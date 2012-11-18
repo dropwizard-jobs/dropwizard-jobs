@@ -1,6 +1,6 @@
 # Dropwizard quartz integration
 
-This plugin integrates the [quartz scheduler][http://quartz-scheduler.org/] with dropwizard and allows you to easily create background jobs, which are not bound to the HTTP request-response cycle.
+This plugin integrates the [quartz scheduler](http://quartz-scheduler.org/) with dropwizard and allows you to easily create background jobs, which are not bound to the HTTP request-response cycle.
 Quartz creates a threadpool on application startup and uses it for background jobs.
 
 There are four different types of jobs:
@@ -34,7 +34,7 @@ Similar to the AssetsBundle or the ViewBundle you need to activate the JobsBundl
 
 ### Dropwizard 0.5.x
 
-Integration with dropwizard 0.5.x is done in the constructor of the service class, like in the [ViewBundle][http://dropwizard.codahale.com/manual/views/]
+Integration with dropwizard 0.5.x is done in the constructor of the service class, like in the [ViewBundle](http://dropwizard.codahale.com/manual/views/)
 
 ```java
 public MyService() {
