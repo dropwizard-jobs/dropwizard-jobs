@@ -8,7 +8,6 @@ import de.spinscale.dropwizard.jobs.annotations.OnApplicationStart;
 import de.spinscale.dropwizard.jobs.annotations.OnApplicationStop;
 import de.spinscale.dropwizard.jobs.parser.TimeParserUtil;
 import org.quartz.*;
-import org.quartz.Job;
 import org.quartz.impl.StdSchedulerFactory;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
@@ -46,22 +45,23 @@ public class JobManager implements Managed {
     }
 
     private void scheduleAllJobsOnApplicationStop() throws SchedulerException {
-        List<Class<? extends org.quartz.Job>> stopJobClasses = getJobClasses(OnApplicationStop.class);
-        for (Class<? extends org.quartz.Job> clazz : stopJobClasses) {
+        List<Class<? extends Job>> stopJobClasses = getJobClasses(OnApplicationStop.class);
+        for (Class<? extends Job> clazz : stopJobClasses) {
             JobBuilder jobDetail = JobBuilder.newJob(clazz);
             scheduler.scheduleJob(jobDetail.build(), executeNowTrigger());
         }
     }
 
-    private List<Class<? extends org.quartz.Job>> getJobClasses(Class annotation) {
-        Set<Class<? extends org.quartz.Job>> jobs = (Set<Class<? extends org.quartz.Job>>) reflections.getSubTypesOf(Job.class);
+    private List<Class<? extends Job>> getJobClasses(Class annotation) {
+        Set<Class<? extends Job>> jobs = (Set<Class<? extends Job>>) reflections.getSubTypesOf(Job.class);
         Set<Class<?>> annotatedClasses = reflections.getTypesAnnotatedWith(annotation);
 
-        return Sets.intersection(new HashSet<Class<? extends org.quartz.Job>>(jobs), annotatedClasses).immutableCopy().asList();
+        return Sets.intersection(new HashSet<Class<? extends Job>>(jobs), annotatedClasses).immutableCopy().asList();
     }
 
     private void scheduleAllJobsWithOnAnnotation() throws SchedulerException {
-        List<Class<? extends org.quartz.Job>> onJobClasses = getJobClasses(On.class);
+        List<Class<? extends Job>> onJobClasses = getJobClasses(On.class);
+        log.info("Jobs with @On annotation: " + onJobClasses);
 
         for (Class<? extends org.quartz.Job> clazz : onJobClasses) {
             On annotation = clazz.getAnnotation(On.class);
@@ -74,7 +74,8 @@ public class JobManager implements Managed {
     }
 
     private void scheduleAllJobsWithEveryAnnotation() throws SchedulerException {
-        List<Class<? extends org.quartz.Job>> everyJobClasses = getJobClasses(Every.class);
+        List<Class<? extends Job>> everyJobClasses = getJobClasses(Every.class);
+        log.info("Jobs with @Every annotation: " + everyJobClasses);
 
         for (Class<? extends org.quartz.Job> clazz : everyJobClasses) {
             Every annotation = clazz.getAnnotation(Every.class);
@@ -88,7 +89,8 @@ public class JobManager implements Managed {
     }
 
     private void scheduleAllJobsOnApplicationStart() throws SchedulerException {
-        List<Class<? extends org.quartz.Job>> startJobClasses = getJobClasses(OnApplicationStart.class);
+        List<Class<? extends Job>> startJobClasses = getJobClasses(OnApplicationStart.class);
+        log.info("Jobs to run on application start: " + startJobClasses);
         for (Class<? extends org.quartz.Job> clazz : startJobClasses) {
             JobBuilder jobBuilder = JobBuilder.newJob(clazz);
             scheduler.scheduleJob(jobBuilder.build(), executeNowTrigger());
