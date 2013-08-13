@@ -20,9 +20,17 @@ import java.util.Set;
 public class JobManager implements Managed {
 
     private static final Logger log = LoggerFactory.getLogger(JobManager.class);
-    private Reflections reflections = new Reflections("");
+    private Reflections reflections = null;
     protected Scheduler scheduler;
 
+    public JobManager() {
+    	reflections = new Reflections("");
+    }
+
+    public JobManager(String scanURL) {
+    	reflections = new Reflections(scanURL);
+    }
+    
     @Override
     public void start() throws Exception {
         scheduler = StdSchedulerFactory.getDefaultScheduler();
