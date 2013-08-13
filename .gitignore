@@ -1,3 +1,5 @@
 .idea
+.classpath
+.project
 dropwizard-jobs.iml
 target/
