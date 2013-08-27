@@ -1,8 +1,9 @@
 package de.spinscale.dropwizard.jobs;
 
-import com.yammer.dropwizard.Bundle;
-import com.yammer.dropwizard.config.Bootstrap;
-import com.yammer.dropwizard.config.Environment;
+import com.codahale.dropwizard.Bundle;
+import com.codahale.dropwizard.setup.Bootstrap;
+import com.codahale.dropwizard.setup.Environment;
+
 
 public class JobsBundle implements Bundle {
 
@@ -21,7 +22,7 @@ public class JobsBundle implements Bundle {
 
     @Override
     public void run(Environment environment) {
-    	environment.manage(new JobManager(scanURL));
+    	environment.getApplicationContext().manage(new JobManager(scanURL));
     }
 
 }
