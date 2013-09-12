@@ -55,6 +55,13 @@ public void initialize(Bootstrap<DelaSearchConfiguration> bootstrap) {
 }
 ```
 
+Be aware that Jobs are searched by reflection only in the current package. 
+You can define jobs location by passing package url to the JobsBundle constructor like this:
+
+```java
+  bootstrap.addBundle(new JobsBundle('com.youpackage.url'));
+```
+
 ## Available job types
 
 The <code>@OnApplicationStart</code> annotation triggers a job after the quartz scheduler is started
