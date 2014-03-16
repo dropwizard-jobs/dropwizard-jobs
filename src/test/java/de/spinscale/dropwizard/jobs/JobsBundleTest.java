@@ -15,6 +15,7 @@ import static org.mockito.Mockito.when;
 public class JobsBundleTest {
 
     private final Environment environment = mock(Environment.class);
+	private final LifecycleEnvironment applicationContext = mock(LifecycleEnvironment.class);
 
     @Test
     public void assertJobsBundleIsWorking() {
@@ -23,7 +24,7 @@ public class JobsBundleTest {
         new JobsBundle().run(environment);
 
         final ArgumentCaptor<JobManager> jobManagerCaptor = ArgumentCaptor.forClass(JobManager.class);
-        verify(environment.lifecycle()).manage(jobManagerCaptor.capture());
+        verify(applicationContext).manage(jobManagerCaptor.capture());
 
         JobManager jobManager = jobManagerCaptor.getValue();
         assertThat(jobManager, is(notNullValue()));

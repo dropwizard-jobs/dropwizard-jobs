@@ -25,8 +25,7 @@ public class JobsBundle implements Bundle {
 
     @Override
     public void run(Environment environment) {
-
-        environment.lifecycle().manage(new JobManager(scanURL));
+    	environment.lifecycle().manage(new JobManager(scanURL));
     }
 
 }
