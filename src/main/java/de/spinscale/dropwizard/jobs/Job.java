@@ -14,7 +14,7 @@ public abstract class Job implements org.quartz.Job {
     private final Timer timer;
 
     public Job() {
-    	MetricRegistry registry = SharedMetricRegistries.getOrCreate("dropwizard-jobs");
+        MetricRegistry registry = SharedMetricRegistries.getOrCreate("dropwizard-jobs");
         timer = registry.timer(name(getClass(), getClass().getName()));
     }
 

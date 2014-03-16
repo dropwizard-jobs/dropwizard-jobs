@@ -20,7 +20,7 @@ public class JobsBundleTest {
     @Test
     public void assertJobsBundleIsWorking() {
 
-        when(environment.lifecycle()).thenReturn(mock(LifecycleEnvironment.class));
+        when(environment.lifecycle()).thenReturn(applicationContext);
         new JobsBundle().run(environment);
 
         final ArgumentCaptor<JobManager> jobManagerCaptor = ArgumentCaptor.forClass(JobManager.class);
