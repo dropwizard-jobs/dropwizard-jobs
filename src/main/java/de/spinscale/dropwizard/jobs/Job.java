@@ -1,23 +1,26 @@
 package de.spinscale.dropwizard.jobs;
 
-import com.yammer.metrics.Metrics;
-import com.yammer.metrics.core.Counter;
-import com.yammer.metrics.core.Timer;
-import com.yammer.metrics.core.TimerContext;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SharedMetricRegistries;
+import com.codahale.metrics.Timer;
+import com.codahale.metrics.Timer.Context;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
+
+import static com.codahale.metrics.MetricRegistry.name;
 
 public abstract class Job implements org.quartz.Job {
 
     private final Timer timer;
 
     public Job() {
-        timer = Metrics.defaultRegistry().newTimer(getClass(), getClass().getName());
+        MetricRegistry registry = SharedMetricRegistries.getOrCreate("dropwizard-jobs");
+        timer = registry.timer(name(getClass(), getClass().getName()));
     }
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
-        TimerContext timerContext = timer.time();
+        Context timerContext = timer.time();
         try {
             doJob();
         } finally {
