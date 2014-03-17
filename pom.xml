@@ -12,7 +12,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <dropwizard.version>0.6.2</dropwizard.version>
+        <dropwizard.version>0.7.0-SNAPSHOT</dropwizard.version>
     </properties>
 
     <repositories>
@@ -21,11 +21,25 @@
             <name>Releases</name>
             <url>https://oss.sonatype.org/content/repositories/releases</url>
         </repository>
+		<repository>
+			<id>repo.codahale.com</id>
+			<url>http://repo.codahale.com/</url>
+		</repository>
+		<repository>
+			<id>sonatype-nexus-snapshots</id>
+			<name>Sonatype Nexus Snapshots</name>
+			<url>http://oss.sonatype.org/content/repositories/snapshots</url>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+			<snapshots>
+			</snapshots>
+		</repository>
     </repositories>
 
     <dependencies>
         <dependency>
-            <groupId>com.yammer.dropwizard</groupId>
+			<groupId>com.codahale.dropwizard</groupId>
             <artifactId>dropwizard-core</artifactId>
             <version>${dropwizard.version}</version>
         </dependency>
@@ -52,14 +66,13 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>com.yammer.dropwizard</groupId>
+			<groupId>com.codahale.dropwizard</groupId>
             <artifactId>dropwizard-testing</artifactId>
             <version>${dropwizard.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
 
-    <!--
     <build>
         <plugins>
             <plugin>
@@ -74,6 +87,4 @@
             </plugin>
         </plugins>
     </build>
-    -->
-
 </project>
