@@ -8,7 +8,7 @@ import io.dropwizard.setup.Environment;
 
 public class JobsBundle implements Bundle {
 
-	private String scanURL = null;
+	protected String scanURL = null;
 	
     @Override
     public void initialize(Bootstrap<?> bootstrap) {
