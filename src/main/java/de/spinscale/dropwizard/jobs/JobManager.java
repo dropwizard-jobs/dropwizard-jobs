@@ -1,6 +1,6 @@
 package de.spinscale.dropwizard.jobs;
 
-import com.codahale.dropwizard.lifecycle.Managed;
+import io.dropwizard.lifecycle.Managed;
 import com.google.common.collect.Sets;
 import de.spinscale.dropwizard.jobs.annotations.Every;
 import de.spinscale.dropwizard.jobs.annotations.On;

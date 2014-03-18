@@ -10,8 +10,8 @@ import static org.mockito.Mockito.when;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
-import com.codahale.dropwizard.lifecycle.setup.LifecycleEnvironment;
-import com.codahale.dropwizard.setup.Environment;
+import io.dropwizard.lifecycle.setup.LifecycleEnvironment;
+import io.dropwizard.setup.Environment;
 
 public class JobsBundleTest {
 
