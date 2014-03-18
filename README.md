@@ -131,3 +131,8 @@ public class OnTestJob extends Job {
 # Thanks
 
 * The playframework 1.x for the idea of simple annotations at Job classes
+
+# Contributors
+ * [Alexander Reelsen](https://github.com/spinscale)
+ * [Hakan Dilek](https://github.com/hakandilek)
+
