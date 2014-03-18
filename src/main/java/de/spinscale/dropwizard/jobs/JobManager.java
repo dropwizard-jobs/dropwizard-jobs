@@ -1,7 +1,7 @@
 package de.spinscale.dropwizard.jobs;
 
+import io.dropwizard.lifecycle.Managed;
 import com.google.common.collect.Sets;
-import com.yammer.dropwizard.lifecycle.Managed;
 import de.spinscale.dropwizard.jobs.annotations.Every;
 import de.spinscale.dropwizard.jobs.annotations.On;
 import de.spinscale.dropwizard.jobs.annotations.OnApplicationStart;
@@ -13,6 +13,7 @@ import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.annotation.Annotation;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -60,7 +61,7 @@ public class JobManager implements Managed {
         }
     }
 
-    private List<Class<? extends Job>> getJobClasses(Class annotation) {
+    private List<Class<? extends Job>> getJobClasses(Class<? extends Annotation> annotation) {
         Set<Class<? extends Job>> jobs = (Set<Class<? extends Job>>) reflections.getSubTypesOf(Job.class);
         Set<Class<?>> annotatedClasses = reflections.getTypesAnnotatedWith(annotation);
 
