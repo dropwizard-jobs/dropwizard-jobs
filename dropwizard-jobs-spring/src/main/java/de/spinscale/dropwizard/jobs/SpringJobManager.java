@@ -1,21 +1,22 @@
 package de.spinscale.dropwizard.jobs;
 
-import com.google.inject.Injector;
 import de.spinscale.dropwizard.jobs.JobManager;
+
 import org.quartz.impl.StdSchedulerFactory;
 import org.reflections.Reflections;
+import org.springframework.context.ApplicationContext;
 
-public class GuiceJobManager extends JobManager {
+public class SpringJobManager extends JobManager {
 
-    protected GuiceJobFactory jobFactory;
+    protected SpringJobFactory jobFactory;
 
-    public GuiceJobManager(String scanUrl, Injector injector) {
+    public SpringJobManager(String scanUrl, ApplicationContext context) {
         reflections = new Reflections(scanUrl);
-        jobFactory = new GuiceJobFactory(injector);
+        jobFactory = new SpringJobFactory(context);
     }
     
-    public GuiceJobManager(Injector injector) {
-    	this("", injector);
+    public SpringJobManager(ApplicationContext context) {
+    	this("", context);
     }
 
     @Override

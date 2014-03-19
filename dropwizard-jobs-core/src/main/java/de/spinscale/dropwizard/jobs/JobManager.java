@@ -39,10 +39,7 @@ public class JobManager implements Managed {
     public void start() throws Exception {
         scheduler = StdSchedulerFactory.getDefaultScheduler();
         scheduler.start();
-
-        scheduleAllJobsOnApplicationStart();
-        scheduleAllJobsWithEveryAnnotation();
-        scheduleAllJobsWithOnAnnotation();
+        scheduleAllJobs();
     }
 
     @Override
@@ -54,6 +51,12 @@ public class JobManager implements Managed {
         Thread.sleep(100);
 
         scheduler.shutdown(true);
+    }
+    
+    protected void scheduleAllJobs() throws SchedulerException {
+        scheduleAllJobsOnApplicationStart();
+        scheduleAllJobsWithEveryAnnotation();
+        scheduleAllJobsWithOnAnnotation();
     }
 
     protected void scheduleAllJobsOnApplicationStop() throws SchedulerException {
