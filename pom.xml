@@ -12,7 +12,7 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<dropwizard.version>0.7.0-SNAPSHOT</dropwizard.version>
+		<dropwizard.version>0.7.0-rc2</dropwizard.version>
 	</properties>
 
 	<repositories>
@@ -39,7 +39,7 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>com.codahale.dropwizard</groupId>
+			<groupId>io.dropwizard</groupId>
 			<artifactId>dropwizard-core</artifactId>
 			<version>${dropwizard.version}</version>
 		</dependency>
@@ -66,7 +66,7 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>com.codahale.dropwizard</groupId>
+			<groupId>io.dropwizard</groupId>
 			<artifactId>dropwizard-testing</artifactId>
 			<version>${dropwizard.version}</version>
 			<scope>test</scope>
@@ -91,4 +91,5 @@
 		<module>dropwizard-jobs-core</module>
 		<module>dropwizard-jobs-guice</module>
 	</modules>
+
 </project>
