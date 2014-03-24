@@ -3,11 +3,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>de.spinscale.dropwizard</groupId>
-    <artifactId>dropwizard-jobs</artifactId>
+    <artifactId>dropwizard-jobs-guice</artifactId>
     <version>1.0-1-SNAPSHOT</version>
     <packaging>jar</packaging>
 
-    <name>dropwizard-jobs</name>
+    <name>dropwizard-jobs-guice</name>
     <url>http://maven.apache.org</url>
 
     <properties>
