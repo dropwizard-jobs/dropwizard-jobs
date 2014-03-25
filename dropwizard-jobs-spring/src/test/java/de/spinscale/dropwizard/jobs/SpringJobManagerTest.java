@@ -18,7 +18,8 @@ public class SpringJobManagerTest {
 	public void setUp() throws Exception {
 		ApplicationContext context = new AnnotationConfigApplicationContext(
 				ApplicationStartTestJob.class, ApplicationStopTestJob.class,
-				EveryTestJob.class, OnTestJob.class);
+				EveryTestJob.class, OnTestJob.class, DependencyTestJob.class,
+				Dependency.class);
 		jobManager = new SpringJobManager(context);
 	}
 
@@ -57,5 +58,13 @@ public class SpringJobManagerTest {
 		jobManager.start();
 		Thread.sleep(5000);
 		assertThat(EveryTestJob.results, hasSize(greaterThan(5)));
+	}
+
+	@Test
+	public void jobsWithDependencyShouldBeExecuted() throws Exception {
+		DependencyTestJob.results.clear();
+		jobManager.start();
+		Thread.sleep(5000);
+		assertThat(DependencyTestJob.results, hasSize(greaterThan(5)));
 	}
 }

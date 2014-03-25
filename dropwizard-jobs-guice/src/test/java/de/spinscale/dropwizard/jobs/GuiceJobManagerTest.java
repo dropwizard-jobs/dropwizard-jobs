@@ -57,4 +57,12 @@ public class GuiceJobManagerTest {
 		Thread.sleep(5000);
 		assertThat(EveryTestJob.results, hasSize(greaterThan(5)));
 	}
+
+	@Test
+	public void jobsWithDependencyShouldBeExecuted() throws Exception {
+		DependencyTestJob.results.clear();
+		jobManager.start();
+		Thread.sleep(5000);
+		assertThat(DependencyTestJob.results, hasSize(greaterThan(5)));
+	}
 }
