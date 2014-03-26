@@ -1,4 +1,4 @@
-package de.spinscale.dropwizard.jobs.guice;
+package de.spinscale.dropwizard.jobs;
 
 import com.google.inject.Injector;
 import de.spinscale.dropwizard.jobs.JobsBundle;
