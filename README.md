@@ -10,6 +10,8 @@ There are four different types of jobs:
 * Jobs which are repeated after a certain time interval
 * Jobs which need to run at a specific time, via a cron-like expression
 
+This plugin now comes with optional dependency injection plugins.
+
 ## Installing the bundle
 
 ```
@@ -27,6 +29,25 @@ After installing the plugin locally you can include it in your pom.xml
   <version>1.0-SNAPSHOT</version>
 </dependency>
 ```
+
+You can also add dependency injection using either Guice or Spring:
+
+```xml
+<dependency>
+  <groupId>de.spinscale.dropwizard</groupId>
+  <artifactId>dropwizard-jobs-guice</artifactId>
+  <version>1.0-SNAPSHOT</version>
+</dependency>
+```
+
+```xml
+<dependency>
+  <groupId>de.spinscale.dropwizard</groupId>
+  <artifactId>dropwizard-jobs-spring</artifactId>
+  <version>1.0-SNAPSHOT</version>
+</dependency>
+```
+
 
 ## Activating the bundle
 
@@ -54,6 +75,11 @@ public void initialize(Bootstrap<DelaSearchConfiguration> bootstrap) {
   bootstrap.addBundle(new JobsBundle());
 }
 ```
+
+### Dropwizard 0.7.2
+
+Dropwizard 0.7.2
+
 
 Be aware that Jobs are searched by reflection only in the current package. 
 You can define jobs location by passing package url to the JobsBundle constructor like this:
@@ -116,9 +142,18 @@ public class OnTestJob extends Job {
 }
 ```
 
+# Dependency Injection
+
+## Guice
+
+
+
+## Spring
+
+
 # Limitations
 
-* Your jobs have to have a no-args constructor
+* Your jobs have to have a no-args constructor, unless you use Dependency Injection modules.
 * The jobs are not persisted, but purely in memory (though quartz can do different), so shutting down your dropwizard service at a certain time might lead to not run the job.
 * The scheduler is not configurable at the moment, for example the threadpool size is fixed to ten.
 * If you run the same dropwizard service on multiple instances, you also run the same jobs twice. This might not be what you want
@@ -131,3 +166,9 @@ public class OnTestJob extends Job {
 # Thanks
 
 * The playframework 1.x for the idea of simple annotations at Job classes
+
+# Contributors
+ * [Alexander Reelsen](https://github.com/spinscale)
+ * [Hakan Dilek](https://github.com/hakandilek)
+ * [Yun Zhi Lin](https://github.com/yunspace)
+

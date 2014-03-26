@@ -74,4 +74,9 @@
         </plugins>
     </build>
 
+	<modules>
+		<module>dropwizard-jobs-core</module>
+		<module>dropwizard-jobs-guice</module>
+		<module>dropwizard-jobs-spring</module>
+	</modules>
 </project>

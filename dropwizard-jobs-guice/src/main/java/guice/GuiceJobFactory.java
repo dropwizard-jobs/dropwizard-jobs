@@ -21,10 +21,8 @@ public class GuiceJobFactory implements JobFactory {
         this.injector = injector;
     }
 
-
     @Override
     public Job newJob(TriggerFiredBundle triggerFiredBundle, Scheduler scheduler) throws SchedulerException {
-
         JobDetail jobDetail = triggerFiredBundle.getJobDetail();
         Class<? extends Job> jobClass = jobDetail.getJobClass();
         return injector.getInstance(jobClass);

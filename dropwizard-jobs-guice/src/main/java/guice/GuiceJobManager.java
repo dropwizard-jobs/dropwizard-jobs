@@ -14,15 +14,17 @@ public class GuiceJobManager extends JobManager {
         jobFactory = new GuiceJobFactory(injector);
     }
 
+    public GuiceJobManager(Injector injector) {
+    	this("", injector);
+    }
+
     @Override
     public void start() throws Exception {
         scheduler = StdSchedulerFactory.getDefaultScheduler();
         scheduler.setJobFactory(jobFactory);
         scheduler.start();
 
-        scheduleAllJobsOnApplicationStart();
-        scheduleAllJobsWithEveryAnnotation();
-        scheduleAllJobsWithOnAnnotation();
+        scheduleAllJobs();
     }
 
 }
