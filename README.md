@@ -10,7 +10,7 @@ There are four different types of jobs:
 * Jobs which are repeated after a certain time interval
 * Jobs which need to run at a specific time, via a cron-like expression
 
-This plugin now comes with optional dependency injection plugins.
+This plugin supports optional dependency injection via Guice and Spring modules.
 
 ## Installing the bundle
 
@@ -20,17 +20,19 @@ cd dropwizard-jobs
 mvn install
 ```
 
-After installing the plugin locally you can include it in your pom.xml
+After installing the plugin locally, if you only need to core module you can include it in your pom.xml
 
 ```xml
 <dependency>
   <groupId>de.spinscale.dropwizard</groupId>
-  <artifactId>dropwizard-jobs</artifactId>
+  <artifactId>dropwizard-jobs-core</artifactId>
   <version>1.0-SNAPSHOT</version>
 </dependency>
 ```
 
-You can also add dependency injection using either Guice or Spring:
+To use dependency injection use either
+
+Guice:
 
 ```xml
 <dependency>
@@ -40,6 +42,8 @@ You can also add dependency injection using either Guice or Spring:
 </dependency>
 ```
 
+Spring:
+
 ```xml
 <dependency>
   <groupId>de.spinscale.dropwizard</groupId>
@@ -48,6 +52,12 @@ You can also add dependency injection using either Guice or Spring:
 </dependency>
 ```
 
+## Dependency Injection
+
+For detailed DI instructions, please see the respective module's README:
+
+ * dropwizard-jobs-guice
+ * dropwizard-jobs-spring
 
 ## Activating the bundle
 
@@ -78,8 +88,14 @@ public void initialize(Bootstrap<DelaSearchConfiguration> bootstrap) {
 
 ### Dropwizard 0.7.2
 
-Dropwizard 0.7.2
+Dropwizard 0.7.2 is the latest stable release candidate, and it's even simpler:
 
+```java
+@Override
+public void initialize(Bootstrap<DelaSearchConfiguration> bootstrap) {
+  bootstrap.addBundle(new JobsBundle());
+}
+```
 
 Be aware that Jobs are searched by reflection only in the current package. 
 You can define jobs location by passing package url to the JobsBundle constructor like this:
@@ -87,6 +103,26 @@ You can define jobs location by passing package url to the JobsBundle constructo
 ```java
   bootstrap.addBundle(new JobsBundle('com.youpackage.url'));
 ```
+
+
+    @Override
+    public void initialize( Bootstrap<DocumentGatewayConfiguration> bootstrap )
+    {
+
+        GuiceBundle guiceBundle = GuiceBundle.<DocumentGatewayConfiguration>newBuilder()
+                .addModule( new DocumentGatewayInjection() )
+                .enableAutoConfig( getClass().getPackage().getName() )
+                .setConfigClass( DocumentGatewayConfiguration.class )
+                .build();
+        bootstrap.addBundle( guiceBundle );
+
+        GuiceJobsBundle guiceJobsBundle = new GuiceJobsBundle(
+                "com.apmasphere.document.directory.service.jobs",
+                guiceBundle.getInjector() );
+        bootstrap.addBundle( guiceJobsBundle );
+
+    }
+
 
 ## Available job types
 
@@ -142,18 +178,9 @@ public class OnTestJob extends Job {
 }
 ```
 
-# Dependency Injection
-
-## Guice
-
-
-
-## Spring
-
-
 # Limitations
 
-* Your jobs have to have a no-args constructor, unless you use Dependency Injection modules.
+* Your jobs have to have a no-args constructor, unless you use Dependency Injection.
 * The jobs are not persisted, but purely in memory (though quartz can do different), so shutting down your dropwizard service at a certain time might lead to not run the job.
 * The scheduler is not configurable at the moment, for example the threadpool size is fixed to ten.
 * If you run the same dropwizard service on multiple instances, you also run the same jobs twice. This might not be what you want

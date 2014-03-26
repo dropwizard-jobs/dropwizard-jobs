@@ -1,22 +1,31 @@
 package de.spinscale.dropwizard.jobs;
 
-import com.google.common.collect.Sets;
-import io.dropwizard.lifecycle.Managed;
-import de.spinscale.dropwizard.jobs.annotations.Every;
-import de.spinscale.dropwizard.jobs.annotations.On;
-import de.spinscale.dropwizard.jobs.annotations.OnApplicationStart;
-import de.spinscale.dropwizard.jobs.annotations.OnApplicationStop;
-import de.spinscale.dropwizard.jobs.parser.TimeParserUtil;
-import org.quartz.*;
+import java.lang.annotation.Annotation;
+import java.util.List;
+import java.util.Set;
+
+import org.quartz.CronScheduleBuilder;
+import org.quartz.JobBuilder;
+import org.quartz.Scheduler;
+import org.quartz.SchedulerException;
+import org.quartz.SimpleScheduleBuilder;
+import org.quartz.Trigger;
+import org.quartz.TriggerBuilder;
 import org.quartz.impl.StdSchedulerFactory;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.annotation.Annotation;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
+import com.google.common.collect.Sets.SetView;
+
+import de.spinscale.dropwizard.jobs.annotations.Every;
+import de.spinscale.dropwizard.jobs.annotations.On;
+import de.spinscale.dropwizard.jobs.annotations.OnApplicationStart;
+import de.spinscale.dropwizard.jobs.annotations.OnApplicationStop;
+import de.spinscale.dropwizard.jobs.parser.TimeParserUtil;
+import io.dropwizard.lifecycle.Managed;
 
 public class JobManager implements Managed {
 
@@ -36,10 +45,7 @@ public class JobManager implements Managed {
     public void start() throws Exception {
         scheduler = StdSchedulerFactory.getDefaultScheduler();
         scheduler.start();
-
-        scheduleAllJobsOnApplicationStart();
-        scheduleAllJobsWithEveryAnnotation();
-        scheduleAllJobsWithOnAnnotation();
+        scheduleAllJobs();
     }
 
     @Override
@@ -51,6 +57,12 @@ public class JobManager implements Managed {
         Thread.sleep(100);
 
         scheduler.shutdown(true);
+    }
+    
+    protected void scheduleAllJobs() throws SchedulerException {
+        scheduleAllJobsOnApplicationStart();
+        scheduleAllJobsWithEveryAnnotation();
+        scheduleAllJobsWithOnAnnotation();
     }
 
     protected void scheduleAllJobsOnApplicationStop() throws SchedulerException {
@@ -65,7 +77,9 @@ public class JobManager implements Managed {
         Set<Class<? extends Job>> jobs = reflections.getSubTypesOf(Job.class);
         Set<Class<?>> annotatedClasses = reflections.getTypesAnnotatedWith(annotation);
 
-        return Sets.intersection(new HashSet<>(jobs), annotatedClasses).immutableCopy().asList();
+        SetView<Class<? extends Job>> intersection = Sets.intersection(jobs, annotatedClasses);
+		ImmutableSet<Class<? extends Job>> immutable = intersection.immutableCopy();
+		return immutable.asList();
     }
 
     protected void scheduleAllJobsWithOnAnnotation() throws SchedulerException {

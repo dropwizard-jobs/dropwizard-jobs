@@ -1,21 +1,27 @@
 package de.spinscale.dropwizard.jobs;
 
+import org.quartz.JobExecutionContext;
+import org.quartz.JobExecutionException;
+
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
-import org.quartz.JobExecutionContext;
-import org.quartz.JobExecutionException;
 
 import static com.codahale.metrics.MetricRegistry.name;
 
 public abstract class Job implements org.quartz.Job {
+	public static final String DROPWIZARD_JOBS_KEY = "dropwizard-jobs";
 
     private final Timer timer;
 
-    public Job() {
-        MetricRegistry registry = SharedMetricRegistries.getOrCreate("dropwizard-jobs");
-        timer = registry.timer(name(getClass(), getClass().getName()));
+    public Job () {
+        // get the metrics registry which was shared during bundle instantiation
+        this(SharedMetricRegistries.getOrCreate(DROPWIZARD_JOBS_KEY));
+    }
+
+    public Job(MetricRegistry metricRegistry) {
+        timer = metricRegistry.timer(name(getClass(), getClass().getName()));
     }
 
     @Override
