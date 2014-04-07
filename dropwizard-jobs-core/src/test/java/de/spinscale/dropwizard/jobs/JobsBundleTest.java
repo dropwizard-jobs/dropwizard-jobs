@@ -1,9 +1,10 @@
 package de.spinscale.dropwizard.jobs;
 
-import io.dropwizard.lifecycle.setup.LifecycleEnvironment;
-import io.dropwizard.setup.Environment;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+
+import io.dropwizard.lifecycle.setup.LifecycleEnvironment;
+import io.dropwizard.setup.Environment;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -15,7 +16,7 @@ import static org.mockito.Mockito.when;
 public class JobsBundleTest {
 
     private final Environment environment = mock(Environment.class);
-	private final LifecycleEnvironment applicationContext = mock(LifecycleEnvironment.class);
+    private final LifecycleEnvironment applicationContext = mock(LifecycleEnvironment.class);
 
     @Test
     public void assertJobsBundleIsWorking() {

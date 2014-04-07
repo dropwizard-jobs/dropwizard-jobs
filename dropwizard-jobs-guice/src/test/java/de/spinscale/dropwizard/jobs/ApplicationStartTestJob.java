@@ -1,10 +1,11 @@
 package de.spinscale.dropwizard.jobs;
 
-import com.google.common.collect.Lists;
-import de.spinscale.dropwizard.jobs.annotations.OnApplicationStart;
-
 import java.util.Date;
 import java.util.List;
+
+import com.google.common.collect.Lists;
+
+import de.spinscale.dropwizard.jobs.annotations.OnApplicationStart;
 
 @OnApplicationStart
 public class ApplicationStartTestJob extends Job {

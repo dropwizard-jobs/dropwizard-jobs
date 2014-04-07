@@ -1,13 +1,13 @@
 package de.spinscale.dropwizard.jobs;
 
-import io.dropwizard.lifecycle.setup.LifecycleEnvironment;
-import io.dropwizard.setup.Environment;
-
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+
+import io.dropwizard.lifecycle.setup.LifecycleEnvironment;
+import io.dropwizard.setup.Environment;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -19,11 +19,11 @@ import static org.mockito.Mockito.when;
 public class GuiceJobsBundleTest {
 
     private final Environment environment = mock(Environment.class);
-	private final LifecycleEnvironment applicationContext = mock(LifecycleEnvironment.class);
+    private final LifecycleEnvironment applicationContext = mock(LifecycleEnvironment.class);
 
     @Test
     public void assertJobsBundleIsWorking() {
-    	Injector injector = Guice.createInjector();
+        Injector injector = Guice.createInjector();
 
         when(environment.lifecycle()).thenReturn(applicationContext);
         new GuiceJobsBundle(injector).run(environment);

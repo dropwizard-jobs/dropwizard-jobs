@@ -16,6 +16,7 @@ public class TimeParserUtil {
 
     /**
      * Parse a duration
+     *
      * @param duration 3h, 2mn, 7s
      * @return The number of seconds
      */

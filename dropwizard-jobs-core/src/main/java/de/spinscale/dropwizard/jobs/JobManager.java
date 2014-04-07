@@ -36,11 +36,11 @@ public class JobManager implements Managed {
     public JobManager() {
         this("");
     }
-    
+
     public JobManager(String scanUrl) {
-    	reflections = new Reflections(scanUrl);
+        reflections = new Reflections(scanUrl);
     }
-    
+
     @Override
     public void start() throws Exception {
         scheduler = StdSchedulerFactory.getDefaultScheduler();
@@ -58,7 +58,7 @@ public class JobManager implements Managed {
 
         scheduler.shutdown(true);
     }
-    
+
     protected void scheduleAllJobs() throws SchedulerException {
         scheduleAllJobsOnApplicationStart();
         scheduleAllJobsWithEveryAnnotation();
@@ -78,8 +78,8 @@ public class JobManager implements Managed {
         Set<Class<?>> annotatedClasses = reflections.getTypesAnnotatedWith(annotation);
 
         SetView<Class<? extends Job>> intersection = Sets.intersection(jobs, annotatedClasses);
-		ImmutableSet<Class<? extends Job>> immutable = intersection.immutableCopy();
-		return immutable.asList();
+        ImmutableSet<Class<? extends Job>> immutable = intersection.immutableCopy();
+        return immutable.asList();
     }
 
     protected void scheduleAllJobsWithOnAnnotation() throws SchedulerException {
@@ -121,6 +121,6 @@ public class JobManager implements Managed {
     }
 
     protected Trigger executeNowTrigger() {
-        return  TriggerBuilder.newTrigger().startNow().build();
+        return TriggerBuilder.newTrigger().startNow().build();
     }
 }

@@ -10,17 +10,17 @@ import org.springframework.context.ApplicationContext;
 
 public class SpringJobFactory implements JobFactory {
 
-	ApplicationContext context;
+    ApplicationContext context;
 
-	public SpringJobFactory(ApplicationContext context) {
-		this.context = context;
-	}
+    public SpringJobFactory(ApplicationContext context) {
+        this.context = context;
+    }
 
-	@Override
-	public Job newJob(TriggerFiredBundle triggerFiredBundle, Scheduler scheduler)
-			throws SchedulerException {
-		JobDetail jobDetail = triggerFiredBundle.getJobDetail();
-		Class<? extends Job> jobClass = jobDetail.getJobClass();
-		return context.getBean(jobClass);
-	}
+    @Override
+    public Job newJob(TriggerFiredBundle triggerFiredBundle, Scheduler scheduler)
+            throws SchedulerException {
+        JobDetail jobDetail = triggerFiredBundle.getJobDetail();
+        Class<? extends Job> jobClass = jobDetail.getJobClass();
+        return context.getBean(jobClass);
+    }
 }

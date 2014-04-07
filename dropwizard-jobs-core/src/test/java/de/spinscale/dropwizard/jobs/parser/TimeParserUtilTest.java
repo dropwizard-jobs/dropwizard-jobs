@@ -10,12 +10,12 @@ public class TimeParserUtilTest {
 
     @Test
     public void timeParserShouldWork() {
-        assertThat(getDuration(null),   is(2592000));
-        assertThat(getDuration("1mn"),  is(60));
+        assertThat(getDuration(null), is(2592000));
+        assertThat(getDuration("1mn"), is(60));
         assertThat(getDuration("1min"), is(60));
-        assertThat(getDuration("10d"),  is(864000));
-        assertThat(getDuration("20h"),  is(72000));
-        assertThat(getDuration("40s"),  is(40));
+        assertThat(getDuration("10d"), is(864000));
+        assertThat(getDuration("20h"), is(72000));
+        assertThat(getDuration("40s"), is(40));
     }
 
     @Test

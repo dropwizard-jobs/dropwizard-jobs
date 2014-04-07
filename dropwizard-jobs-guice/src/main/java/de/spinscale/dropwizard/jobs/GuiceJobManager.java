@@ -15,7 +15,7 @@ public class GuiceJobManager extends JobManager {
     }
 
     public GuiceJobManager(Injector injector) {
-    	this("", injector);
+        this("", injector);
     }
 
     @Override

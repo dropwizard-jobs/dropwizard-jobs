@@ -11,11 +11,11 @@ import com.codahale.metrics.Timer.Context;
 import static com.codahale.metrics.MetricRegistry.name;
 
 public abstract class Job implements org.quartz.Job {
-	public static final String DROPWIZARD_JOBS_KEY = "dropwizard-jobs";
+    public static final String DROPWIZARD_JOBS_KEY = "dropwizard-jobs";
 
     private final Timer timer;
 
-    public Job () {
+    public Job() {
         // get the metrics registry which was shared during bundle instantiation
         this(SharedMetricRegistries.getOrCreate(DROPWIZARD_JOBS_KEY));
     }

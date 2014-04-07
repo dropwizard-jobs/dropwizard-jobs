@@ -1,10 +1,11 @@
 package de.spinscale.dropwizard.jobs;
 
-import com.google.common.collect.Lists;
-import de.spinscale.dropwizard.jobs.annotations.Every;
-
 import java.util.Date;
 import java.util.List;
+
+import com.google.common.collect.Lists;
+
+import de.spinscale.dropwizard.jobs.annotations.Every;
 
 @Every("1s")
 public class EveryTestJob extends Job {

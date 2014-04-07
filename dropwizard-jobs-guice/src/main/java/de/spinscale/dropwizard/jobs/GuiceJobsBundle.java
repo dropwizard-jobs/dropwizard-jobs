@@ -1,7 +1,7 @@
 package de.spinscale.dropwizard.jobs;
 
 import com.google.inject.Injector;
-import de.spinscale.dropwizard.jobs.JobsBundle;
+
 import io.dropwizard.setup.Environment;
 
 public class GuiceJobsBundle extends JobsBundle {
