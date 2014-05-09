@@ -1,12 +1,12 @@
 package de.spinscale.dropwizard.jobs;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 public class JobManagerTest {
 

@@ -4,8 +4,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /*
- This code is ripped of the playframework, see original here
- https://github.com/playframework/play/blob/master/framework/src/play/libs/Time.java
+ * This code is ripped of the playframework, see original here
+ * https://github.com/playframework/play/blob/master/framework/src/play/libs/Time.java
  */
 public class TimeParserUtil {
 
@@ -16,8 +16,9 @@ public class TimeParserUtil {
 
     /**
      * Parse a duration
-     *
-     * @param duration 3h, 2mn, 7s
+     * 
+     * @param duration
+     *            3h, 2mn, 7s
      * @return The number of seconds
      */
     public static int parseDuration(String duration) {

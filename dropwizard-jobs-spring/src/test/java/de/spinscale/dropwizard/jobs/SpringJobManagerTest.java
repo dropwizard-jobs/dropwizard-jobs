@@ -1,14 +1,14 @@
 package de.spinscale.dropwizard.jobs;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.hasSize;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.hasSize;
 
 public class SpringJobManagerTest {
 
@@ -16,9 +16,8 @@ public class SpringJobManagerTest {
 
     @Before
     public void setUp() throws Exception {
-        ApplicationContext context = new AnnotationConfigApplicationContext(
-                ApplicationStartTestJob.class, ApplicationStopTestJob.class,
-                EveryTestJob.class, OnTestJob.class, DependencyTestJob.class,
+        ApplicationContext context = new AnnotationConfigApplicationContext(ApplicationStartTestJob.class,
+                ApplicationStopTestJob.class, EveryTestJob.class, OnTestJob.class, DependencyTestJob.class,
                 Dependency.class);
         jobManager = new SpringJobManager(context);
     }

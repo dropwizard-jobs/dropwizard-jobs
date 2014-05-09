@@ -1,13 +1,13 @@
 package de.spinscale.dropwizard.jobs;
 
+import io.dropwizard.lifecycle.setup.LifecycleEnvironment;
+import io.dropwizard.setup.Environment;
+
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-
-import io.dropwizard.lifecycle.setup.LifecycleEnvironment;
-import io.dropwizard.setup.Environment;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;

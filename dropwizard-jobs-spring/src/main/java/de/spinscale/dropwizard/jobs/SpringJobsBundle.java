@@ -2,6 +2,7 @@ package de.spinscale.dropwizard.jobs;
 
 import org.springframework.context.ApplicationContext;
 
+import de.spinscale.dropwizard.jobs.JobsBundle;
 import io.dropwizard.setup.Environment;
 
 public class SpringJobsBundle extends JobsBundle {

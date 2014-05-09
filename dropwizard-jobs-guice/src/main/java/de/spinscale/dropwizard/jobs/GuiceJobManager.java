@@ -1,9 +1,9 @@
 package de.spinscale.dropwizard.jobs;
 
+import com.google.inject.Injector;
+import de.spinscale.dropwizard.jobs.JobManager;
 import org.quartz.impl.StdSchedulerFactory;
 import org.reflections.Reflections;
-
-import com.google.inject.Injector;
 
 public class GuiceJobManager extends JobManager {
 

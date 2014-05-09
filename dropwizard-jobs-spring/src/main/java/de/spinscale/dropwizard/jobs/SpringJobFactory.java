@@ -17,8 +17,7 @@ public class SpringJobFactory implements JobFactory {
     }
 
     @Override
-    public Job newJob(TriggerFiredBundle triggerFiredBundle, Scheduler scheduler)
-            throws SchedulerException {
+    public Job newJob(TriggerFiredBundle triggerFiredBundle, Scheduler scheduler) throws SchedulerException {
         JobDetail jobDetail = triggerFiredBundle.getJobDetail();
         Class<? extends Job> jobClass = jobDetail.getJobClass();
         return context.getBean(jobClass);

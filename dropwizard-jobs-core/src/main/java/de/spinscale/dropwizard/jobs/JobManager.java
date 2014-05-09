@@ -1,6 +1,9 @@
 package de.spinscale.dropwizard.jobs;
 
+import io.dropwizard.lifecycle.Managed;
+
 import java.lang.annotation.Annotation;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -16,16 +19,13 @@ import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-import com.google.common.collect.Sets.SetView;
 
 import de.spinscale.dropwizard.jobs.annotations.Every;
 import de.spinscale.dropwizard.jobs.annotations.On;
 import de.spinscale.dropwizard.jobs.annotations.OnApplicationStart;
 import de.spinscale.dropwizard.jobs.annotations.OnApplicationStop;
 import de.spinscale.dropwizard.jobs.parser.TimeParserUtil;
-import io.dropwizard.lifecycle.Managed;
 
 public class JobManager implements Managed {
 
@@ -52,7 +52,8 @@ public class JobManager implements Managed {
     public void stop() throws Exception {
         scheduleAllJobsOnApplicationStop();
 
-        // this is enough to put the job into the queue, otherwise the jobs wont be executed
+        // this is enough to put the job into the queue, otherwise the jobs wont
+        // be executed
         // anyone got a better solution?
         Thread.sleep(100);
 
@@ -77,9 +78,7 @@ public class JobManager implements Managed {
         Set<Class<? extends Job>> jobs = reflections.getSubTypesOf(Job.class);
         Set<Class<?>> annotatedClasses = reflections.getTypesAnnotatedWith(annotation);
 
-        SetView<Class<? extends Job>> intersection = Sets.intersection(jobs, annotatedClasses);
-        ImmutableSet<Class<? extends Job>> immutable = intersection.immutableCopy();
-        return immutable.asList();
+        return Sets.intersection(new HashSet<Class<? extends Job>>(jobs), annotatedClasses).immutableCopy().asList();
     }
 
     protected void scheduleAllJobsWithOnAnnotation() throws SchedulerException {
@@ -103,7 +102,8 @@ public class JobManager implements Managed {
         for (Class<? extends org.quartz.Job> clazz : everyJobClasses) {
             Every annotation = clazz.getAnnotation(Every.class);
             int secondDelay = TimeParserUtil.parseDuration(annotation.value());
-            SimpleScheduleBuilder scheduleBuilder = SimpleScheduleBuilder.simpleSchedule().withIntervalInSeconds(secondDelay).repeatForever();
+            SimpleScheduleBuilder scheduleBuilder = SimpleScheduleBuilder.simpleSchedule()
+                    .withIntervalInSeconds(secondDelay).repeatForever();
             Trigger trigger = TriggerBuilder.newTrigger().withSchedule(scheduleBuilder).build();
 
             JobBuilder jobBuilder = JobBuilder.newJob(clazz);

@@ -1,5 +1,7 @@
 package de.spinscale.dropwizard.jobs;
 
+import de.spinscale.dropwizard.jobs.JobManager;
+
 import org.quartz.impl.StdSchedulerFactory;
 import org.reflections.Reflections;
 import org.springframework.context.ApplicationContext;

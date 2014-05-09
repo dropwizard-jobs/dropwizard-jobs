@@ -1,11 +1,10 @@
 package de.spinscale.dropwizard.jobs;
 
+import com.google.common.collect.Lists;
+import de.spinscale.dropwizard.jobs.annotations.On;
+
 import java.util.Date;
 import java.util.List;
-
-import com.google.common.collect.Lists;
-
-import de.spinscale.dropwizard.jobs.annotations.On;
 
 @On("0/1 * * * * ?")
 public class OnTestJob extends Job {

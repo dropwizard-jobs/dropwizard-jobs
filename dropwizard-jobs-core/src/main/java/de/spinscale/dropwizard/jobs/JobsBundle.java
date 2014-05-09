@@ -10,6 +10,14 @@ public class JobsBundle implements Bundle {
 
     protected String scanURL = null;
 
+    @Override
+    public void initialize(Bootstrap<?> bootstrap) {
+        // add shared metrics registry to be used by Jobs, since defaultRegistry
+        // has been removed
+        SharedMetricRegistries.add(Job.DROPWIZARD_JOBS_KEY,
+                bootstrap.getMetricRegistry());
+    }
+
     public JobsBundle() {
     }
 
@@ -18,14 +26,9 @@ public class JobsBundle implements Bundle {
     }
 
     @Override
-    public void initialize(Bootstrap<?> bootstrap) {
-        // add shared metrics registry to be used by Jobs, since defaultRegistry has been removed
-        SharedMetricRegistries.add("dropwizard-jobs", bootstrap.getMetricRegistry());
-    }
-
-    @Override
     public void run(Environment environment) {
-        environment.lifecycle().manage(new JobManager(scanURL));
+        JobManager jobManager = new JobManager(scanURL);
+        environment.lifecycle().manage(jobManager);
     }
 
 }
