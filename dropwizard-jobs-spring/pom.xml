@@ -4,7 +4,7 @@
     <parent>
         <groupId>de.spinscale.dropwizard</groupId>
         <artifactId>dropwizard-jobs</artifactId>
-        <version>1.0-SNAPSHOT</version>
+        <version>0.7.0.1</version>
     </parent>
     <artifactId>dropwizard-jobs-spring</artifactId>
     <name>dropwizard-jobs-spring</name>
