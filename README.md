@@ -26,7 +26,7 @@ After installing the plugin locally, if you only need to core module you can inc
 <dependency>
   <groupId>de.spinscale.dropwizard</groupId>
   <artifactId>dropwizard-jobs-core</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <version>0.7.0.1</version>
 </dependency>
 ```
 
@@ -38,7 +38,7 @@ Guice:
 <dependency>
   <groupId>de.spinscale.dropwizard</groupId>
   <artifactId>dropwizard-jobs-guice</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <version>0.7.0.1</version>
 </dependency>
 ```
 
@@ -48,7 +48,7 @@ Spring:
 <dependency>
   <groupId>de.spinscale.dropwizard</groupId>
   <artifactId>dropwizard-jobs-spring</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <version>0.7.0.1</version>
 </dependency>
 ```
 
@@ -86,9 +86,9 @@ public void initialize(Bootstrap<DelaSearchConfiguration> bootstrap) {
 }
 ```
 
-### Dropwizard 0.7.2
+### Dropwizard 0.7.0
 
-Dropwizard 0.7.2 is the latest stable release candidate, and it's even simpler:
+Dropwizard 0.7.0 is the latest stable release candidate, and it's even simpler:
 
 ```java
 @Override
@@ -104,24 +104,27 @@ You can define jobs location by passing package url to the JobsBundle constructo
   bootstrap.addBundle(new JobsBundle('com.youpackage.url'));
 ```
 
+#### Guice Bundle
 
     @Override
-    public void initialize( Bootstrap<DocumentGatewayConfiguration> bootstrap )
+    public void initialize( Bootstrap<ApplicationConfiguration> bootstrap )
     {
 
-        GuiceBundle guiceBundle = GuiceBundle.<DocumentGatewayConfiguration>newBuilder()
-                .addModule( new DocumentGatewayInjection() )
+        GuiceBundle guiceBundle = GuiceBundle.<ApplicationConfiguration>newBuilder()
+                .addModule( new ApplicationModule() )
                 .enableAutoConfig( getClass().getPackage().getName() )
-                .setConfigClass( DocumentGatewayConfiguration.class )
+                .setConfigClass( ApplicationConfiguration.class )
                 .build();
         bootstrap.addBundle( guiceBundle );
 
         GuiceJobsBundle guiceJobsBundle = new GuiceJobsBundle(
-                "com.apmasphere.document.directory.service.jobs",
+                "com.jobs.package.url",
                 guiceBundle.getInjector() );
         bootstrap.addBundle( guiceJobsBundle );
 
     }
+
+#### Spring Bundle
 
 
 ## Available job types
