@@ -105,6 +105,7 @@ You can define jobs location by passing package url to the JobsBundle constructo
 ```
 
 #### Guice Bundle
+You will need to depend on dropwizard-guice project and create a guiceBundle first, in order to instantiate GuiceJobsBundle:
 
     @Override
     public void initialize( Bootstrap<ApplicationConfiguration> bootstrap )
