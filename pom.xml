@@ -12,7 +12,10 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <dropwizard.version>0.7.0-rc2</dropwizard.version>
+        <dropwizard.version>0.7.0</dropwizard.version>
+        <spring.version>4.0.5.RELEASE</spring.version>
+        <guice.version>3.0</guice.version>
+        <quartz.version>2.2.1</quartz.version>
     </properties>
 
     <repositories>
@@ -32,7 +35,7 @@
         <dependency>
             <groupId>org.quartz-scheduler</groupId>
             <artifactId>quartz</artifactId>
-            <version>2.2.1</version>
+            <version>${quartz.version}</version>
         </dependency>
         <dependency>
             <groupId>org.reflections</groupId>
@@ -48,7 +51,7 @@
         <dependency>
             <groupId>com.google.inject.extensions</groupId>
             <artifactId>guice-servlet</artifactId>
-            <version>3.0</version>
+            <version>${guice.version}</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
