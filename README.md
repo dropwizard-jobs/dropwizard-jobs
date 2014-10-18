@@ -10,8 +10,6 @@ There are four different types of jobs:
 * Jobs which are repeated after a certain time interval
 * Jobs which need to run at a specific time, via a cron-like expression
 
-This plugin supports optional dependency injection via Guice and Spring modules.
-
 ## Installing the bundle
 
 ```
@@ -20,44 +18,15 @@ cd dropwizard-jobs
 mvn install
 ```
 
-After installing the plugin locally, if you only need to core module you can include it in your pom.xml
+After installing the plugin locally you can include it in your pom.xml
 
 ```xml
 <dependency>
   <groupId>de.spinscale.dropwizard</groupId>
-  <artifactId>dropwizard-jobs-core</artifactId>
-  <version>0.7.0.1</version>
+  <artifactId>dropwizard-jobs</artifactId>
+  <version>1.0-SNAPSHOT</version>
 </dependency>
 ```
-
-To use dependency injection use either
-
-Guice:
-
-```xml
-<dependency>
-  <groupId>de.spinscale.dropwizard</groupId>
-  <artifactId>dropwizard-jobs-guice</artifactId>
-  <version>0.7.0.1</version>
-</dependency>
-```
-
-Spring:
-
-```xml
-<dependency>
-  <groupId>de.spinscale.dropwizard</groupId>
-  <artifactId>dropwizard-jobs-spring</artifactId>
-  <version>0.7.0.1</version>
-</dependency>
-```
-
-## Dependency Injection
-
-For detailed DI instructions, please see the respective module's README:
-
- * dropwizard-jobs-guice
- * dropwizard-jobs-spring
 
 ## Activating the bundle
 
@@ -103,30 +72,6 @@ You can define jobs location by passing package url to the JobsBundle constructo
 ```java
   bootstrap.addBundle(new JobsBundle('com.youpackage.url'));
 ```
-
-#### Guice Bundle
-You will need to depend on dropwizard-guice project and create a guiceBundle first, in order to instantiate GuiceJobsBundle:
-
-    @Override
-    public void initialize( Bootstrap<ApplicationConfiguration> bootstrap )
-    {
-
-        GuiceBundle guiceBundle = GuiceBundle.<ApplicationConfiguration>newBuilder()
-                .addModule( new ApplicationModule() )
-                .enableAutoConfig( getClass().getPackage().getName() )
-                .setConfigClass( ApplicationConfiguration.class )
-                .build();
-        bootstrap.addBundle( guiceBundle );
-
-        GuiceJobsBundle guiceJobsBundle = new GuiceJobsBundle(
-                "com.jobs.package.url",
-                guiceBundle.getInjector() );
-        bootstrap.addBundle( guiceJobsBundle );
-
-    }
-
-#### Spring Bundle
-
 
 ## Available job types
 
