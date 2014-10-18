@@ -23,7 +23,7 @@ After installing the plugin locally, include the following dependencies only:
 <dependency>
   <groupId>com.hubspot.dropwizard</groupId>
   <artifactId>dropwizard-guice</artifactId>
-  <version>0.7.0-SNAPSHOT</version>
+  <version>0.7.1</version>
 </dependency>
 ```
 
