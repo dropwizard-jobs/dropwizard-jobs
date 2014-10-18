@@ -32,32 +32,7 @@ After installing the plugin locally you can include it in your pom.xml
 
 Similar to the AssetsBundle or the ViewBundle you need to activate the JobsBundle class.
 
-### Dropwizard 0.5.x
-
-Integration with dropwizard 0.5.x is done in the constructor of the service class, like in the [ViewBundle](http://dropwizard.codahale.com/manual/views/)
-
-```java
-public MyService() {
-    super("my-service");
-    addBundle(new JobsBundle());
-}
-```
-
-### Dropwizard 0.6.0-SNAPSHOT
-
-Because I am using dropwizard 0.6.0-SNAPSHOT in my current project, this is how it is integrated there
-
-```java
-@Override
-public void initialize(Bootstrap<DelaSearchConfiguration> bootstrap) {
-  bootstrap.setName("myService");
-  bootstrap.addBundle(new JobsBundle());
-}
-```
-
 ### Dropwizard 0.7.0
-
-Dropwizard 0.7.0 is the latest stable release candidate, and it's even simpler:
 
 ```java
 @Override
