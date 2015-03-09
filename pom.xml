@@ -17,6 +17,10 @@
         <guice.version>4.0-beta5</guice.version>
         <quartz.version>2.2.1</quartz.version>
     </properties>
+    
+    <scm>
+        <url>https://github.com/spinscale/dropwizard-jobs</url>
+    </scm>
 
     <repositories>
         <repository>
