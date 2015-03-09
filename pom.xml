@@ -12,9 +12,9 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <dropwizard.version>0.7.0</dropwizard.version>
+        <dropwizard.version>0.7.1</dropwizard.version>
         <spring.version>4.0.5.RELEASE</spring.version>
-        <guice.version>3.0</guice.version>
+        <guice.version>4.0-beta5</guice.version>
         <quartz.version>2.2.1</quartz.version>
     </properties>
 
@@ -47,11 +47,6 @@
             <artifactId>hamcrest-all</artifactId>
             <version>1.3</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.google.inject.extensions</groupId>
-            <artifactId>guice-servlet</artifactId>
-            <version>${guice.version}</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
