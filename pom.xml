@@ -20,6 +20,9 @@
     
     <scm>
         <url>https://github.com/spinscale/dropwizard-jobs</url>
+        <connection>scm:git:git@github.com:spinscale/dropwizard-jobs.git</connection>
+        <developerConnection>scm:git:git@github.com:spinscale/dropwizard-jobs.git</developerConnection>
+        <tag>HEAD</tag>
     </scm>
 
     <repositories>
