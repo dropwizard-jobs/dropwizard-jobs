@@ -8,7 +8,9 @@
     <packaging>pom</packaging>
 
     <name>dropwizard-jobs</name>
-    <url>http://maven.apache.org</url>
+    <url>https://github.com/spinscale/dropwizard-jobs</url>
+    
+    <description>https://github.com/spinscale/dropwizard-jobs</description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -17,6 +19,28 @@
         <guice.version>4.0-beta5</guice.version>
         <quartz.version>2.2.1</quartz.version>
     </properties>
+
+	<developers>
+		<developer>
+			<name>Alexander Reelsen</name>
+			<url>https://github.com/spinscale</url>
+		</developer>
+	</developers>
+	
+	<contributors>
+		<contributor>
+			<name>Yun Zhi Lin</name>
+			<url>https://github.com/yunspace</url>
+		</contributor>
+		<contributor>
+			<name>Hakan Dilek</name>
+			<url>https://github.com/hakandilek</url>
+		</contributor>
+		<contributor>
+			<name>Eyal Golan</name>
+			<url>https://github.com/eyalgo</url>
+		</contributor>
+	</contributors>
     
 	<licenses>
 		<license>
@@ -32,6 +56,17 @@
         <developerConnection>scm:git:git@github.com:spinscale/dropwizard-jobs.git</developerConnection>
         <tag>HEAD</tag>
     </scm>
+
+	<distributionManagement>
+		<repository>
+			<id>oss.sonatype.org</id>
+			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+		</repository>
+		<snapshotRepository>
+			<id>oss.sonatype.org</id>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+		</snapshotRepository>
+	</distributionManagement>
 
     <repositories>
         <repository>
