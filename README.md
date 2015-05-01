@@ -1,3 +1,11 @@
+# Fork #
+
+This is a fork used simply to publish dropwizard-jobs to a public maven repository.
+
+The repository is available at https://nexus.vanntett.net/content/repositories/dropwizard-jobs/
+
+I will keep this repository updated as needed. I have also reached out to the original dev to grant him access to publish to the repository if wanted.
+
 # Dropwizard quartz integration
 
 This plugin integrates the [quartz scheduler](http://quartz-scheduler.org/) with dropwizard and allows you to easily create background jobs, which are not bound to the HTTP request-response cycle.

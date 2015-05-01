@@ -99,4 +99,11 @@
         <module>dropwizard-jobs-spring</module>
     </modules>
 
+     <distributionManagement>
+	<repository>
+            <id>dropwizard-jobs</id>
+            <url>https://nexus.vanntett.net/content/repositories/dropwizard-jobs</url>
+        </repository>
+     </distributionManagement>
+
 </project>

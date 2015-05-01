@@ -1,3 +1,11 @@
+# Fork #
+
+This is a fork used simply to publish dropwizard-jobs to a public maven repository.
+
+The repository is available at https://nexus.vanntett.net/content/repositories/dropwizard-jobs/
+
+I will keep this repository updated as needed. I have also reached out to the original dev to grant him access to publish to the repository if wanted.
+
 # Dropwizard quartz integration with Guice
 
 This is a extension for [dropwizard-jobs](https://github.com/spinscale/dropwizard-jobs) to use
