@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>de.spinscale.dropwizard</groupId>
+        <groupId>de.spinscale</groupId>
         <artifactId>dropwizard-jobs</artifactId>
         <version>1.0.0</version>
     </parent>
