@@ -4,13 +4,13 @@
     <parent>
         <groupId>de.spinscale</groupId>
         <artifactId>dropwizard-jobs</artifactId>
-        <version>1.0.0</version>
+        <version>1.0.1</version>
     </parent>
     <artifactId>dropwizard-jobs-guice</artifactId>
     <name>dropwizard-jobs-guice</name>
     <dependencies>
         <dependency>
-            <groupId>de.spinscale.dropwizard</groupId>
+            <groupId>de.spinscale</groupId>
             <artifactId>dropwizard-jobs-core</artifactId>
             <version>${project.version}</version>
         </dependency>

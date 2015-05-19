@@ -10,7 +10,20 @@ There are four different types of jobs:
 * Jobs which are repeated after a certain time interval
 * Jobs which need to run at a specific time, via a cron-like expression
 
-## Installing the bundle
+## Using maven central repository
+dropwizard jobs can be used with maven.
+It is located in Central Repository. http://search.maven.org/
+
+Add to your pom:
+```xml
+<dependency>
+  <groupId>de.spinscale</groupId>
+  <artifactId>dropwizard-jobs-core</artifactId>
+  <version>1.0.1</version>
+</dependency>
+```
+
+## Installing the bundle from source code
 
 ```
 git clone https://github.com/spinscale/dropwizard-jobs
@@ -24,7 +37,7 @@ After installing the plugin locally you can include it in your pom.xml
 <dependency>
   <groupId>de.spinscale.dropwizard</groupId>
   <artifactId>dropwizard-jobs</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <version><current version></version>
 </dependency>
 ```
 
@@ -122,4 +135,5 @@ public class OnTestJob extends Job {
  * [Alexander Reelsen](https://github.com/spinscale)
  * [Hakan Dilek](https://github.com/hakandilek)
  * [Yun Zhi Lin](https://github.com/yunspace)
+ * [Eyal Golan](https://github.com/eyalgo)
 

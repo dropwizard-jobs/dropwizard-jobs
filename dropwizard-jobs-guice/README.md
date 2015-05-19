@@ -4,7 +4,22 @@ This is a extension for [dropwizard-jobs](https://github.com/spinscale/dropwizar
 [Google Guice] (https://code.google.com/p/google-guice/) to provide Dependency Injection. This is especially handy when you need to inject
 arguments into Jobs.
 
-## Installing the bundle
+## Using maven central repository
+dropwizard jobs can be used with maven.
+It is located in Central Repository. http://search.maven.org/
+
+Add to your pom:
+```xml
+<dependency>
+  <groupId>de.spinscale</groupId>
+  <artifactId>dropwizard-jobs-guice</artifactId>
+  <version>1.0.1</version>
+</dependency>
+```
+
+## Installing the bundle from source code
+
+## Installing the bundle from source
 
 ```
 git clone https://github.com/spinscale/dropwizard-jobs
@@ -18,7 +33,7 @@ After installing the plugin locally, include the following dependencies only:
 <dependency>
   <groupId>de.spinscale.dropwizard</groupId>
   <artifactId>dropwizard-jobs-guice</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <version><current version></version>
 </dependency>
 <dependency>
   <groupId>com.hubspot.dropwizard</groupId>
