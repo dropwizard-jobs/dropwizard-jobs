@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.joda.time.DateTime;
 import org.quartz.CronScheduleBuilder;
 import org.quartz.JobBuilder;
 import org.quartz.Scheduler;
@@ -21,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Sets;
 
+import de.spinscale.dropwizard.jobs.annotations.DelayStart;
 import de.spinscale.dropwizard.jobs.annotations.Every;
 import de.spinscale.dropwizard.jobs.annotations.On;
 import de.spinscale.dropwizard.jobs.annotations.OnApplicationStart;
@@ -101,11 +103,19 @@ public class JobManager implements Managed {
 
         for (Class<? extends org.quartz.Job> clazz : everyJobClasses) {
             Every annotation = clazz.getAnnotation(Every.class);
-            int secondDelay = TimeParserUtil.parseDuration(annotation.value());
+            int secondInterval = TimeParserUtil.parseDuration(annotation.value());
             SimpleScheduleBuilder scheduleBuilder = SimpleScheduleBuilder.simpleSchedule()
-                    .withIntervalInSeconds(secondDelay).repeatForever();
-            Trigger trigger = TriggerBuilder.newTrigger().withSchedule(scheduleBuilder).build();
+                    .withIntervalInSeconds(secondInterval).repeatForever();
 
+            DateTime start = new DateTime();
+            DelayStart delayAnnotation = clazz.getAnnotation(DelayStart.class);
+            if (delayAnnotation != null) {
+                int secondDelay = TimeParserUtil.parseDuration(delayAnnotation.value());
+                start = start.plusSeconds(secondDelay);
+            }
+            Trigger trigger = TriggerBuilder.newTrigger().withSchedule(scheduleBuilder)
+            		.startAt(start.toDate())
+            		.build();
             JobBuilder jobBuilder = JobBuilder.newJob(clazz);
             scheduler.scheduleJob(jobBuilder.build(), trigger);
         }

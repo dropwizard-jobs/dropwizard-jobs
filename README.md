@@ -100,6 +100,19 @@ public class EveryTestJob extends Job {
 }
 ```
 
+The <code>@DelayStart</code> annotation can be used in conjunction with @Every to delay the start of the job. Without this, all the @Every jobs start up at the same time when the scheduler starts.
+
+```java
+@DelayStart("5s")
+@Every("1s")
+public class EveryTestJobWithDelayedStart extends Job {
+  @Override
+  public void doJob() {
+    // logic run every time and time again
+  }
+}
+```
+
 The <code>@On</code> annotation allows one to use cron-like expressions for complex time settings. You can read more about possible cron expressions at http://quartz-scheduler.org/documentation/quartz-2.1.x/tutorials/tutorial-lesson-06
 
 This expression allows you to run a job every 15 seconds and could possibly also be run via a @Every annotation.
