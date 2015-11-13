@@ -2,6 +2,7 @@ package de.spinscale.dropwizard.jobs;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.Matchers.hasSize;
 
 import org.junit.After;
@@ -11,6 +12,7 @@ import org.junit.Test;
 public class JobManagerTest {
 
     JobManager jobManager;
+    private boolean stopped;
 
     @Before
     public void setUp() throws Exception {
@@ -19,6 +21,9 @@ public class JobManagerTest {
 
     @After
     public void tearDown() throws Exception {
+    	if (!stopped) {
+    		jobManager.stop();
+    	}
         jobManager = null;
     }
 
@@ -35,6 +40,7 @@ public class JobManagerTest {
         ApplicationStopTestJob.results.clear();
         jobManager.start();
         jobManager.stop();
+        stopped = true;
         assertThat(ApplicationStopTestJob.results, hasSize(1));
     }
 
@@ -53,4 +59,15 @@ public class JobManagerTest {
         Thread.sleep(5000);
         assertThat(EveryTestJob.results, hasSize(greaterThan(5)));
     }
+    
+    @Test
+    public void jobsWithEveryAnnotationAndDelayStartShouldWaitToBeExecuted() throws Exception {
+        EveryTestJobWithDelay.results.clear();
+        jobManager.start();
+        Thread.sleep(2500);
+        assertThat(EveryTestJobWithDelay.results, hasSize(0));
+        Thread.sleep(2500);
+        assertThat(EveryTestJobWithDelay.results, hasSize(lessThan(4)));
+    }
+
 }
