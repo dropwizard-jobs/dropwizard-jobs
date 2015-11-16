@@ -1,7 +1,5 @@
 package de.spinscale.dropwizard.jobs;
 
-import io.dropwizard.lifecycle.Managed;
-
 import java.lang.annotation.Annotation;
 import java.util.HashSet;
 import java.util.List;
@@ -28,6 +26,7 @@ import de.spinscale.dropwizard.jobs.annotations.On;
 import de.spinscale.dropwizard.jobs.annotations.OnApplicationStart;
 import de.spinscale.dropwizard.jobs.annotations.OnApplicationStop;
 import de.spinscale.dropwizard.jobs.parser.TimeParserUtil;
+import io.dropwizard.lifecycle.Managed;
 
 public class JobManager implements Managed {
 
@@ -48,6 +47,7 @@ public class JobManager implements Managed {
         scheduler = StdSchedulerFactory.getDefaultScheduler();
         scheduler.start();
         scheduleAllJobs();
+        logAllOnApplicationStopJobs();
     }
 
     @Override
@@ -85,52 +85,89 @@ public class JobManager implements Managed {
 
     protected void scheduleAllJobsWithOnAnnotation() throws SchedulerException {
         List<Class<? extends Job>> onJobClasses = getJobClasses(On.class);
-        log.info("Jobs with @On annotation: " + onJobClasses);
 
-        for (Class<? extends org.quartz.Job> clazz : onJobClasses) {
-            On annotation = clazz.getAnnotation(On.class);
+        log.info("Jobs with @On annotation:");
+        if (onJobClasses.isEmpty()) {
+            log.info("    NONE");
+        } else {
+            for (Class<? extends org.quartz.Job> clazz : onJobClasses) {
+                On annotation = clazz.getAnnotation(On.class);
+                String cron = annotation.value();
+                CronScheduleBuilder scheduleBuilder = CronScheduleBuilder.cronSchedule(cron);
+                Trigger trigger = TriggerBuilder.newTrigger().withSchedule(scheduleBuilder).build();
+                JobBuilder jobBuilder = JobBuilder.newJob(clazz);
+                scheduler.scheduleJob(jobBuilder.build(), trigger);
 
-            CronScheduleBuilder scheduleBuilder = CronScheduleBuilder.cronSchedule(annotation.value());
-            Trigger trigger = TriggerBuilder.newTrigger().withSchedule(scheduleBuilder).build();
-            JobBuilder jobBuilder = JobBuilder.newJob(clazz);
-            scheduler.scheduleJob(jobBuilder.build(), trigger);
+                log.info(String.format("    %-21s %s", cron, clazz.getCanonicalName()));
+            }
         }
     }
 
     protected void scheduleAllJobsWithEveryAnnotation() throws SchedulerException {
         List<Class<? extends Job>> everyJobClasses = getJobClasses(Every.class);
-        log.info("Jobs with @Every annotation: " + everyJobClasses);
 
-        for (Class<? extends org.quartz.Job> clazz : everyJobClasses) {
-            Every annotation = clazz.getAnnotation(Every.class);
-            int secondInterval = TimeParserUtil.parseDuration(annotation.value());
-            SimpleScheduleBuilder scheduleBuilder = SimpleScheduleBuilder.simpleSchedule()
-                    .withIntervalInSeconds(secondInterval).repeatForever();
+        log.info("Jobs with @Every annotation:");
+        if (everyJobClasses.isEmpty()) {
+            log.info("    NONE");
+        } else {
+            for (Class<? extends org.quartz.Job> clazz : everyJobClasses) {
+                Every everyAnnotation = clazz.getAnnotation(Every.class);
+                int secondInterval = TimeParserUtil.parseDuration(everyAnnotation.value());
+                SimpleScheduleBuilder scheduleBuilder = SimpleScheduleBuilder.simpleSchedule()
+                        .withIntervalInSeconds(secondInterval).repeatForever();
 
-            DateTime start = new DateTime();
-            DelayStart delayAnnotation = clazz.getAnnotation(DelayStart.class);
-            if (delayAnnotation != null) {
-                int secondDelay = TimeParserUtil.parseDuration(delayAnnotation.value());
-                start = start.plusSeconds(secondDelay);
+                DateTime start = new DateTime();
+                DelayStart delayAnnotation = clazz.getAnnotation(DelayStart.class);
+                if (delayAnnotation != null) {
+                    int secondDelay = TimeParserUtil.parseDuration(delayAnnotation.value());
+                    start = start.plusSeconds(secondDelay);
+                }
+
+                Trigger trigger = TriggerBuilder.newTrigger().withSchedule(scheduleBuilder)
+                        .startAt(start.toDate())
+                        .build();
+                JobBuilder jobBuilder = JobBuilder.newJob(clazz);
+                scheduler.scheduleJob(jobBuilder.build(), trigger);
+
+                String logMessage = String.format("    %-7s %s", everyAnnotation.value(), clazz.getCanonicalName());
+                if (delayAnnotation != null) {
+                    logMessage += " (" + delayAnnotation.value() + " delay)";
+                }
+                log.info(logMessage);
             }
-            Trigger trigger = TriggerBuilder.newTrigger().withSchedule(scheduleBuilder)
-            		.startAt(start.toDate())
-            		.build();
-            JobBuilder jobBuilder = JobBuilder.newJob(clazz);
-            scheduler.scheduleJob(jobBuilder.build(), trigger);
         }
     }
 
     protected void scheduleAllJobsOnApplicationStart() throws SchedulerException {
         List<Class<? extends Job>> startJobClasses = getJobClasses(OnApplicationStart.class);
-        log.info("Jobs to run on application start: " + startJobClasses);
-        for (Class<? extends org.quartz.Job> clazz : startJobClasses) {
-            JobBuilder jobBuilder = JobBuilder.newJob(clazz);
-            scheduler.scheduleJob(jobBuilder.build(), executeNowTrigger());
+
+        log.info("Jobs to run on application start:");
+        if (startJobClasses.isEmpty()) {
+            log.info("    NONE");
+        } else {
+            for (Class<? extends org.quartz.Job> clazz : startJobClasses) {
+
+                JobBuilder jobBuilder = JobBuilder.newJob(clazz);
+                scheduler.scheduleJob(jobBuilder.build(), executeNowTrigger());
+
+                log.info("   " + clazz.getCanonicalName());
+            }
         }
     }
 
     protected Trigger executeNowTrigger() {
         return TriggerBuilder.newTrigger().startNow().build();
+    }
+
+    private void logAllOnApplicationStopJobs() throws SchedulerException {
+        List<Class<? extends Job>> stopJobClasses = getJobClasses(OnApplicationStop.class);
+        log.info("Jobs to run on application stop:");
+        if (stopJobClasses.isEmpty()) {
+            log.info("    NONE");
+        } else {
+            for (Class<? extends Job> clazz : stopJobClasses) {
+                log.info("   " + clazz.getCanonicalName());
+            }
+        }
     }
 }
