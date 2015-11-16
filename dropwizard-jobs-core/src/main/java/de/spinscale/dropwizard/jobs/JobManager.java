@@ -1,12 +1,13 @@
 package de.spinscale.dropwizard.jobs;
 
+import com.google.common.collect.Sets;
+import de.spinscale.dropwizard.jobs.annotations.DelayStart;
+import de.spinscale.dropwizard.jobs.annotations.Every;
+import de.spinscale.dropwizard.jobs.annotations.On;
+import de.spinscale.dropwizard.jobs.annotations.OnApplicationStart;
+import de.spinscale.dropwizard.jobs.annotations.OnApplicationStop;
+import de.spinscale.dropwizard.jobs.parser.TimeParserUtil;
 import io.dropwizard.lifecycle.Managed;
-
-import java.lang.annotation.Annotation;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import org.joda.time.DateTime;
 import org.quartz.CronScheduleBuilder;
 import org.quartz.JobBuilder;
@@ -20,14 +21,11 @@ import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.Sets;
-
-import de.spinscale.dropwizard.jobs.annotations.DelayStart;
-import de.spinscale.dropwizard.jobs.annotations.Every;
-import de.spinscale.dropwizard.jobs.annotations.On;
-import de.spinscale.dropwizard.jobs.annotations.OnApplicationStart;
-import de.spinscale.dropwizard.jobs.annotations.OnApplicationStop;
-import de.spinscale.dropwizard.jobs.parser.TimeParserUtil;
+import java.lang.annotation.Annotation;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 
 public class JobManager implements Managed {
 
@@ -85,22 +83,26 @@ public class JobManager implements Managed {
 
     protected void scheduleAllJobsWithOnAnnotation() throws SchedulerException {
         List<Class<? extends Job>> onJobClasses = getJobClasses(On.class);
-        log.info("Jobs with @On annotation: " + onJobClasses);
 
+        List<OnJobLogLine> logLines = new LinkedList<>();
         for (Class<? extends org.quartz.Job> clazz : onJobClasses) {
             On annotation = clazz.getAnnotation(On.class);
+
+            logLines.add(new OnJobLogLine(clazz, annotation));
 
             CronScheduleBuilder scheduleBuilder = CronScheduleBuilder.cronSchedule(annotation.value());
             Trigger trigger = TriggerBuilder.newTrigger().withSchedule(scheduleBuilder).build();
             JobBuilder jobBuilder = JobBuilder.newJob(clazz);
             scheduler.scheduleJob(jobBuilder.build(), trigger);
         }
+
+        logJobs("Jobs with @On annotation:", logLines);
     }
 
     protected void scheduleAllJobsWithEveryAnnotation() throws SchedulerException {
         List<Class<? extends Job>> everyJobClasses = getJobClasses(Every.class);
-        log.info("Jobs with @Every annotation: " + everyJobClasses);
 
+        List<EveryJobLogLine> logLines = new LinkedList<>();
         for (Class<? extends org.quartz.Job> clazz : everyJobClasses) {
             Every annotation = clazz.getAnnotation(Every.class);
             int secondInterval = TimeParserUtil.parseDuration(annotation.value());
@@ -113,24 +115,103 @@ public class JobManager implements Managed {
                 int secondDelay = TimeParserUtil.parseDuration(delayAnnotation.value());
                 start = start.plusSeconds(secondDelay);
             }
+
+            logLines.add(new EveryJobLogLine(clazz, annotation, delayAnnotation));
+
             Trigger trigger = TriggerBuilder.newTrigger().withSchedule(scheduleBuilder)
             		.startAt(start.toDate())
             		.build();
             JobBuilder jobBuilder = JobBuilder.newJob(clazz);
             scheduler.scheduleJob(jobBuilder.build(), trigger);
         }
+
+        logJobs("Jobs with @Every annotation:", logLines);
     }
 
     protected void scheduleAllJobsOnApplicationStart() throws SchedulerException {
         List<Class<? extends Job>> startJobClasses = getJobClasses(OnApplicationStart.class);
-        log.info("Jobs to run on application start: " + startJobClasses);
+
+        List<JobLogLine> logLines = new LinkedList<>();
         for (Class<? extends org.quartz.Job> clazz : startJobClasses) {
+            logLines.add(new OnApplicationStartLogLine(clazz));
+
             JobBuilder jobBuilder = JobBuilder.newJob(clazz);
             scheduler.scheduleJob(jobBuilder.build(), executeNowTrigger());
         }
+
+        logJobs("Jobs to run on application start:", logLines);
     }
 
     protected Trigger executeNowTrigger() {
         return TriggerBuilder.newTrigger().startNow().build();
+    }
+
+    private void logJobs(String title, List<? extends JobLogLine> logLines) {
+        StringBuilder message = new StringBuilder(512);
+        message.append(title).append('\n').append('\n');
+        if (logLines.isEmpty()) {
+            message.append("    NONE").append('\n');
+        } else {
+            for (JobLogLine line : logLines) {
+                message.append("    ").append(line.toString()).append('\n');
+            }
+        }
+
+        log.info(message.toString());
+    }
+
+    private interface JobLogLine {
+        String toString();
+    }
+
+    private static class OnApplicationStartLogLine implements JobLogLine {
+        private final Class<? extends org.quartz.Job> clazz;
+
+        public OnApplicationStartLogLine(Class<? extends org.quartz.Job> clazz) {
+            this.clazz = clazz;
+        }
+
+        @Override
+        public String toString() {
+            return clazz.getCanonicalName();
+        }
+    }
+
+    private static class OnJobLogLine implements JobLogLine {
+        private final Class<? extends org.quartz.Job> clazz;
+        private final On on;
+
+        public OnJobLogLine(Class<? extends org.quartz.Job> clazz, On on) {
+            this.clazz = clazz;
+            this.on = on;
+        }
+
+        @Override
+        public String toString() {
+            final String cron = on.value();
+            return String.format("%-21s %s", cron, clazz.getCanonicalName());
+        }
+    }
+
+    private static class EveryJobLogLine implements JobLogLine {
+        private final Class<? extends org.quartz.Job> clazz;
+        private final Every every;
+        private final DelayStart delayStart;
+
+        public EveryJobLogLine(Class<? extends org.quartz.Job> clazz, Every every, DelayStart delayStart) {
+            this.clazz = clazz;
+            this.every = every;
+            this.delayStart = delayStart;
+        }
+
+        @Override
+        public String toString() {
+            final StringBuilder msg = new StringBuilder(128);
+            msg.append(String.format("%-7s %s", every.value(), clazz.getCanonicalName()));
+            if (delayStart != null) {
+                msg.append(String.format(" (%s delay)", delayStart.value()));
+            }
+            return msg.toString();
+        }
     }
 }
