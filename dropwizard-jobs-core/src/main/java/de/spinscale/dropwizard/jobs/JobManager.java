@@ -5,9 +5,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.quartz.CronScheduleBuilder;
 import org.quartz.JobBuilder;
+import org.quartz.JobKey;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.SimpleScheduleBuilder;
@@ -54,8 +56,7 @@ public class JobManager implements Managed {
     public void stop() throws Exception {
         scheduleAllJobsOnApplicationStop();
 
-        // this is enough to put the job into the queue, otherwise the jobs wont
-        // be executed
+        // this is enough to put the job into the queue, otherwise the jobs wont be executed
         // anyone got a better solution?
         Thread.sleep(100);
 
@@ -91,14 +92,15 @@ public class JobManager implements Managed {
             log.info("    NONE");
         } else {
             for (Class<? extends org.quartz.Job> clazz : onJobClasses) {
-                On annotation = clazz.getAnnotation(On.class);
-                String cron = annotation.value();
+                On onAnnotation = clazz.getAnnotation(On.class);
+                String cron = onAnnotation.value();
                 CronScheduleBuilder scheduleBuilder = CronScheduleBuilder.cronSchedule(cron);
                 Trigger trigger = TriggerBuilder.newTrigger().withSchedule(scheduleBuilder).build();
-                JobBuilder jobBuilder = JobBuilder.newJob(clazz);
-                scheduler.scheduleJob(jobBuilder.build(), trigger);
 
-                log.info(String.format("    %-21s %s", cron, clazz.getCanonicalName()));
+                // ensure that only one instance of each job is scheduled
+                JobKey jobKey = JobKey.jobKey(StringUtils.isNotBlank(onAnnotation.jobName()) ? onAnnotation.jobName() : clazz.getCanonicalName());
+                createOrUpdateJob(jobKey, clazz, trigger);
+                log.info(String.format("    %-21s %s", cron, jobKey.toString()));
             }
         }
     }
@@ -126,10 +128,13 @@ public class JobManager implements Managed {
                 Trigger trigger = TriggerBuilder.newTrigger().withSchedule(scheduleBuilder)
                         .startAt(start.toDate())
                         .build();
-                JobBuilder jobBuilder = JobBuilder.newJob(clazz);
-                scheduler.scheduleJob(jobBuilder.build(), trigger);
 
-                String logMessage = String.format("    %-7s %s", everyAnnotation.value(), clazz.getCanonicalName());
+                // ensure that only one instance of each job is scheduled
+                JobKey jobKey = JobKey.jobKey(StringUtils.isNotBlank(everyAnnotation.jobName()) ? everyAnnotation.jobName() : clazz
+                        .getCanonicalName());
+                createOrUpdateJob(jobKey, clazz, trigger);
+
+                String logMessage = String.format("    %-7s %s", everyAnnotation.value(), jobKey.toString());
                 if (delayAnnotation != null) {
                     logMessage += " (" + delayAnnotation.value() + " delay)";
                 }
@@ -159,7 +164,7 @@ public class JobManager implements Managed {
         return TriggerBuilder.newTrigger().startNow().build();
     }
 
-    private void logAllOnApplicationStopJobs() throws SchedulerException {
+    private void logAllOnApplicationStopJobs() {
         List<Class<? extends Job>> stopJobClasses = getJobClasses(OnApplicationStop.class);
         log.info("Jobs to run on application stop:");
         if (stopJobClasses.isEmpty()) {
@@ -168,6 +173,29 @@ public class JobManager implements Managed {
             for (Class<? extends Job> clazz : stopJobClasses) {
                 log.info("   " + clazz.getCanonicalName());
             }
+        }
+    }
+
+    private void createOrUpdateJob(JobKey jobKey, Class<? extends org.quartz.Job> clazz, Trigger trigger) throws SchedulerException {
+        JobBuilder jobBuilder = JobBuilder.newJob(clazz).withIdentity(jobKey);
+        if (!scheduler.checkExists(jobKey)) {
+            // if the job doesn't already exist, we can create it, along with its trigger. this prevents us
+            // from creating multiple instances of the same job when running in a clustered environment
+            scheduler.scheduleJob(jobBuilder.build(), trigger);
+            log.error("SCHEDULED JOB WITH KEY " + jobKey.toString());
+        } else {
+            // if the job has exactly one trigger, we can just reschedule it, which allows us to update the schedule for
+            // that trigger.
+            List<? extends Trigger> triggers = scheduler.getTriggersOfJob(jobKey);
+            if (triggers.size() == 1) {
+                scheduler.rescheduleJob(triggers.get(0).getKey(), trigger);
+                return;
+            }
+
+            // if for some reason the job has multiple triggers, it's easiest to just delete and re-create the job,
+            // since we want to enforce a one-to-one relationship between jobs and triggers
+            scheduler.deleteJob(jobKey);
+            scheduler.scheduleJob(jobBuilder.build(), trigger);
         }
     }
 }

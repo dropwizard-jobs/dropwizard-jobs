@@ -9,4 +9,10 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface Every {
     String value();
+
+    /**
+     * The name of this job. If not specified, the name of the job will default to the canonical name of the annotated
+     * class
+     */
+    String jobName() default "";
 }

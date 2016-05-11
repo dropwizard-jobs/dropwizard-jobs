@@ -2,12 +2,18 @@ package de.spinscale.dropwizard.jobs;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.lessThan;
 
+import org.hamcrest.core.IsEqual;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.quartz.JobKey;
+
+import de.spinscale.dropwizard.jobs.annotations.Every;
+import de.spinscale.dropwizard.jobs.annotations.On;
 
 public class JobManagerTest {
 
@@ -21,9 +27,9 @@ public class JobManagerTest {
 
     @After
     public void tearDown() throws Exception {
-    	if (!stopped) {
-    		jobManager.stop();
-    	}
+        if (!stopped) {
+            jobManager.stop();
+        }
         jobManager = null;
     }
 
@@ -59,7 +65,7 @@ public class JobManagerTest {
         Thread.sleep(5000);
         assertThat(EveryTestJob.results, hasSize(greaterThan(5)));
     }
-    
+
     @Test
     public void jobsWithEveryAnnotationAndDelayStartShouldWaitToBeExecuted() throws Exception {
         EveryTestJobWithDelay.results.clear();
@@ -70,4 +76,42 @@ public class JobManagerTest {
         assertThat(EveryTestJobWithDelay.results, hasSize(lessThan(4)));
     }
 
+    @Test
+    public void jobsWithEveryAnnotationWithoutJobNameShouldUseCanonicalClassName() throws Exception {
+        jobManager.start();
+        String jobName = EveryTestJob.class.getCanonicalName();
+        Assert.assertTrue(jobManager.scheduler.checkExists(JobKey.jobKey(jobName)));
+    }
+
+    @Test
+    public void jobsWithEveryAnnotationWithJobNameShouldOverrideCanonicalClassName() throws Exception {
+        jobManager.start();
+        String jobName = EveryTestJobWithJobName.class.getAnnotation(Every.class).jobName();
+        Assert.assertTrue(jobManager.scheduler.checkExists(JobKey.jobKey(jobName)));
+    }
+
+    @Test
+    public void jobsWithOnAnnotationWithoutJobNameShouldUseCanonicalClassName() throws Exception {
+        jobManager.start();
+        String jobName = OnTestJob.class.getCanonicalName();
+        Assert.assertTrue(jobManager.scheduler.checkExists(JobKey.jobKey(jobName)));
+    }
+
+    @Test
+    public void jobsWithOnAnnotationWithJobNameShouldOverrideCanonicalClassName() throws Exception {
+        jobManager.start();
+        String jobName = OnTestJobWithJobName.class.getAnnotation(On.class).jobName();
+        Assert.assertTrue(jobManager.scheduler.checkExists(JobKey.jobKey(jobName)));
+    }
+
+    @Test
+    public void onlyOneJobWithNameCreated() throws Exception {
+        jobManager.start();
+
+        // there is only one job and trigger for the job name, even though there are two jobs with that name
+        String jobName = EveryTestJobWithJobName.class.getAnnotation(Every.class).jobName();
+        Assert.assertThat(jobName, IsEqual.equalTo(EveryTestJobWithSameJobName.class.getAnnotation(Every.class).jobName()));
+        Assert.assertTrue(jobManager.scheduler.checkExists(JobKey.jobKey(jobName)));
+        Assert.assertThat(jobManager.scheduler.getTriggersOfJob(JobKey.jobKey(jobName)).size(), IsEqual.equalTo(1));
+    }
 }
