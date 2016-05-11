@@ -87,8 +87,8 @@ public class StopJob extends Job {
 }
 ```
 
-The <code>@Every</code> annotation triggers a job every n times, as it is configured. You can use a number and a time unit, which can be one of "s" for seconds, "mn" or "min" for minutes, "h" for hours and "d" for days.
-This job has the severe limitation, that if you schedule a job for each day, but restart the service twice a day, your job will never run. You better use this type for short running repeated tasks.
+The <code>@Every</code> annotation first triggers a job after the quartz scheduler is started and then every n times, as it is configured. You can use a number and a time unit, which can be one of "s" for seconds, "mn" or "min" for minutes, "h" for hours and "d" for days.
+Use in conjunction with <code>@DelayStart</code> to delay the first invocation of this job.
 
 ```java
 @Every("1s")
