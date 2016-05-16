@@ -127,6 +127,67 @@ public class OnTestJob extends Job {
   }
 }
 ```
+## Configuring jobs in the Dropwizard Config File
+
+As of 1.0.2, the period for @Every jobs can be read from the dropwizard config file instead of being hard-coded. The YAML looks like this:
+
+```
+jobs:
+  myJob: 10s
+  myOtherJob: 20s
+```
+  
+Where MyJob and MyOtherJob are the names of Job classes in the application. In the <code>Configuration</code> class add the corresponding property:
+
+```java
+@JsonProperty("jobs")
+private Map<String , String> jobs;
+
+public Map<String, String> getJobs() {
+    return jobs;
+}
+   
+public void setJobs(Map<String, String> jobs) {
+    this.jobs = jobs;
+}
+```
+
+To configure the jobs, you must call the bundle's <code>configure()</code> method in the application's <code>run()</code> method:
+
+```java
+private GuiceJobsBundle guiceJobsBundle;
+
+public void run(MyConfiguration config, Environment env) throws Exception {
+    guiceJobsBundle.configure(config);
+    ...
+}
+```
+
+Then the <code>@Every</code> annotation can be used without a value, its value is set from the configuration:
+
+```java
+@Every
+public class MyJob extends Job {
+    ...
+}
+```
+
+An alternative label to the class name can also be specified:
+
+```java
+@Every("${foobar}")
+public class MyJob extends Job {
+    ...
+}
+```
+
+So long as there is a matching property in the YAML:
+
+```
+jobs:
+  foobar: 10s
+```
+
 
 # Limitations
 

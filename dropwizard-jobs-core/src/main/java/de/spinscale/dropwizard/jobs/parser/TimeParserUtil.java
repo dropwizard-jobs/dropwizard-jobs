@@ -22,7 +22,7 @@ public class TimeParserUtil {
      * @return The number of seconds
      */
     public static int parseDuration(String duration) {
-        if (duration == null) {
+        if (duration == null || duration.isEmpty()) {
             return 60 * 60 * 24 * 30;
         }
         int toAdd = -1;
