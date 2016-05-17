@@ -4,3 +4,6 @@ jdk:
   - openjdk7
   - oraclejdk7
 
+#workaround for https://github.com/travis-ci/travis-ci/issues/5227
+addons:
+  hostname: dropwizard-jobs-ci
