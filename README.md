@@ -196,11 +196,6 @@ jobs:
 * The scheduler is not configurable at the moment, for example the threadpool size is fixed to ten.
 * If you run the same dropwizard service on multiple instances, you also run the same jobs twice. This might not be what you want
 
-# TODO
-
-* I hacked this in a few hours in the evening, so rather see it as a prototype.
-* Ask the community whether this is useful. It seems, it makes more sense that you use a DI container like Guice in order to inject daos or other persistence layers into the jobs, as you really want to do store stuff.
-
 # Thanks
 
 * The playframework 1.x for the idea of simple annotations at Job classes
