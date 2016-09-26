@@ -127,6 +127,53 @@ public class OnTestJob extends Job {
   }
 }
 ```
+## Using dropwizard-jobs in a Clustered Environment
+By default, dropwizard-jobs is designed to be used with an in-memory Quartz scheduler. If you wish to deploy it in a clustered environment that consists of more than one node, you'll need to use a scheduler that has some sort of persistence. Adding a file called `quartz.properties` to your classpath that looks something like this will do the trick:
+
+```
+# See the full Quartz configuration reference at http://www.quartz-scheduler.org/documentation/quartz-2.x/configuration/
+
+# define the scheduler and how many threads it ought to use
+org.quartz.scheduler.instanceName = MyScheduler
+org.quartz.scheduler.instanceId = AUTO
+org.quartz.threadPool.threadCount = 1
+
+# instances will synchronize their schedulers by communicating via a postgresql database
+# this ensures that scheduled jobs won't be run by two or more nodes at the same time
+org.quartz.jobStore.class = org.quartz.impl.jdbcjobstore.JobStoreTX
+org.quartz.jobStore.driverDelegateClass = org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
+org.quartz.jobStore.dataSource = my-datasource
+org.quartz.jobStore.isClustered = true
+org.quartz.jobStore.tablePrefix = quartz.qrtz_
+
+# specifies how to connect to the database
+# the database tables that quartz requires must be created in advance, and must reside in the quartz schema
+org.quartz.dataSource.aeryon-live-datasource.driver = org.postgresql.Driver
+org.quartz.dataSource.aeryon-live-datasource.URL = # DATABASE CONNECTION STRING
+org.quartz.dataSource.aeryon-live-datasource.user = # USERNAME
+org.quartz.dataSource.aeryon-live-datasource.password = # PASSWORD
+org.quartz.dataSource.aeryon-live-datasource.maxConnections = 1
+```
+When you do this, dropwizard-jobs will ensure that only one instance of each job is scheduled, regardless of the number of nodes in your cluster by using the fully-qualified class name of your job implementation as the name of your job. For example, if your job implementation resides in a class called `MyJob`, which in turn is located in the package `com.my.awesome.web.app`, then the name of your job (so far as Quartz is concerned) will be `com.my.awesome.web.app.MyJob`.
+
+If you wish to override the default name that dropwizard-jobs assigns to your job, you can do so by setting the `jobName` property in the `@Every` or `@On` annotation like so:
+
+```Java
+package com.my.awesome.web.app
+
+/**
+ * This job will be given the name "MyJob" instead of the name "com.my.awesome.web.app.MyJob"
+ */
+@Every(value="5s", jobName="MyJob")
+public class MyJob extends Job {
+
+  @Override
+  public void doJob() {
+    // do some work here
+  } 
+}
+```
+This property is not supported in the `@OnApplicationStart` or `@ApplicationStop` annotations, as they are designed for jobs that will fire reliably when Dropwizard starts or stops your web application. As such, jobs annotated with `@OnApplicationStart` or `@OnApplicationStop` will be given unique names, and will be fired according to schedule on every node in your cluster.
 ## Configuring jobs in the Dropwizard Config File
 
 As of 1.0.2, the period for @Every jobs can be read from the dropwizard config file instead of being hard-coded. The YAML looks like this:
