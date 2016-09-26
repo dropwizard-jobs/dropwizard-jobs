@@ -2,8 +2,12 @@ package de.spinscale.dropwizard.jobs;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.lessThan;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.lessThan;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import org.hamcrest.core.IsEqual;
 import org.junit.After;
@@ -12,6 +16,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.quartz.JobKey;
 
+import de.spinscale.dropwizard.jobs.annotations.Every;
+import de.spinscale.dropwizard.jobs.annotations.On;
 import io.dropwizard.Configuration;
 
 public class JobManagerTest {
@@ -20,15 +26,15 @@ public class JobManagerTest {
     private boolean stopped;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         jobManager = new JobManager();
     }
 
     @After
     public void tearDown() throws Exception {
-    	if (!stopped) {
-    		jobManager.stop();
-    	}
+        if (!stopped) {
+            jobManager.stop();
+        }
         jobManager = null;
     }
 
@@ -64,7 +70,7 @@ public class JobManagerTest {
         Thread.sleep(5000);
         assertThat(EveryTestJob.results, hasSize(greaterThan(5)));
     }
-    
+
     @Test
     public void jobsWithEveryAnnotationAndDelayStartShouldWaitToBeExecuted() throws Exception {
         EveryTestJobWithDelay.results.clear();
@@ -75,7 +81,7 @@ public class JobManagerTest {
         assertThat(EveryTestJobWithDelay.results, hasSize(lessThan(4)));
     }
 
-	@Test
+    @Test
     public void jobsWithEveryAnnotationAndNoValueShouldBeExternallyConfigured() throws Exception {
         givenConfigurationFor("everyTestJobDefaultConfiguration", "1s");
         EveryTestJobDefaultConfiguration.results.clear();
@@ -83,7 +89,7 @@ public class JobManagerTest {
         Thread.sleep(5000);
         assertThat(EveryTestJobDefaultConfiguration.results, hasSize(greaterThanOrEqualTo(5)));
     }
-    
+
     @Test
     public void jobsWithEveryAnnotationAndTemplateValueShouldBeExternallyConfigured() throws Exception {
         givenConfigurationFor("testJob", "1s");
@@ -139,15 +145,11 @@ public class JobManagerTest {
     }
 
     private static class TestConfig extends Configuration {
-    	
-        private Map<String,String> jobs = new HashMap<>();
+
+        private Map<String, String> jobs = new HashMap<>();
+
         public Map<String, String> getJobs() {
             return jobs;
         }
-        public void setJobs(Map<String, String> jobs) {
-            this.jobs = jobs;
-        }
-    	
     }
-
 }

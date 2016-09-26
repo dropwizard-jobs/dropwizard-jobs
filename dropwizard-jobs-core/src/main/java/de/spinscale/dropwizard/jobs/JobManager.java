@@ -1,6 +1,8 @@
 package de.spinscale.dropwizard.jobs;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +32,7 @@ import de.spinscale.dropwizard.jobs.annotations.On;
 import de.spinscale.dropwizard.jobs.annotations.OnApplicationStart;
 import de.spinscale.dropwizard.jobs.annotations.OnApplicationStop;
 import de.spinscale.dropwizard.jobs.parser.TimeParserUtil;
+import io.dropwizard.Configuration;
 import io.dropwizard.lifecycle.Managed;
 
 public class JobManager implements Managed {
@@ -106,7 +109,8 @@ public class JobManager implements Managed {
                 Trigger trigger = TriggerBuilder.newTrigger().withSchedule(scheduleBuilder).build();
 
                 // ensure that only one instance of each job is scheduled
-                JobKey jobKey = JobKey.jobKey(StringUtils.isNotBlank(onAnnotation.jobName()) ? onAnnotation.jobName() : clazz.getCanonicalName());
+                JobKey jobKey = JobKey.jobKey(StringUtils.isNotBlank(onAnnotation.jobName()) ? onAnnotation.jobName() : clazz
+                        .getCanonicalName());
                 createOrUpdateJob(jobKey, clazz, trigger);
                 log.info(String.format("    %-21s %s", cron, jobKey.toString()));
             }
@@ -165,10 +169,10 @@ public class JobManager implements Managed {
         try {
             String property = WordUtils.uncapitalize(clazz.getSimpleName());
             if (!annotation.value().isEmpty()) {
-                property = annotation.value().substring(2, annotation.value().length()-1);
+                property = annotation.value().substring(2, annotation.value().length() - 1);
             }
             Method m = config.getClass().getMethod("getJobs");
-            Map<String,String> jobConfig = (Map<String,String>) m.invoke(config);
+            Map<String, String> jobConfig = (Map<String, String>) m.invoke(config);
             if (jobConfig != null && jobConfig.containsKey(property)) {
                 return jobConfig.get(property);
             }
@@ -178,7 +182,7 @@ public class JobManager implements Managed {
         return null;
     }
 
-	protected void scheduleAllJobsOnApplicationStart() throws SchedulerException {
+    protected void scheduleAllJobsOnApplicationStart() throws SchedulerException {
         List<Class<? extends Job>> startJobClasses = getJobClasses(OnApplicationStart.class);
 
         log.info("Jobs to run on application start:");
@@ -199,7 +203,7 @@ public class JobManager implements Managed {
         return TriggerBuilder.newTrigger().startNow().build();
     }
 
-    private void logAllOnApplicationStopJobs() throws SchedulerException {
+    private void logAllOnApplicationStopJobs() {
         List<Class<? extends Job>> stopJobClasses = getJobClasses(OnApplicationStop.class);
         log.info("Jobs to run on application stop:");
         if (stopJobClasses.isEmpty()) {
