@@ -3,9 +3,11 @@ package de.spinscale.dropwizard.jobs;
 import java.lang.annotation.Annotation;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.text.WordUtils;
 import org.joda.time.DateTime;
 import org.quartz.CronScheduleBuilder;
 import org.quartz.JobBuilder;
@@ -35,6 +37,7 @@ public class JobManager implements Managed {
     private static final Logger log = LoggerFactory.getLogger(JobManager.class);
     protected Reflections reflections = null;
     protected Scheduler scheduler;
+    private Configuration config;
 
     public JobManager() {
         this("");
@@ -42,6 +45,10 @@ public class JobManager implements Managed {
 
     public JobManager(String scanUrl) {
         reflections = new Reflections(scanUrl);
+    }
+
+    public void configure(Configuration config) {
+        this.config = config;
     }
 
     @Override
@@ -56,7 +63,8 @@ public class JobManager implements Managed {
     public void stop() throws Exception {
         scheduleAllJobsOnApplicationStop();
 
-        // this is enough to put the job into the queue, otherwise the jobs wont be executed
+        // this is enough to put the job into the queue, otherwise the jobs wont
+        // be executed
         // anyone got a better solution?
         Thread.sleep(100);
 
@@ -114,7 +122,13 @@ public class JobManager implements Managed {
         } else {
             for (Class<? extends org.quartz.Job> clazz : everyJobClasses) {
                 Every everyAnnotation = clazz.getAnnotation(Every.class);
-                int secondInterval = TimeParserUtil.parseDuration(everyAnnotation.value());
+
+                String value = everyAnnotation.value();
+                if (value.isEmpty() || value.matches("\\$\\{.*\\}")) {
+                    value = readDurationFromConfig(everyAnnotation, clazz);
+                    log.info(clazz + " is configured in the config file to run every " + value);
+                }
+                int secondInterval = TimeParserUtil.parseDuration(value);
                 SimpleScheduleBuilder scheduleBuilder = SimpleScheduleBuilder.simpleSchedule()
                         .withIntervalInSeconds(secondInterval).repeatForever();
 
@@ -143,7 +157,28 @@ public class JobManager implements Managed {
         }
     }
 
-    protected void scheduleAllJobsOnApplicationStart() throws SchedulerException {
+    @SuppressWarnings("unchecked")
+    private String readDurationFromConfig(Every annotation, Class<? extends org.quartz.Job> clazz) {
+        if (config == null) {
+            return null;
+        }
+        try {
+            String property = WordUtils.uncapitalize(clazz.getSimpleName());
+            if (!annotation.value().isEmpty()) {
+                property = annotation.value().substring(2, annotation.value().length()-1);
+            }
+            Method m = config.getClass().getMethod("getJobs");
+            Map<String,String> jobConfig = (Map<String,String>) m.invoke(config);
+            if (jobConfig != null && jobConfig.containsKey(property)) {
+                return jobConfig.get(property);
+            }
+        } catch (NoSuchMethodException | SecurityException | InvocationTargetException | IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+        return null;
+    }
+
+	protected void scheduleAllJobsOnApplicationStart() throws SchedulerException {
         List<Class<? extends Job>> startJobClasses = getJobClasses(OnApplicationStart.class);
 
         log.info("Jobs to run on application start:");
@@ -164,7 +199,7 @@ public class JobManager implements Managed {
         return TriggerBuilder.newTrigger().startNow().build();
     }
 
-    private void logAllOnApplicationStopJobs() {
+    private void logAllOnApplicationStopJobs() throws SchedulerException {
         List<Class<? extends Job>> stopJobClasses = getJobClasses(OnApplicationStop.class);
         log.info("Jobs to run on application stop:");
         if (stopJobClasses.isEmpty()) {

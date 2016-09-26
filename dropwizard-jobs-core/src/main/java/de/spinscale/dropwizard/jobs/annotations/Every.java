@@ -8,9 +8,9 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface Every {
-    String value();
+    String value(); default "";
 
-    /**
+	/**
      * The name of this job. If not specified, the name of the job will default to the canonical name of the annotated
      * class
      */
