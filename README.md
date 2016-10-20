@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/spinscale/dropwizard-jobs.svg?branch=master)](https://travis-ci.org/spinscale/dropwizard-jobs)
+
 # Dropwizard quartz integration
 
 This plugin integrates the [quartz scheduler](http://quartz-scheduler.org/) with dropwizard and allows you to easily create background jobs, which are not bound to the HTTP request-response cycle.
