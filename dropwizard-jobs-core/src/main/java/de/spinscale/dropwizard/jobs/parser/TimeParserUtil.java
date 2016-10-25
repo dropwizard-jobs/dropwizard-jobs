@@ -24,7 +24,7 @@ public class TimeParserUtil {
      */
     public static long parseDuration(String duration) {
         if (duration == null || duration.isEmpty()) {
-            return 60 * 60 * 24 * 30 * 1000L;
+            throw new IllegalArgumentException("duration may not be null");
         }
         long toAdd = -1;
         if (days.matcher(duration).matches()) {

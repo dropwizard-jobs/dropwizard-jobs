@@ -21,7 +21,6 @@ public class JobManagerTest {
         assertThat(OnTestJob.latch.getCount(), is(2L));
         assertThat(EveryTestJob.latch.getCount(), is(5L));
         assertThat(EveryTestJobWithDelay.latch.getCount(), is(5L));
-        assertThat(EveryTestJobDefaultConfiguration.latch.getCount(), is(5L));
         assertThat(EveryTestJobAlternativeConfiguration.latch.getCount(), is(5L));
         assertThat(ApplicationStopTestJob.latch.getCount(), is(1L));
     }
@@ -41,7 +40,6 @@ public class JobManagerTest {
         assertThat(EveryTestJobWithDelay.latch.await(2, TimeUnit.SECONDS), is(true));
         assertThat(EveryTestJob.latch.await(1, TimeUnit.SECONDS), is(true));
 
-        assertThat(EveryTestJobDefaultConfiguration.latch.await(1, TimeUnit.SECONDS), is(true));
         assertThat(OnTestJob.latch.await(5, TimeUnit.SECONDS), is(true));
 
         jobManager.stop();
