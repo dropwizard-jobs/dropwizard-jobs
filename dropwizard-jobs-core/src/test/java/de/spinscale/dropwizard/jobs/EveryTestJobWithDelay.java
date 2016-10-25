@@ -5,7 +5,7 @@ import de.spinscale.dropwizard.jobs.annotations.Every;
 
 import java.util.concurrent.CountDownLatch;
 
-@DelayStart("2s")
+@DelayStart("1s")
 @Every("50ms")
 public class EveryTestJobWithDelay extends Job {
 

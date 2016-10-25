@@ -33,8 +33,8 @@ public class JobManagerTest {
         jobManager.configure(config);
 
         jobManager.start();
-        assertThat(ApplicationStartTestJob.latch.await(2, TimeUnit.SECONDS), is(true));
-        assertThat(EveryTestJobWithDelay.latch.await(1, TimeUnit.SECONDS), is(false));
+        assertThat(EveryTestJobWithDelay.latch.await(800, TimeUnit.MILLISECONDS), is(false));
+        assertThat(ApplicationStartTestJob.latch.await(1, TimeUnit.SECONDS), is(true));
 
         assertThat(EveryTestJobAlternativeConfiguration.latch.await(1, TimeUnit.SECONDS), is(true));
         assertThat(EveryTestJobWithDelay.latch.await(2, TimeUnit.SECONDS), is(true));
