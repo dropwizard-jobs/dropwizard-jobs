@@ -16,7 +16,7 @@ public class SpringJobManagerTest {
 
     @Before
     public void setUp() throws Exception {
-        ApplicationContext context = new AnnotationConfigApplicationContext(ApplicationStartTestJob.class,
+        final ApplicationContext context = new AnnotationConfigApplicationContext(ApplicationStartTestJob.class,
                 ApplicationStopTestJob.class, EveryTestJob.class, OnTestJob.class, DependencyTestJob.class,
                 Dependency.class);
         jobManager = new SpringJobManager(context);
@@ -55,7 +55,7 @@ public class SpringJobManagerTest {
     public void jobsWithEveryAnnotationShouldBeExecuted() throws Exception {
         EveryTestJob.results.clear();
         jobManager.start();
-        Thread.sleep(5000);
+        Thread.sleep(10000);
         assertThat(EveryTestJob.results, hasSize(greaterThan(5)));
     }
 
