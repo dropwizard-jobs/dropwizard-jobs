@@ -1,18 +1,17 @@
 package de.spinscale.dropwizard.jobs;
 
+import com.google.common.collect.Sets;
+import de.spinscale.dropwizard.jobs.annotations.DelayStart;
+import de.spinscale.dropwizard.jobs.annotations.Every;
+import de.spinscale.dropwizard.jobs.annotations.On;
+import de.spinscale.dropwizard.jobs.annotations.OnApplicationStart;
+import de.spinscale.dropwizard.jobs.annotations.OnApplicationStop;
+import de.spinscale.dropwizard.jobs.parser.TimeParserUtil;
 import io.dropwizard.Configuration;
 import io.dropwizard.lifecycle.Managed;
-
-import java.lang.annotation.Annotation;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import org.apache.commons.lang3.text.WordUtils;
 import org.joda.time.DateTime;
+import org.joda.time.Duration;
 import org.quartz.CronScheduleBuilder;
 import org.quartz.JobBuilder;
 import org.quartz.Scheduler;
@@ -25,15 +24,13 @@ import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.Sets;
-
-import de.spinscale.dropwizard.jobs.annotations.DelayStart;
-import de.spinscale.dropwizard.jobs.annotations.Every;
-import de.spinscale.dropwizard.jobs.annotations.On;
-import de.spinscale.dropwizard.jobs.annotations.OnApplicationStart;
-import de.spinscale.dropwizard.jobs.annotations.OnApplicationStop;
-import de.spinscale.dropwizard.jobs.parser.TimeParserUtil;
-import io.dropwizard.lifecycle.Managed;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class JobManager implements Managed {
 
@@ -130,15 +127,15 @@ public class JobManager implements Managed {
                     value = readDurationFromConfig(everyAnnotation, clazz);
                     log.info(clazz + " is configured in the config file to run every " + value);
                 }
-                int secondInterval = TimeParserUtil.parseDuration(value);
+                long milliSeconds = TimeParserUtil.parseDuration(value);
                 SimpleScheduleBuilder scheduleBuilder = SimpleScheduleBuilder.simpleSchedule()
-                        .withIntervalInSeconds(secondInterval).repeatForever();
+                        .withIntervalInMilliseconds(milliSeconds).repeatForever();
 
                 DateTime start = new DateTime();
                 DelayStart delayAnnotation = clazz.getAnnotation(DelayStart.class);
                 if (delayAnnotation != null) {
-                    int secondDelay = TimeParserUtil.parseDuration(delayAnnotation.value());
-                    start = start.plusSeconds(secondDelay);
+                    long milliSecondDelay = TimeParserUtil.parseDuration(delayAnnotation.value());
+                    start = start.plus(Duration.millis(milliSecondDelay));
                 }
 
                 Trigger trigger = TriggerBuilder.newTrigger().withSchedule(scheduleBuilder)

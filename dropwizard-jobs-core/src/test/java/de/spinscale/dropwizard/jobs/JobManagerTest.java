@@ -1,104 +1,54 @@
 package de.spinscale.dropwizard.jobs;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-
-import java.util.HashMap;
-import java.util.Map;
-
-import org.junit.After;
+import io.dropwizard.Configuration;
 import org.junit.Before;
 import org.junit.Test;
 
-import io.dropwizard.Configuration;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
 public class JobManagerTest {
 
-    private JobManager jobManager;
-    private boolean stopped;
+    private JobManager jobManager = new JobManager();
 
     @Before
-    public void setUp() throws Exception {
-        jobManager = new JobManager();
-    }
-
-    @After
-    public void tearDown() throws Exception {
-    	if (!stopped) {
-    		jobManager.stop();
-    	}
-        jobManager = null;
-    }
-
-    @Test
-    public void jobsOnStartupShouldBeExecuted() throws Exception {
-        ApplicationStartTestJob.results.clear();
-        jobManager.start();
-        Thread.sleep(1000);
-        assertThat(ApplicationStartTestJob.results, hasSize(1));
+    public void ensureLatchesAreUntouched() {
+        assertThat(ApplicationStartTestJob.latch.getCount(), is(1L));
+        assertThat(OnTestJob.latch.getCount(), is(2L));
+        assertThat(EveryTestJob.latch.getCount(), is(5L));
+        assertThat(EveryTestJobWithDelay.latch.getCount(), is(5L));
+        assertThat(EveryTestJobDefaultConfiguration.latch.getCount(), is(5L));
+        assertThat(EveryTestJobAlternativeConfiguration.latch.getCount(), is(5L));
+        assertThat(ApplicationStopTestJob.latch.getCount(), is(1L));
     }
 
     @Test
-    public void jobsOnStoppingShouldBeExecuted() throws Exception {
-        ApplicationStopTestJob.results.clear();
-        jobManager.start();
-        jobManager.stop();
-        stopped = true;
-        assertThat(ApplicationStopTestJob.results, hasSize(1));
-    }
-
-    @Test
-    public void jobsWithOnAnnotationShouldBeExecuted() throws Exception {
-        OnTestJob.results.clear();
-        jobManager.start();
-        Thread.sleep(5000);
-        assertThat(OnTestJob.results, hasSize(greaterThan(5)));
-    }
-
-    @Test
-    public void jobsWithEveryAnnotationShouldBeExecuted() throws Exception {
-        EveryTestJob.results.clear();
-        jobManager.start();
-        Thread.sleep(5000);
-        assertThat(EveryTestJob.results, hasSize(greaterThan(5)));
-    }
-    
-    @Test
-    public void jobsWithEveryAnnotationAndDelayStartShouldWaitToBeExecuted() throws Exception {
-        EveryTestJobWithDelay.results.clear();
-        jobManager.start();
-        Thread.sleep(2500);
-        assertThat(EveryTestJobWithDelay.results, hasSize(0));
-        Thread.sleep(2500);
-        assertThat(EveryTestJobWithDelay.results, hasSize(lessThan(4)));
-    }
-
-    @Test
-    public void jobsWithEveryAnnotationAndNoValueShouldBeExternallyConfigured() throws Exception {
-        givenConfigurationFor("everyTestJobDefaultConfiguration", "1s");
-        EveryTestJobDefaultConfiguration.results.clear();
-        jobManager.start();
-        Thread.sleep(5000);
-        assertThat(EveryTestJobDefaultConfiguration.results, hasSize(greaterThanOrEqualTo(5)));
-    }
-    
-    @Test
-    public void jobsWithEveryAnnotationAndTemplateValueShouldBeExternallyConfigured() throws Exception {
-        givenConfigurationFor("testJob", "1s");
-        EveryTestJobAlternativeConfiguration.results.clear();
-        jobManager.start();
-        Thread.sleep(5000);
-        assertThat(EveryTestJobAlternativeConfiguration.results, hasSize(greaterThanOrEqualTo(5)));
-    }
-
-    private void givenConfigurationFor(String key, String value) {
+    public void testThatJobsAreExecuted() throws Exception {
         TestConfig config = new TestConfig();
-        config.getJobs().put(key, value);
+        config.getJobs().put("everyTestJobDefaultConfiguration", "50ms");
+        config.getJobs().put("testJob", "50ms");
         jobManager.configure(config);
+
+        jobManager.start();
+        assertThat(ApplicationStartTestJob.latch.await(2, TimeUnit.SECONDS), is(true));
+        assertThat(EveryTestJobWithDelay.latch.await(1, TimeUnit.SECONDS), is(false));
+
+        assertThat(EveryTestJobAlternativeConfiguration.latch.await(1, TimeUnit.SECONDS), is(true));
+        assertThat(EveryTestJobWithDelay.latch.await(2, TimeUnit.SECONDS), is(true));
+        assertThat(EveryTestJob.latch.await(1, TimeUnit.SECONDS), is(true));
+
+        assertThat(EveryTestJobDefaultConfiguration.latch.await(1, TimeUnit.SECONDS), is(true));
+        assertThat(OnTestJob.latch.await(5, TimeUnit.SECONDS), is(true));
+
+        jobManager.stop();
+        assertThat(ApplicationStopTestJob.latch.await(2, TimeUnit.SECONDS), is(true));
     }
 
     private static class TestConfig extends Configuration {
-    	
         private Map<String,String> jobs = new HashMap<>();
         public Map<String, String> getJobs() {
             return jobs;
@@ -106,8 +56,5 @@ public class JobManagerTest {
         public void setJobs(Map<String, String> jobs) {
             this.jobs = jobs;
         }
-    	
     }
-    
-
 }

@@ -1,19 +1,16 @@
 package de.spinscale.dropwizard.jobs;
 
-import com.google.common.collect.Lists;
 import de.spinscale.dropwizard.jobs.annotations.OnApplicationStop;
 
-import java.util.Date;
-import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 @OnApplicationStop
 public class ApplicationStopTestJob extends Job {
 
-    public static final List<String> results = Lists.newArrayList();
+    static final CountDownLatch latch = new CountDownLatch(1);
 
     @Override
     public void doJob() {
-        results.add(getClass().getName() + " " + new Date());
+        latch.countDown();
     }
-
 }
