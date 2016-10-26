@@ -1,17 +1,14 @@
 package de.spinscale.dropwizard.jobs;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.lessThan;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertTrue;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import org.hamcrest.core.IsEqual;
-import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.quartz.JobKey;
@@ -22,130 +19,63 @@ import io.dropwizard.Configuration;
 
 public class JobManagerTest {
 
-    private JobManager jobManager;
-    private boolean stopped;
+    private JobManager jobManager = new JobManager();
 
     @Before
-    public void setUp() {
-        jobManager = new JobManager();
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        if (!stopped) {
-            jobManager.stop();
-        }
-        jobManager = null;
+    public void ensureLatchesAreUntouched() {
+        assertThat(ApplicationStartTestJob.latch.getCount(), is(1L));
+        assertThat(OnTestJob.latch.getCount(), is(2L));
+        assertThat(EveryTestJob.latch.getCount(), is(5L));
+        assertThat(EveryTestJobWithDelay.latch.getCount(), is(5L));
+        assertThat(EveryTestJobAlternativeConfiguration.latch.getCount(), is(5L));
+        assertThat(ApplicationStopTestJob.latch.getCount(), is(1L));
     }
 
     @Test
-    public void jobsOnStartupShouldBeExecuted() throws Exception {
-        ApplicationStartTestJob.results.clear();
-        jobManager.start();
-        Thread.sleep(1000);
-        assertThat(ApplicationStartTestJob.results, hasSize(1));
-    }
-
-    @Test
-    public void jobsOnStoppingShouldBeExecuted() throws Exception {
-        ApplicationStopTestJob.results.clear();
-        jobManager.start();
-        jobManager.stop();
-        stopped = true;
-        assertThat(ApplicationStopTestJob.results, hasSize(1));
-    }
-
-    @Test
-    public void jobsWithOnAnnotationShouldBeExecuted() throws Exception {
-        OnTestJob.results.clear();
-        jobManager.start();
-        Thread.sleep(5000);
-        assertThat(OnTestJob.results, hasSize(greaterThan(5)));
-    }
-
-    @Test
-    public void jobsWithEveryAnnotationShouldBeExecuted() throws Exception {
-        EveryTestJob.results.clear();
-        jobManager.start();
-        Thread.sleep(5000);
-        assertThat(EveryTestJob.results, hasSize(greaterThan(5)));
-    }
-
-    @Test
-    public void jobsWithEveryAnnotationAndDelayStartShouldWaitToBeExecuted() throws Exception {
-        EveryTestJobWithDelay.results.clear();
-        jobManager.start();
-        Thread.sleep(2500);
-        assertThat(EveryTestJobWithDelay.results, hasSize(0));
-        Thread.sleep(2500);
-        assertThat(EveryTestJobWithDelay.results, hasSize(lessThan(4)));
-    }
-
-    @Test
-    public void jobsWithEveryAnnotationAndNoValueShouldBeExternallyConfigured() throws Exception {
-        givenConfigurationFor("everyTestJobDefaultConfiguration", "1s");
-        EveryTestJobDefaultConfiguration.results.clear();
-        jobManager.start();
-        Thread.sleep(5000);
-        assertThat(EveryTestJobDefaultConfiguration.results, hasSize(greaterThanOrEqualTo(5)));
-    }
-
-    @Test
-    public void jobsWithEveryAnnotationAndTemplateValueShouldBeExternallyConfigured() throws Exception {
-        givenConfigurationFor("testJob", "1s");
-        EveryTestJobAlternativeConfiguration.results.clear();
-        jobManager.start();
-        Thread.sleep(5000);
-        assertThat(EveryTestJobAlternativeConfiguration.results, hasSize(greaterThanOrEqualTo(5)));
-    }
-
-    @Test
-    public void jobsWithEveryAnnotationWithoutJobNameShouldUseCanonicalClassName() throws Exception {
-        jobManager.start();
-        String jobName = EveryTestJob.class.getCanonicalName();
-        Assert.assertTrue(jobManager.scheduler.checkExists(JobKey.jobKey(jobName)));
-    }
-
-    @Test
-    public void jobsWithEveryAnnotationWithJobNameShouldOverrideCanonicalClassName() throws Exception {
-        jobManager.start();
-        String jobName = EveryTestJobWithJobName.class.getAnnotation(Every.class).jobName();
-        Assert.assertTrue(jobManager.scheduler.checkExists(JobKey.jobKey(jobName)));
-    }
-
-    @Test
-    public void jobsWithOnAnnotationWithoutJobNameShouldUseCanonicalClassName() throws Exception {
-        jobManager.start();
-        String jobName = OnTestJob.class.getCanonicalName();
-        Assert.assertTrue(jobManager.scheduler.checkExists(JobKey.jobKey(jobName)));
-    }
-
-    @Test
-    public void jobsWithOnAnnotationWithJobNameShouldOverrideCanonicalClassName() throws Exception {
-        jobManager.start();
-        String jobName = OnTestJobWithJobName.class.getAnnotation(On.class).jobName();
-        Assert.assertTrue(jobManager.scheduler.checkExists(JobKey.jobKey(jobName)));
-    }
-
-    @Test
-    public void onlyOneJobWithNameCreated() throws Exception {
-        jobManager.start();
-
-        // there is only one job and trigger for the job name, even though there are two jobs with that name
-        String jobName = EveryTestJobWithJobName.class.getAnnotation(Every.class).jobName();
-        Assert.assertThat(jobName, IsEqual.equalTo(EveryTestJobWithSameJobName.class.getAnnotation(Every.class).jobName()));
-        Assert.assertTrue(jobManager.scheduler.checkExists(JobKey.jobKey(jobName)));
-        Assert.assertThat(jobManager.scheduler.getTriggersOfJob(JobKey.jobKey(jobName)).size(), IsEqual.equalTo(1));
-    }
-
-    private void givenConfigurationFor(String key, String value) {
+    public void testThatJobsAreExecuted() throws Exception {
         TestConfig config = new TestConfig();
-        config.getJobs().put(key, value);
+        config.getJobs().put("everyTestJobDefaultConfiguration", "50ms");
+        config.getJobs().put("testJob", "50ms");
         jobManager.configure(config);
+
+        jobManager.start();
+
+        // a job with an @Every annotation that doesn't specify a job name should be assigned the canonical class name
+        String jobName = EveryTestJob.class.getCanonicalName();
+        assertTrue(jobManager.scheduler.checkExists(JobKey.jobKey(jobName)));
+
+        // a job with an @Every annotation that specifies a job name should get that name, not the canonical class name
+        jobName = EveryTestJobWithJobName.class.getAnnotation(Every.class).jobName();
+        assertTrue(jobManager.scheduler.checkExists(JobKey.jobKey(jobName)));
+
+        // a job with an @On annotation that doesn't specify a job name should be assigned the canonical class name
+        jobName = OnTestJob.class.getCanonicalName();
+        assertTrue(jobManager.scheduler.checkExists(JobKey.jobKey(jobName)));
+
+        // a job with an @On annotation that specifies a job name should get that name, not the canonical class name
+        jobName = OnTestJobWithJobName.class.getAnnotation(On.class).jobName();
+        assertTrue(jobManager.scheduler.checkExists(JobKey.jobKey(jobName)));
+
+        // if there are two jobs that have the same name, only one job and trigger will be created with that job name
+        // this simulates running in clustered environments where two or more nodes have the same set of jobs
+        jobName = EveryTestJobWithJobName.class.getAnnotation(Every.class).jobName();
+        assertThat(jobName, IsEqual.equalTo(EveryTestJobWithSameJobName.class.getAnnotation(Every.class).jobName()));
+        assertTrue(jobManager.scheduler.checkExists(JobKey.jobKey(jobName)));
+        assertThat(jobManager.scheduler.getTriggersOfJob(JobKey.jobKey(jobName)).size(), IsEqual.equalTo(1));
+
+        assertThat(EveryTestJobWithDelay.latch.await(800, TimeUnit.MILLISECONDS), is(false));
+        assertThat(ApplicationStartTestJob.latch.await(1, TimeUnit.SECONDS), is(true));
+        assertThat(EveryTestJobAlternativeConfiguration.latch.await(1, TimeUnit.SECONDS), is(true));
+        assertThat(EveryTestJobWithDelay.latch.await(2, TimeUnit.SECONDS), is(true));
+        assertThat(EveryTestJob.latch.await(1, TimeUnit.SECONDS), is(true));
+        assertThat(OnTestJob.latch.await(5, TimeUnit.SECONDS), is(true));
+
+        jobManager.stop();
+
+        assertThat(ApplicationStopTestJob.latch.await(2, TimeUnit.SECONDS), is(true));
     }
 
     private static class TestConfig extends Configuration {
-
         private Map<String, String> jobs = new HashMap<>();
 
         public Map<String, String> getJobs() {
