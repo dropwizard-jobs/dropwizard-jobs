@@ -11,6 +11,7 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
 import org.joda.time.DateTime;
+import org.joda.time.Duration;
 import org.quartz.CronScheduleBuilder;
 import org.quartz.JobBuilder;
 import org.quartz.JobKey;
@@ -132,15 +133,15 @@ public class JobManager implements Managed {
                     value = readDurationFromConfig(everyAnnotation, clazz);
                     log.info(clazz + " is configured in the config file to run every " + value);
                 }
-                int secondInterval = TimeParserUtil.parseDuration(value);
+                long milliSeconds = TimeParserUtil.parseDuration(value);
                 SimpleScheduleBuilder scheduleBuilder = SimpleScheduleBuilder.simpleSchedule()
-                        .withIntervalInSeconds(secondInterval).repeatForever();
+                        .withIntervalInMilliseconds(milliSeconds).repeatForever();
 
                 DateTime start = new DateTime();
                 DelayStart delayAnnotation = clazz.getAnnotation(DelayStart.class);
                 if (delayAnnotation != null) {
-                    int secondDelay = TimeParserUtil.parseDuration(delayAnnotation.value());
-                    start = start.plusSeconds(secondDelay);
+                    long milliSecondDelay = TimeParserUtil.parseDuration(delayAnnotation.value());
+                    start = start.plus(Duration.millis(milliSecondDelay));
                 }
 
                 Trigger trigger = TriggerBuilder.newTrigger().withSchedule(scheduleBuilder)
