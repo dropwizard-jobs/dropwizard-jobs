@@ -19,9 +19,9 @@ It is located in Central Repository. http://search.maven.org/
 Add to your pom:
 ```xml
 <dependency>
-  <groupId>de.spinscale</groupId>
+  <groupId>de.spinscale.dropwizard</groupId>
   <artifactId>dropwizard-jobs-core</artifactId>
-  <version>1.0.1</version>
+  <version>2.0.0</version>
 </dependency>
 ```
 
@@ -39,7 +39,7 @@ After installing the plugin locally you can include it in your pom.xml
 <dependency>
   <groupId>de.spinscale.dropwizard</groupId>
   <artifactId>dropwizard-jobs</artifactId>
-  <version><current version></version>
+  <version>$VERSION</version>
 </dependency>
 ```
 
@@ -47,20 +47,17 @@ After installing the plugin locally you can include it in your pom.xml
 
 Similar to the AssetsBundle or the ViewBundle you need to activate the JobsBundle class.
 
-### Dropwizard 0.7.0
+### Usage
 
 ```java
 @Override
-public void initialize(Bootstrap<DelaSearchConfiguration> bootstrap) {
-  bootstrap.addBundle(new JobsBundle());
+public void initialize(Bootstrap<MyConfiguration> bootstrap) {
+  SomeDependency dependency = new Dependency();
+  Job startJob = new StartupJob();
+  Job stopJob = new StopJob();
+  Job everyJob = new EveryTestJob(dependency);
+  bootstrap.addBundle(new JobsBundle(startJob, stopJob, everyJob));
 }
-```
-
-Be aware that Jobs are searched by reflection only in the current package. 
-You can define jobs location by passing package url to the JobsBundle constructor like this:
-
-```java
-  bootstrap.addBundle(new JobsBundle('com.youpackage.url'));
 ```
 
 ## Available job types
@@ -129,7 +126,9 @@ public class OnTestJob extends Job {
   }
 }
 ```
+
 ## Using dropwizard-jobs in a Clustered Environment
+
 By default, dropwizard-jobs is designed to be used with an in-memory Quartz scheduler. If you wish to deploy it in a clustered environment that consists of more than one node, you'll need to use a scheduler that has some sort of persistence. Adding a file called `quartz.properties` to your classpath that looks something like this will do the trick:
 
 ```
@@ -176,6 +175,7 @@ public class MyJob extends Job {
 }
 ```
 This property is not supported in the `@OnApplicationStart` or `@ApplicationStop` annotations, as they are designed for jobs that will fire reliably when Dropwizard starts or stops your web application. As such, jobs annotated with `@OnApplicationStart` or `@OnApplicationStop` will be given unique names, and will be fired according to schedule on every node in your cluster.
+
 ## Configuring jobs in the Dropwizard Config File
 
 As of 1.0.2, the period for @Every jobs can be read from the dropwizard config file instead of being hard-coded. The YAML looks like this:
@@ -198,17 +198,6 @@ public Map<String, String> getJobs() {
    
 public void setJobs(Map<String, String> jobs) {
     this.jobs = jobs;
-}
-```
-
-To configure the jobs, you must call the bundle's <code>configure()</code> method in the application's <code>run()</code> method:
-
-```java
-private GuiceJobsBundle guiceJobsBundle;
-
-public void run(MyConfiguration config, Environment env) throws Exception {
-    guiceJobsBundle.configure(config);
-    ...
 }
 ```
 
@@ -237,13 +226,35 @@ jobs:
   foobar: 10s
 ```
 
+# Usage with Dropwizard
+
+```java
+public class ExampleApplication extends Application<ApplicationConfiguration> {
+
+    @Override
+    public void initialize(final Bootstrap<ApplicationConfiguration> bootstrap) {
+        Logger jobLogger = LoggerFactory.getLogger("jobs");
+        bootstrap.addBundle(new JobsBundle(new StartJob(jobLogger), new StopJob(jobLogger)));
+    }
+
+}
+```
+
+This also means, that your `ApplicationConfiguration` needs to implement `JobConfiguration`
+
+```java
+public class ApplicationConfiguration extends Configuration implements JobConfiguration {
+
+...
+
+}
+
+```
 
 # Limitations
 
-* Your jobs have to have a no-args constructor, unless you use Dependency Injection.
 * The jobs are not persisted, but purely in memory (though quartz can do different), so shutting down your dropwizard service at a certain time might lead to not run the job.
 * The scheduler is not configurable at the moment, for example the threadpool size is fixed to ten.
-* If you run the same dropwizard service on multiple instances, you also run the same jobs twice. This might not be what you want
 
 # Thanks
 
@@ -255,3 +266,4 @@ jobs:
  * [Yun Zhi Lin](https://github.com/yunspace)
  * [Eyal Golan](https://github.com/eyalgo)
  * [Jonathan Fritz](https://github.com/MusikPolice)
+

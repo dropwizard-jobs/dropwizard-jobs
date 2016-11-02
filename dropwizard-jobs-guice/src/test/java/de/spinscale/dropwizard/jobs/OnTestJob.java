@@ -7,7 +7,7 @@ import java.util.concurrent.CountDownLatch;
 @On("0/1 * * * * ?")
 public class OnTestJob extends Job {
 
-    static final CountDownLatch latch = new CountDownLatch(2);
+    final CountDownLatch latch = new CountDownLatch(2);
 
     @Override
     public void doJob() {

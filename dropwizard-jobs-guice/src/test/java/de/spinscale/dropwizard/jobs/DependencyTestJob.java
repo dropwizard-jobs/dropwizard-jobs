@@ -8,10 +8,13 @@ import java.util.concurrent.CountDownLatch;
 @Every("100ms")
 public class DependencyTestJob extends Job {
 
-    @Inject
+    final CountDownLatch latch = new CountDownLatch(5);
     private Dependency dependency;
 
-    static final CountDownLatch latch = new CountDownLatch(5);
+    @Inject
+    public DependencyTestJob(Dependency dependency) {
+        this.dependency = dependency;
+    }
 
     @Override
     public void doJob() {

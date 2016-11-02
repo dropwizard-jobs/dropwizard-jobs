@@ -9,9 +9,6 @@ import org.quartz.SchedulerException;
 import org.quartz.spi.JobFactory;
 import org.quartz.spi.TriggerFiredBundle;
 
-/**
- * Created by yun on 17/03/14.
- */
 public class GuiceJobFactory implements JobFactory {
 
     private Injector injector;

@@ -2,6 +2,7 @@ package de.spinscale.dropwizard.jobs;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Module;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -12,28 +13,31 @@ import static org.hamcrest.Matchers.is;
 
 public class GuiceJobManagerTest {
 
-    private Injector injector = Guice.createInjector();
-    private JobManager jobManager = new GuiceJobManager(injector);
+    private JobManager jobManager;
+    private Injector injector;
 
     @Before
     public void ensureLatchesAreZero() {
-        assertThat(ApplicationStartTestJob.latch.getCount(), is(1L));
-        assertThat(OnTestJob.latch.getCount(), is(2L));
-        assertThat(EveryTestJob.latch.getCount(), is(5L));
-        assertThat(DependencyTestJob.latch.getCount(), is(5L));
-        assertThat(ApplicationStopTestJob.latch.getCount(), is(1L));
+        injector = Guice.createInjector((Module) binder -> {
+            binder.bind(ApplicationStartTestJob.class).asEagerSingleton();
+            binder.bind(OnTestJob.class).asEagerSingleton();
+            binder.bind(EveryTestJob.class).asEagerSingleton();
+            binder.bind(DependencyTestJob.class).asEagerSingleton();
+            binder.bind(ApplicationStopTestJob.class).asEagerSingleton();
+        });
+        jobManager = new GuiceJobManager(injector);
     }
 
     @Test
     public void testAllGuiceJobs() throws Exception {
         jobManager.start();
-        assertThat(ApplicationStartTestJob.latch.await(1, TimeUnit.SECONDS), is(true));
+        assertThat(injector.getInstance(ApplicationStartTestJob.class).latch.await(1, TimeUnit.SECONDS), is(true));
 
-        assertThat(OnTestJob.latch.await(2, TimeUnit.SECONDS), is(true));
-        assertThat(EveryTestJob.latch.await(2, TimeUnit.SECONDS), is(true));
-        assertThat(DependencyTestJob.latch.await(2, TimeUnit.SECONDS), is(true));
+        assertThat(injector.getInstance(OnTestJob.class).latch.await(2, TimeUnit.SECONDS), is(true));
+        assertThat(injector.getInstance(EveryTestJob.class).latch.await(2, TimeUnit.SECONDS), is(true));
+        assertThat(injector.getInstance(DependencyTestJob.class).latch.await(2, TimeUnit.SECONDS), is(true));
 
         jobManager.stop();
-        assertThat(ApplicationStopTestJob.latch.await(1, TimeUnit.SECONDS), is(true));
+        assertThat(injector.getInstance(ApplicationStopTestJob.class).latch.await(1, TimeUnit.SECONDS), is(true));
     }
 }
