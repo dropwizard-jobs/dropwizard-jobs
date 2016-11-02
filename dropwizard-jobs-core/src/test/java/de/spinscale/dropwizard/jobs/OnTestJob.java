@@ -2,15 +2,10 @@ package de.spinscale.dropwizard.jobs;
 
 import de.spinscale.dropwizard.jobs.annotations.On;
 
-import java.util.concurrent.CountDownLatch;
-
 @On("0/1 * * * * ?")
-public class OnTestJob extends Job {
+public class OnTestJob extends AbstractJob {
 
-    static final CountDownLatch latch = new CountDownLatch(2);
-
-    @Override
-    public void doJob() {
-        latch.countDown();
+    public OnTestJob() {
+        super(1);
     }
 }

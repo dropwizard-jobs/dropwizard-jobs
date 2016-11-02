@@ -2,15 +2,10 @@ package de.spinscale.dropwizard.jobs;
 
 import de.spinscale.dropwizard.jobs.annotations.Every;
 
-import java.util.concurrent.CountDownLatch;
-
 @Every("10ms")
-public class EveryTestJob extends Job {
+public class EveryTestJob extends AbstractJob {
 
-    static final CountDownLatch latch = new CountDownLatch(5);
-
-    @Override
-    public void doJob() {
-        latch.countDown();
+    public EveryTestJob() {
+        super(5);
     }
 }

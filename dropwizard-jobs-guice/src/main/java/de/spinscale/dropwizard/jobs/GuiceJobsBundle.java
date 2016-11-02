@@ -1,31 +1,19 @@
 package de.spinscale.dropwizard.jobs;
 
 import com.google.inject.Injector;
-import de.spinscale.dropwizard.jobs.JobsBundle;
-import io.dropwizard.Configuration;
 import io.dropwizard.setup.Environment;
 
 public class GuiceJobsBundle extends JobsBundle {
-    Injector injector;
+
     private GuiceJobManager guiceJobsManager;
     
     public GuiceJobsBundle(Injector injector) {
-        this("", injector);
-    }
-
-    public GuiceJobsBundle(String scanUrl, Injector injector) {
-        super(scanUrl);
-        this.injector = injector;
-        guiceJobsManager = new GuiceJobManager(scanURL, injector);
+        guiceJobsManager = new GuiceJobManager(injector);
     }
 
     @Override
-    public void run(Environment environment) {
+    public void run(JobConfiguration configuration, Environment environment) throws Exception {
+        guiceJobsManager.configure(configuration);
         environment.lifecycle().manage(guiceJobsManager);
     }
-    
-    public void configure(Configuration config) {
-    	guiceJobsManager.configure(config);
-    }
-
 }

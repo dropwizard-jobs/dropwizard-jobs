@@ -1,30 +1,37 @@
 package de.spinscale.dropwizard.jobs;
 
+import com.google.inject.Binding;
 import com.google.inject.Injector;
-import de.spinscale.dropwizard.jobs.JobManager;
-import org.quartz.impl.StdSchedulerFactory;
-import org.reflections.Reflections;
+import com.google.inject.Key;
+import org.quartz.spi.JobFactory;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public class GuiceJobManager extends JobManager {
 
-    protected GuiceJobFactory jobFactory;
+    private final GuiceJobFactory jobFactory;
 
-    public GuiceJobManager(String scanUrl, Injector injector) {
-        reflections = new Reflections(scanUrl);
+    public GuiceJobManager(Injector injector) {
+        jobs = getJobs(injector);
         jobFactory = new GuiceJobFactory(injector);
     }
 
-    public GuiceJobManager(Injector injector) {
-        this("", injector);
+    static Job[] getJobs(Injector injector) {
+        List<Job> jobs = new ArrayList<>();
+        for (Map.Entry<Key<?>, Binding<?>> entry : injector.getBindings().entrySet()) {
+            Class<?> clazz = entry.getValue().getKey().getTypeLiteral().getRawType();
+            if (Job.class.isAssignableFrom(clazz)) {
+                jobs.add((Job) injector.getInstance(clazz));
+            }
+        }
+        return jobs.toArray(new Job[]{});
     }
+
 
     @Override
-    public void start() throws Exception {
-        scheduler = StdSchedulerFactory.getDefaultScheduler();
-        scheduler.setJobFactory(jobFactory);
-        scheduler.start();
-
-        scheduleAllJobs();
+    protected JobFactory getJobFactory() {
+        return jobFactory;
     }
-
 }

@@ -3,16 +3,11 @@ package de.spinscale.dropwizard.jobs;
 import de.spinscale.dropwizard.jobs.annotations.DelayStart;
 import de.spinscale.dropwizard.jobs.annotations.Every;
 
-import java.util.concurrent.CountDownLatch;
-
 @DelayStart("1s")
-@Every("50ms")
-public class EveryTestJobWithDelay extends Job {
+@Every("10ms")
+public class EveryTestJobWithDelay extends AbstractJob {
 
-    static final CountDownLatch latch = new CountDownLatch(5);
-
-    @Override
-    public void doJob() {
-        latch.countDown();
+    public EveryTestJobWithDelay() {
+        super(5);
     }
 }

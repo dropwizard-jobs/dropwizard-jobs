@@ -7,7 +7,7 @@ import java.util.concurrent.CountDownLatch;
 @OnApplicationStop
 public class ApplicationStopTestJob extends Job {
 
-    static final CountDownLatch latch = new CountDownLatch(1);
+    final CountDownLatch latch = new CountDownLatch(1);
 
     @Override
     public void doJob() {

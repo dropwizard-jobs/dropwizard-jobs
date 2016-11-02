@@ -7,7 +7,7 @@ import java.util.concurrent.CountDownLatch;
 @Every("100ms")
 public class EveryTestJob extends Job {
 
-    static final CountDownLatch latch = new CountDownLatch(5);
+    final CountDownLatch latch = new CountDownLatch(5);
 
     @Override
     public void doJob() {
