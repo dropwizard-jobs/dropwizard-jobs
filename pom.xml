@@ -131,14 +131,10 @@
 					</configuration>
 				</plugin>
 				
-				<!-- Unit tests rely on static counters, and tend to fail if tests are run in parallel -->
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-surefire-plugin</artifactId>
 					<version>2.19.1</version>
-					<configuration>
-						<forkCount>0</forkCount>
-					</configuration>
 				</plugin>
 			</plugins>
 		</pluginManagement>
