@@ -12,6 +12,7 @@
 
     <description>https://github.com/spinscale/dropwizard-jobs</description>
 
+    <!-- To check for outdated dependencies, run: mvn versions:display-dependency-updates -->
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <dropwizard.version>1.0.3</dropwizard.version>
