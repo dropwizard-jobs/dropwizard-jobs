@@ -65,6 +65,10 @@ public class JobManager implements Managed {
         scheduler.shutdown(true);
     }
 
+    public Scheduler getScheduler() {
+        return scheduler;
+    }
+
     protected JobFactory getJobFactory() {
         return new DropwizardJobFactory(jobs);
     }

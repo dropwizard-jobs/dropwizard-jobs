@@ -1,6 +1,9 @@
 package de.spinscale.dropwizard.jobs;
 
 import com.codahale.metrics.SharedMetricRegistries;
+
+import org.quartz.Scheduler;
+
 import io.dropwizard.ConfiguredBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
@@ -8,6 +11,7 @@ import io.dropwizard.setup.Environment;
 public class JobsBundle implements ConfiguredBundle<JobConfiguration> {
 
     private final Job[] jobs;
+    protected JobManager jobManager;
 
     public JobsBundle(Job ... jobs) {
         this.jobs = jobs;
@@ -15,7 +19,7 @@ public class JobsBundle implements ConfiguredBundle<JobConfiguration> {
 
     @Override
     public void run(JobConfiguration configuration, Environment environment) throws Exception {
-        JobManager jobManager = new JobManager(jobs);
+        jobManager = new JobManager(jobs);
         jobManager.configure(configuration);
         environment.lifecycle().manage(jobManager);
     }
@@ -26,4 +30,9 @@ public class JobsBundle implements ConfiguredBundle<JobConfiguration> {
         // has been removed
         SharedMetricRegistries.add(Job.DROPWIZARD_JOBS_KEY, bootstrap.getMetricRegistry());
     }
+
+    public Scheduler getScheduler() {
+        return jobManager.getScheduler();
+    }
+
 }
