@@ -3,6 +3,9 @@ package de.spinscale.dropwizard.jobs;
 import com.google.inject.Inject;
 import de.spinscale.dropwizard.jobs.annotations.Every;
 
+import org.quartz.JobExecutionContext;
+import org.quartz.JobExecutionException;
+
 import java.util.concurrent.CountDownLatch;
 
 @Every("100ms")
@@ -17,7 +20,7 @@ public class DependencyTestJob extends Job {
     }
 
     @Override
-    public void doJob() {
+    public void doJob(JobExecutionContext context) throws JobExecutionException {
         if (dependency == null)
             throw new IllegalStateException("dependency is null");
         latch.countDown();
