@@ -99,13 +99,22 @@ public class JobManager implements Managed {
         for (Class<? extends org.quartz.Job> clazz : onJobClasses) {
             On onAnnotation = clazz.getAnnotation(On.class);
             String cron = onAnnotation.value();
+            String key = StringUtils.isNotBlank(onAnnotation.jobName()) ? onAnnotation.jobName() : clazz.getCanonicalName();
+            int priority = onAnnotation.priority();
+            On.MisfirePolicy misfirePolicy = onAnnotation.misfirePolicy();
+            boolean requestRecovery = onAnnotation.requestRecovery();
+            boolean storeDurably = onAnnotation.storeDurably();
+
             CronScheduleBuilder scheduleBuilder = CronScheduleBuilder.cronSchedule(cron);
-            Trigger trigger = TriggerBuilder.newTrigger().withSchedule(scheduleBuilder).build();
+            if (misfirePolicy == On.MisfirePolicy.IGNORE_MISFIRES) scheduleBuilder.withMisfireHandlingInstructionIgnoreMisfires();
+            else if (misfirePolicy == On.MisfirePolicy.DO_NOTHING) scheduleBuilder.withMisfireHandlingInstructionDoNothing();
+            else if (misfirePolicy == On.MisfirePolicy.FIRE_AND_PROCEED) scheduleBuilder.withMisfireHandlingInstructionFireAndProceed();
+
+            Trigger trigger = TriggerBuilder.newTrigger().withSchedule(scheduleBuilder).withPriority(priority).build();
 
             // ensure that only one instance of each job is scheduled
-            String key = StringUtils.isNotBlank(onAnnotation.jobName()) ? onAnnotation.jobName() : clazz.getCanonicalName();
             JobKey jobKey = JobKey.jobKey(key);
-            createOrUpdateJob(jobKey, clazz, trigger);
+            createOrUpdateJob(jobKey, clazz, trigger, requestRecovery, storeDurably);
             log.info(String.format("    %-21s %s", cron, jobKey.toString()));
         }
     }
@@ -123,6 +132,10 @@ public class JobManager implements Managed {
         log.info("Jobs with @Every annotation:");
         for (Class<? extends org.quartz.Job> clazz : everyJobClasses) {
             Every everyAnnotation = clazz.getAnnotation(Every.class);
+            int priority = everyAnnotation.priority();
+            Every.MisfirePolicy misfirePolicy = everyAnnotation.misfirePolicy();
+            boolean requestRecovery = everyAnnotation.requestRecovery();
+            boolean storeDurably = everyAnnotation.storeDurably();
 
             String value = everyAnnotation.value();
             if (value.isEmpty() || value.matches("\\$\\{.*\\}")) {
@@ -132,6 +145,12 @@ public class JobManager implements Managed {
             long milliSeconds = TimeParserUtil.parseDuration(value);
             SimpleScheduleBuilder scheduleBuilder = SimpleScheduleBuilder.simpleSchedule()
                     .withIntervalInMilliseconds(milliSeconds).repeatForever();
+            if (misfirePolicy == Every.MisfirePolicy.IGNORE_MISFIRES) scheduleBuilder.withMisfireHandlingInstructionIgnoreMisfires();
+            else if (misfirePolicy == Every.MisfirePolicy.FIRE_NOW) scheduleBuilder.withMisfireHandlingInstructionFireNow();
+            else if (misfirePolicy == Every.MisfirePolicy.NOW_WITH_EXISTING_COUNT) scheduleBuilder.withMisfireHandlingInstructionNowWithExistingCount();
+            else if (misfirePolicy == Every.MisfirePolicy.NOW_WITH_REMAINING_COUNT) scheduleBuilder.withMisfireHandlingInstructionNowWithRemainingCount();
+            else if (misfirePolicy == Every.MisfirePolicy.NEXT_WITH_EXISTING_COUNT) scheduleBuilder.withMisfireHandlingInstructionNextWithExistingCount();
+            else if (misfirePolicy == Every.MisfirePolicy.NEXT_WITH_REMAINING_COUNT) scheduleBuilder.withMisfireHandlingInstructionNextWithRemainingCount();
 
             DateTime start = new DateTime();
             DelayStart delayAnnotation = clazz.getAnnotation(DelayStart.class);
@@ -142,12 +161,13 @@ public class JobManager implements Managed {
 
             Trigger trigger = TriggerBuilder.newTrigger().withSchedule(scheduleBuilder)
                     .startAt(start.toDate())
+                    .withPriority(priority)
                     .build();
 
             // ensure that only one instance of each job is scheduled
             String key = StringUtils.isNotBlank(everyAnnotation.jobName()) ? everyAnnotation.jobName() : clazz.getCanonicalName();
             JobKey jobKey = JobKey.jobKey(key);
-            createOrUpdateJob(jobKey, clazz, trigger);
+            createOrUpdateJob(jobKey, clazz, trigger, requestRecovery, storeDurably);
 
             String logMessage = String.format("    %-7s %s", everyAnnotation.value(), jobKey.toString());
             if (delayAnnotation != null) {
@@ -197,8 +217,11 @@ public class JobManager implements Managed {
                 .forEach(clazz -> log.info("   " + clazz.getCanonicalName()));
     }
 
-    private void createOrUpdateJob(JobKey jobKey, Class<? extends org.quartz.Job> clazz, Trigger trigger) throws SchedulerException {
-        JobBuilder jobBuilder = JobBuilder.newJob(clazz).withIdentity(jobKey);
+    private void createOrUpdateJob(JobKey jobKey, Class<? extends org.quartz.Job> clazz, Trigger trigger,
+                                   boolean requestsRecovery, boolean storeDurably) throws SchedulerException {
+        JobBuilder jobBuilder = JobBuilder.newJob(clazz).withIdentity(jobKey).requestRecovery(requestsRecovery)
+                .storeDurably(storeDurably);
+
         if (!scheduler.checkExists(jobKey)) {
             // if the job doesn't already exist, we can create it, along with its trigger. this prevents us
             // from creating multiple instances of the same job when running in a clustered environment
