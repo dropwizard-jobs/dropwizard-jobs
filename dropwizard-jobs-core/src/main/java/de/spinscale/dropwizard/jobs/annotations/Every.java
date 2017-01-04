@@ -29,6 +29,8 @@ public @interface Every {
      */
     String jobName() default "";
 
+    int repeatCount() default -1;
+
     boolean requestRecovery() default false;
 
     boolean storeDurably() default false;

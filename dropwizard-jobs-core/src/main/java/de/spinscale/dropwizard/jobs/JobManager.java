@@ -136,6 +136,7 @@ public class JobManager implements Managed {
             Every.MisfirePolicy misfirePolicy = everyAnnotation.misfirePolicy();
             boolean requestRecovery = everyAnnotation.requestRecovery();
             boolean storeDurably = everyAnnotation.storeDurably();
+            int repeatCount = everyAnnotation.repeatCount();
 
             String value = everyAnnotation.value();
             if (value.isEmpty() || value.matches("\\$\\{.*\\}")) {
@@ -143,8 +144,13 @@ public class JobManager implements Managed {
                 log.info(clazz + " is configured in the config file to run every " + value);
             }
             long milliSeconds = TimeParserUtil.parseDuration(value);
+
             SimpleScheduleBuilder scheduleBuilder = SimpleScheduleBuilder.simpleSchedule()
-                    .withIntervalInMilliseconds(milliSeconds).repeatForever();
+                    .withIntervalInMilliseconds(milliSeconds);
+
+            if (repeatCount > -1) scheduleBuilder.withRepeatCount(repeatCount);
+            else scheduleBuilder.repeatForever();
+
             if (misfirePolicy == Every.MisfirePolicy.IGNORE_MISFIRES) scheduleBuilder.withMisfireHandlingInstructionIgnoreMisfires();
             else if (misfirePolicy == Every.MisfirePolicy.FIRE_NOW) scheduleBuilder.withMisfireHandlingInstructionFireNow();
             else if (misfirePolicy == Every.MisfirePolicy.NOW_WITH_EXISTING_COUNT) scheduleBuilder.withMisfireHandlingInstructionNowWithExistingCount();
