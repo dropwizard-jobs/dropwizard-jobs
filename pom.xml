@@ -219,6 +219,7 @@
                                     <goal>sign</goal>
                                 </goals>
                                 <configuration>
+                                    <gpg.useagent>true</gpg.useagent>
                                     <keyname>${gpg.keyname}</keyname>
                                     <passphraseServerId>${gpg.keyname}</passphraseServerId>
                                 </configuration>
