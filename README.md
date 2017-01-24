@@ -21,9 +21,31 @@ Add to your pom:
 <dependency>
   <groupId>de.spinscale.dropwizard</groupId>
   <artifactId>dropwizard-jobs-core</artifactId>
-  <version>2.0.1</version>
+  <version>3.0.0</version>
 </dependency>
 ```
+
+## API changes from 3.x
+The 3.x release has breaking API changes that would need to be addressed if upgrading from an older version. The
+signature of the <code>doJob()</code> method has changed and now takes a <code>JobExecutionContext</code> as an
+argument and also throws a <code>JobExecutionException</code>.
+
+##### 3.x
+```java
+  @Override
+  public void doJob(JobExecutionContext context) throws JobExecutionException {
+    ...
+  }
+```
+
+##### < 3.x
+```java
+  @Override
+  public void doJob() {
+    ...
+  }
+```
+
 
 ## Installing the bundle from source code
 
@@ -68,7 +90,7 @@ The <code>@OnApplicationStart</code> annotation triggers a job after the quartz 
 @OnApplicationStart
 public class StartupJob extends Job {
   @Override
-  public void doJob() {
+  public void doJob(JobExecutionContext context) throws JobExecutionException {
     // logic run once on application start
   }
 }
@@ -80,7 +102,7 @@ The <code>@OnApplicationStop</code> annotation triggers a job when the applicati
 @OnApplicationStop
 public class StopJob extends Job {
   @Override
-  public void doJob() {
+  public void doJob(JobExecutionContext context) throws JobExecutionException {
     // logic run once on application stop
   }
 }
@@ -93,7 +115,7 @@ Use in conjunction with <code>@DelayStart</code> to delay the first invocation o
 @Every("1s")
 public class EveryTestJob extends Job {
   @Override
-  public void doJob() {
+  public void doJob(JobExecutionContext context) throws JobExecutionException {
     // logic run every time and time again
   }
 }
@@ -106,7 +128,7 @@ The <code>@DelayStart</code> annotation can be used in conjunction with @Every t
 @Every("1s")
 public class EveryTestJobWithDelayedStart extends Job {
   @Override
-  public void doJob() {
+  public void doJob(JobExecutionContext context) throws JobExecutionException {
     // logic run every time and time again
   }
 }
@@ -119,9 +141,8 @@ This expression allows you to run a job every 15 seconds and could possibly also
 ```java
 @On("0/15 * * * * ?")
 public class OnTestJob extends Job {
-
   @Override
-  public void doJob() {
+  public void doJob(JobExecutionContext context) throws JobExecutionException {
     // logic run via cron expression
   }
 }
@@ -167,9 +188,8 @@ package com.my.awesome.web.app
  */
 @Every(value="5s", jobName="MyJob")
 public class MyJob extends Job {
-
   @Override
-  public void doJob() {
+  public void doJob(JobExecutionContext context) throws JobExecutionException {
     // do some work here
   } 
 }
@@ -266,4 +286,5 @@ public class ApplicationConfiguration extends Configuration implements JobConfig
  * [Yun Zhi Lin](https://github.com/yunspace)
  * [Eyal Golan](https://github.com/eyalgo)
  * [Jonathan Fritz](https://github.com/MusikPolice)
+ * [Ahsan Rabbani](https://github.com/xargsgrep)
 
