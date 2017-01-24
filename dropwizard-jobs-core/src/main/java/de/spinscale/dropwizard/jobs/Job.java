@@ -4,6 +4,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
+
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 
@@ -21,7 +22,7 @@ public abstract class Job implements org.quartz.Job {
     }
 
     public Job(MetricRegistry metricRegistry) {
-        timer = metricRegistry.timer(name(getClass(), getClass().getName()));
+        timer = metricRegistry.timer(name(getClass()));
     }
 
     @Override

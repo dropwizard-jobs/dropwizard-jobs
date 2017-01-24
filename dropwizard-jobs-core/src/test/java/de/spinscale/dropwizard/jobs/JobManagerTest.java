@@ -2,19 +2,23 @@ package de.spinscale.dropwizard.jobs;
 
 import de.spinscale.dropwizard.jobs.annotations.Every;
 import de.spinscale.dropwizard.jobs.annotations.On;
-import io.dropwizard.Configuration;
+
 import org.hamcrest.core.IsEqual;
 import org.junit.Before;
 import org.junit.Test;
+import org.quartz.JobDetail;
 import org.quartz.JobKey;
+import org.quartz.Trigger;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import io.dropwizard.Configuration;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class JobManagerTest {
 
@@ -79,6 +83,60 @@ public class JobManagerTest {
         assertThat(applicationStopTestJob.latch().await(2, TimeUnit.SECONDS), is(true));
     }
 
+    @Test
+    public void testJobsWithDefaultConfiguration() throws Exception {
+        jobManager = new JobManager(new EveryTestJobWithDefaultConfiguration(), new OnTestJobWithDefaultConfiguration());
+
+        jobManager.start();
+
+        String jobName = EveryTestJobWithDefaultConfiguration.class.getCanonicalName();
+        JobDetail jobDetail = jobManager.scheduler.getJobDetail(JobKey.jobKey(jobName));
+        Trigger trigger = jobManager.scheduler.getTriggersOfJob(JobKey.jobKey(jobName)).get(0);
+
+        assertEquals(false, jobDetail.requestsRecovery());
+        assertEquals(false, jobDetail.isDurable());
+        assertEquals(Trigger.DEFAULT_PRIORITY, trigger.getPriority());
+        assertEquals(Trigger.MISFIRE_INSTRUCTION_SMART_POLICY, trigger.getMisfireInstruction());
+
+        jobName = OnTestJobWithDefaultConfiguration.class.getCanonicalName();
+        jobDetail = jobManager.scheduler.getJobDetail(JobKey.jobKey(jobName));
+        trigger = jobManager.scheduler.getTriggersOfJob(JobKey.jobKey(jobName)).get(0);
+
+        assertEquals(false, jobDetail.requestsRecovery());
+        assertEquals(false, jobDetail.isDurable());
+        assertEquals(Trigger.DEFAULT_PRIORITY, trigger.getPriority());
+        assertEquals(Trigger.MISFIRE_INSTRUCTION_SMART_POLICY, trigger.getMisfireInstruction());
+
+        jobManager.stop();
+    }
+
+    @Test
+    public void testJobsWithNonDefaultConfiguration() throws Exception {
+        jobManager = new JobManager(new EveryTestJobWithNonDefaultConfiguration(), new OnTestJobWithNonDefaultConfiguration());
+
+        jobManager.start();
+
+        String jobName = EveryTestJobWithNonDefaultConfiguration.class.getCanonicalName();
+        JobDetail jobDetail = jobManager.scheduler.getJobDetail(JobKey.jobKey(jobName));
+        Trigger trigger = jobManager.scheduler.getTriggersOfJob(JobKey.jobKey(jobName)).get(0);
+
+        assertEquals(true, jobDetail.requestsRecovery());
+        assertEquals(true, jobDetail.isDurable());
+        assertEquals(20, trigger.getPriority());
+        assertEquals(Trigger.MISFIRE_INSTRUCTION_IGNORE_MISFIRE_POLICY, trigger.getMisfireInstruction());
+
+        jobName = OnTestJobWithNonDefaultConfiguration.class.getCanonicalName();
+        jobDetail = jobManager.scheduler.getJobDetail(JobKey.jobKey(jobName));
+        trigger = jobManager.scheduler.getTriggersOfJob(JobKey.jobKey(jobName)).get(0);
+
+        assertEquals(true, jobDetail.requestsRecovery());
+        assertEquals(true, jobDetail.isDurable());
+        assertEquals(20, trigger.getPriority());
+        assertEquals(Trigger.MISFIRE_INSTRUCTION_IGNORE_MISFIRE_POLICY, trigger.getMisfireInstruction());
+
+        jobManager.stop();
+    }
+
     private static class TestConfig extends Configuration implements JobConfiguration {
         private Map<String, String> jobs = new HashMap<>();
 
@@ -86,4 +144,25 @@ public class JobManagerTest {
             return jobs;
         }
     }
+
+    @Every("10ms")
+    class EveryTestJobWithDefaultConfiguration extends AbstractJob {
+        public EveryTestJobWithDefaultConfiguration() { super(1); }
+    }
+
+    @On("0/1 * * * * ?")
+    class OnTestJobWithDefaultConfiguration extends AbstractJob {
+        public OnTestJobWithDefaultConfiguration() { super(1); }
+    }
+
+    @Every(value = "10ms", requestRecovery = true, storeDurably = true, priority = 20, misfirePolicy = Every.MisfirePolicy.IGNORE_MISFIRES)
+    class EveryTestJobWithNonDefaultConfiguration extends AbstractJob {
+        public EveryTestJobWithNonDefaultConfiguration() { super(1); }
+    }
+
+    @On(value = "0/1 * * * * ?", requestRecovery = true, storeDurably = true, priority = 20, misfirePolicy = On.MisfirePolicy.IGNORE_MISFIRES)
+    class OnTestJobWithNonDefaultConfiguration extends AbstractJob {
+        public OnTestJobWithNonDefaultConfiguration() { super(1); }
+    }
+
 }
