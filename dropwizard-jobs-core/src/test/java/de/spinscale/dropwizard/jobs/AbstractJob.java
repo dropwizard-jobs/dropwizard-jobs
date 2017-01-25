@@ -1,5 +1,8 @@
 package de.spinscale.dropwizard.jobs;
 
+import org.quartz.JobExecutionContext;
+import org.quartz.JobExecutionException;
+
 import java.util.concurrent.CountDownLatch;
 
 public abstract class AbstractJob extends Job {
@@ -11,7 +14,7 @@ public abstract class AbstractJob extends Job {
     }
 
     @Override
-    public void doJob() {
+    public void doJob(JobExecutionContext context) throws JobExecutionException {
         latch.countDown();
     }
 

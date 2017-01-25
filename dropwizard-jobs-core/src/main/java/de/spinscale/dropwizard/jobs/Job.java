@@ -15,6 +15,7 @@ public abstract class Job implements org.quartz.Job {
     public static final String DROPWIZARD_JOBS_KEY = "dropwizard-jobs";
 
     private final Timer timer;
+    private final MetricRegistry metricRegistry;
 
     public Job() {
         // get the metrics registry which was shared during bundle instantiation
@@ -22,15 +23,21 @@ public abstract class Job implements org.quartz.Job {
     }
 
     public Job(MetricRegistry metricRegistry) {
-        timer = metricRegistry.timer(name(getClass()));
+        this.timer = metricRegistry.timer(name(getClass()));
+        this.metricRegistry = metricRegistry;
     }
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
         try (Context timerContext = timer.time()) {
-            doJob();
+            doJob(context);
         }
     }
 
-    public abstract void doJob();
+    public abstract void doJob(JobExecutionContext context) throws JobExecutionException;
+
+    protected MetricRegistry getMetricRegistry() {
+        return metricRegistry;
+    }
+
 }

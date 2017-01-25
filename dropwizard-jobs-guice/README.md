@@ -13,7 +13,7 @@ Add to your pom:
 <dependency>
   <groupId>de.spinscale</groupId>
   <artifactId>dropwizard-jobs-guice</artifactId>
-  <version>1.0.1</version>
+  <version>3.0.0</version>
 </dependency>
 ```
 
