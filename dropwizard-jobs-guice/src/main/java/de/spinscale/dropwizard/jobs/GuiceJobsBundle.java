@@ -5,14 +5,17 @@ import com.google.inject.Injector;
 import io.dropwizard.setup.Environment;
 
 public class GuiceJobsBundle extends JobsBundle {
+    
+    private Injector injector;
 
     public GuiceJobsBundle(Injector injector) {
-        jobManager = new GuiceJobManager(injector);
+        this.injector = injector;
+        
     }
 
     @Override
     public void run(JobConfiguration configuration, Environment environment) throws Exception {
-        jobManager.configure(configuration);
+        jobManager = new GuiceJobManager(configuration, injector);
         environment.lifecycle().manage(jobManager);
     }
 
