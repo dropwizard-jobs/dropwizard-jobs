@@ -150,32 +150,33 @@ public class OnTestJob extends Job {
 
 ## Using dropwizard-jobs in a Clustered Environment
 
-By default, dropwizard-jobs is designed to be used with an in-memory Quartz scheduler. If you wish to deploy it in a clustered environment that consists of more than one node, you'll need to use a scheduler that has some sort of persistence. Adding a file called `quartz.properties` to your classpath that looks something like this will do the trick:
+By default, dropwizard-jobs is designed to be used with an in-memory Quartz scheduler. If you wish to deploy it in a clustered environment that consists of more than one node, you'll need to use a scheduler that has some sort of persistence. You can either add a file called `quartz.properties` to your classpath or you can provide the quartz configuration in your Dropwizard configuration file. The content of the `quartz` element is passed to the Quartz scheduler directly (so you can take the properties from the official docs). If you'd like to add the config to your Dropwizard configuration file, you need to override the `getQuartzConfiguration()` method in your application's configuration. You can set the map to `DefaultQuartzConfiguration.get()`. 
 
+See the full Quartz configuration reference at http://www.quartz-scheduler.org/documentation/quartz-2.x/configuration/
+```yaml
+[...]
+quartz:
+	org.quartz.scheduler.instanceName: "scheduler"
+	org.quartz.scheduler.instanceId: "AUTO"
+	org.quartz.scheduler.skipUpdateCheck: "true"
+	org.quartz.threadPool.class: "org.quartz.simpl.SimpleThreadPool"
+	org.quartz.threadPool.threadCount: "10"
+	org.quartz.threadPool.threadPriority: "5"
+	org.quartz.jobStore.misfireThreshold: "60000"
+	org.quartz.jobStore.class: "org.quartz.impl.jdbcjobstore.JobStoreTX"
+	org.quartz.jobStore.driverDelegateClass: "org.quartz.impl.jdbcjobstore.StdJDBCDelegate"
+	org.quartz.jobStore.useProperties: "false"
+	org.quartz.jobStore.dataSource: "myDS"
+	org.quartz.jobStore.tablePrefix: "QRTZ_"
+	org.quartz.jobStore.isClustered: "true"
+	org.quartz.dataSource.myDS.driver: "com.mysql.cj.jdbc.Driver"
+	org.quartz.dataSource.myDS.URL: "jdbc:mysql://localhost:3306/quartz"
+	org.quartz.dataSource.myDS.user: "fami"
+	org.quartz.dataSource.myDS.password: "ageClXl5mrSg"
+	org.quartz.dataSource.myDS.maxConnections: "5"
+	org.quartz.dataSource.myDS.validationQuery: "select 1"
 ```
-# See the full Quartz configuration reference at http://www.quartz-scheduler.org/documentation/quartz-2.x/configuration/
 
-# define the scheduler and how many threads it ought to use
-org.quartz.scheduler.instanceName = MyScheduler
-org.quartz.scheduler.instanceId = AUTO
-org.quartz.threadPool.threadCount = 1
-
-# instances will synchronize their schedulers by communicating via a postgresql database
-# this ensures that scheduled jobs won't be run by two or more nodes at the same time
-org.quartz.jobStore.class = org.quartz.impl.jdbcjobstore.JobStoreTX
-org.quartz.jobStore.driverDelegateClass = org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
-org.quartz.jobStore.dataSource = my-datasource
-org.quartz.jobStore.isClustered = true
-org.quartz.jobStore.tablePrefix = quartz.qrtz_
-
-# specifies how to connect to the database
-# the database tables that quartz requires must be created in advance, and must reside in the quartz schema
-org.quartz.dataSource.aeryon-live-datasource.driver = org.postgresql.Driver
-org.quartz.dataSource.aeryon-live-datasource.URL = # DATABASE CONNECTION STRING
-org.quartz.dataSource.aeryon-live-datasource.user = # USERNAME
-org.quartz.dataSource.aeryon-live-datasource.password = # PASSWORD
-org.quartz.dataSource.aeryon-live-datasource.maxConnections = 1
-```
 When you do this, dropwizard-jobs will ensure that only one instance of each job is scheduled, regardless of the number of nodes in your cluster by using the fully-qualified class name of your job implementation as the name of your job. For example, if your job implementation resides in a class called `MyJob`, which in turn is located in the package `com.my.awesome.web.app`, then the name of your job (so far as Quartz is concerned) will be `com.my.awesome.web.app.MyJob`.
 
 If you wish to override the default name that dropwizard-jobs assigns to your job, you can do so by setting the `jobName` property in the `@Every` or `@On` annotation like so:
@@ -272,9 +273,7 @@ public class ApplicationConfiguration extends Configuration implements JobConfig
 ```
 
 # Limitations
-
-* The jobs are not persisted, but purely in memory (though quartz can do different), so shutting down your dropwizard service at a certain time might lead to not run the job.
-* The scheduler is not configurable at the moment, for example the threadpool size is fixed to ten.
+* Configuration mechanism is still in early stages. Might be enhanced in the future.
 
 # Thanks
 
