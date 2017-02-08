@@ -9,7 +9,7 @@ public interface JobConfiguration {
     default Map<String, String> getJobs() {
         return Collections.emptyMap();
     }
-    
+
     @JsonProperty("quartz")
     default Map<String, String> getQuartzConfiguration() {
         return Collections.emptyMap();
