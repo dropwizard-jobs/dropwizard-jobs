@@ -1,13 +1,7 @@
 package de.spinscale.dropwizard.jobs;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
+import de.spinscale.dropwizard.jobs.annotations.Every;
+import de.spinscale.dropwizard.jobs.annotations.On;
 
 import org.hamcrest.Matchers;
 import org.hamcrest.core.IsEqual;
@@ -17,9 +11,15 @@ import org.quartz.JobKey;
 import org.quartz.SchedulerConfigException;
 import org.quartz.Trigger;
 
-import de.spinscale.dropwizard.jobs.annotations.Every;
-import de.spinscale.dropwizard.jobs.annotations.On;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
 import io.dropwizard.Configuration;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.*;
 
 public class JobManagerTest {
 
@@ -43,30 +43,24 @@ public class JobManagerTest {
                 applicationStopTestJob);
         jobManager.start();
 
-        // a job with an @Every annotation that doesn't specify a job name
-        // should be assigned the canonical class name
+        // a job with an @Every annotation that doesn't specify a job name should be assigned the canonical class name
         String jobName = EveryTestJob.class.getCanonicalName();
         assertTrue(jobManager.scheduler.checkExists(JobKey.jobKey(jobName)));
 
-        // a job with an @Every annotation that specifies a job name should get
-        // that name, not the canonical class name
+        // a job with an @Every annotation that specifies a job name should get that name, not the canonical class name
         jobName = EveryTestJobWithJobName.class.getAnnotation(Every.class).jobName();
         assertTrue(jobManager.scheduler.checkExists(JobKey.jobKey(jobName)));
 
-        // a job with an @On annotation that doesn't specify a job name should
-        // be assigned the canonical class name
+        // a job with an @On annotation that doesn't specify a job name should be assigned the canonical class name
         jobName = OnTestJob.class.getCanonicalName();
         assertTrue(jobManager.scheduler.checkExists(JobKey.jobKey(jobName)));
 
-        // a job with an @On annotation that specifies a job name should get
-        // that name, not the canonical class name
+        // a job with an @On annotation that specifies a job name should get that name, not the canonical class name
         jobName = OnTestJobWithJobName.class.getAnnotation(On.class).jobName();
         assertTrue(jobManager.scheduler.checkExists(JobKey.jobKey(jobName)));
 
-        // if there are two jobs that have the same name, only one job and
-        // trigger will be created with that job name
-        // this simulates running in clustered environments where two or more
-        // nodes have the same set of jobs
+        // if there are two jobs that have the same name, only one job and trigger will be created with that job name
+        // this simulates running in clustered environments where two or more nodes have the same set of jobs
         jobName = EveryTestJobWithJobName.class.getAnnotation(Every.class).jobName();
         assertThat(jobName, IsEqual.equalTo(EveryTestJobWithSameJobName.class.getAnnotation(Every.class).jobName()));
         assertTrue(jobManager.scheduler.checkExists(JobKey.jobKey(jobName)));

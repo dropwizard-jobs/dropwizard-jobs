@@ -1,9 +1,12 @@
 package de.spinscale.dropwizard.jobs;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Properties;
-import java.util.stream.Collectors;
+import de.spinscale.dropwizard.jobs.annotations.DelayStart;
+import de.spinscale.dropwizard.jobs.annotations.Every;
+import de.spinscale.dropwizard.jobs.annotations.On;
+import de.spinscale.dropwizard.jobs.annotations.OnApplicationStart;
+import de.spinscale.dropwizard.jobs.annotations.OnApplicationStop;
+import de.spinscale.dropwizard.jobs.parser.TimeParserUtil;
+import io.dropwizard.lifecycle.Managed;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
@@ -23,13 +26,10 @@ import org.quartz.spi.JobFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.spinscale.dropwizard.jobs.annotations.DelayStart;
-import de.spinscale.dropwizard.jobs.annotations.Every;
-import de.spinscale.dropwizard.jobs.annotations.On;
-import de.spinscale.dropwizard.jobs.annotations.OnApplicationStart;
-import de.spinscale.dropwizard.jobs.annotations.OnApplicationStop;
-import de.spinscale.dropwizard.jobs.parser.TimeParserUtil;
-import io.dropwizard.lifecycle.Managed;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Properties;
+import java.util.stream.Collectors;
 
 public class JobManager implements Managed {
 
@@ -57,8 +57,7 @@ public class JobManager implements Managed {
     public void stop() throws Exception {
         scheduleAllJobsOnApplicationStop();
 
-        // this is enough to put the job into the queue, otherwise the jobs
-        // wont
+        // this is enough to put the job into the queue, otherwise the jobs wont
         // be executed, anyone got a better solution?
         Thread.sleep(100);
 
@@ -82,7 +81,8 @@ public class JobManager implements Managed {
     protected void scheduleAllJobsOnApplicationStop() throws SchedulerException {
         List<JobDetail> jobDetails = Arrays.stream(jobs)
                 .filter(job -> job.getClass().isAnnotationPresent(OnApplicationStop.class))
-                .map(job -> JobBuilder.newJob(job.getClass()).build()).collect(Collectors.toList());
+                .map(job -> JobBuilder.newJob(job.getClass()).build())
+                .collect(Collectors.toList());
         for (JobDetail jobDetail : jobDetails) {
             scheduler.scheduleJob(jobDetail, executeNowTrigger());
         }
@@ -90,7 +90,8 @@ public class JobManager implements Managed {
 
     protected void scheduleAllJobsWithOnAnnotation() throws SchedulerException {
         List<Class<? extends Job>> onJobClasses = Arrays.stream(this.jobs)
-                .filter(job -> job.getClass().isAnnotationPresent(On.class)).map(job -> job.getClass())
+                .filter(job -> job.getClass().isAnnotationPresent(On.class))
+                .map(job -> job.getClass())
                 .collect(Collectors.toList());
 
         if (onJobClasses.isEmpty()) {
@@ -101,8 +102,7 @@ public class JobManager implements Managed {
         for (Class<? extends org.quartz.Job> clazz : onJobClasses) {
             On onAnnotation = clazz.getAnnotation(On.class);
             String cron = onAnnotation.value();
-            String key = StringUtils.isNotBlank(onAnnotation.jobName()) ? onAnnotation.jobName()
-                    : clazz.getCanonicalName();
+            String key = StringUtils.isNotBlank(onAnnotation.jobName()) ? onAnnotation.jobName() : clazz.getCanonicalName();
             int priority = onAnnotation.priority();
             On.MisfirePolicy misfirePolicy = onAnnotation.misfirePolicy();
             boolean requestRecovery = onAnnotation.requestRecovery();
@@ -127,7 +127,8 @@ public class JobManager implements Managed {
 
     protected void scheduleAllJobsWithEveryAnnotation() throws SchedulerException {
         List<Class<? extends Job>> everyJobClasses = Arrays.stream(this.jobs)
-                .filter(job -> job.getClass().isAnnotationPresent(Every.class)).map(job -> job.getClass())
+                .filter(job -> job.getClass().isAnnotationPresent(Every.class))
+                .map(job -> job.getClass())
                 .collect(Collectors.toList());
 
         if (everyJobClasses.isEmpty()) {
@@ -178,12 +179,13 @@ public class JobManager implements Managed {
                 start = start.plus(Duration.millis(milliSecondDelay));
             }
 
-            Trigger trigger = TriggerBuilder.newTrigger().withSchedule(scheduleBuilder).startAt(start.toDate())
-                    .withPriority(priority).build();
+            Trigger trigger = TriggerBuilder.newTrigger().withSchedule(scheduleBuilder)
+                    .startAt(start.toDate())
+                    .withPriority(priority)
+                    .build();
 
             // ensure that only one instance of each job is scheduled
-            String key = StringUtils.isNotBlank(everyAnnotation.jobName()) ? everyAnnotation.jobName()
-                    : clazz.getCanonicalName();
+            String key = StringUtils.isNotBlank(everyAnnotation.jobName()) ? everyAnnotation.jobName() : clazz.getCanonicalName();
             JobKey jobKey = JobKey.jobKey(key);
             createOrUpdateJob(jobKey, clazz, trigger, requestRecovery, storeDurably);
 
@@ -195,7 +197,6 @@ public class JobManager implements Managed {
         }
     }
 
-    @SuppressWarnings("unchecked")
     private String readDurationFromConfig(Every annotation, Class<? extends org.quartz.Job> clazz) {
         if (configuration == null) {
             return null;
@@ -210,7 +211,8 @@ public class JobManager implements Managed {
     protected void scheduleAllJobsOnApplicationStart() throws SchedulerException {
         List<JobDetail> jobDetails = Arrays.stream(this.jobs)
                 .filter(job -> job.getClass().isAnnotationPresent(OnApplicationStart.class))
-                .map(job -> JobBuilder.newJob(job.getClass()).build()).collect(Collectors.toList());
+                .map(job -> JobBuilder.newJob(job.getClass()).build())
+                .collect(Collectors.toList());
 
         if (!jobDetails.isEmpty()) {
             log.info("Jobs to run on application start:");
@@ -245,36 +247,31 @@ public class JobManager implements Managed {
     private void logAllOnApplicationStopJobs() {
         log.info("Jobs to run on application stop:");
 
-        Arrays.stream(this.jobs).filter(job -> job.getClass().isAnnotationPresent(OnApplicationStop.class))
-                .map(job -> job.getClass()).forEach(clazz -> log.info("   " + clazz.getCanonicalName()));
+        Arrays.stream(this.jobs)
+                .filter(job -> job.getClass().isAnnotationPresent(OnApplicationStop.class))
+                .map(job -> job.getClass())
+                .forEach(clazz -> log.info("   " + clazz.getCanonicalName()));
     }
 
-    private void createOrUpdateJob(JobKey jobKey, Class<? extends org.quartz.Job> clazz, Trigger trigger,
-            boolean requestsRecovery, boolean storeDurably) throws SchedulerException {
+    private void createOrUpdateJob(JobKey jobKey, Class<? extends org.quartz.Job> clazz, Trigger trigger, boolean requestsRecovery,
+            boolean storeDurably) throws SchedulerException {
         JobBuilder jobBuilder = JobBuilder.newJob(clazz).withIdentity(jobKey).requestRecovery(requestsRecovery)
                 .storeDurably(storeDurably);
 
         if (!scheduler.checkExists(jobKey)) {
-            // if the job doesn't already exist, we can create it, along with
-            // its trigger. this prevents us
-            // from creating multiple instances of the same job when running
-            // in
-            // a clustered environment
+            // if the job doesn't already exist, we can create it, along with its trigger. this prevents us
+            // from creating multiple instances of the same job when running in a clustered environment
             scheduler.scheduleJob(jobBuilder.build(), trigger);
             log.info("scheduled job with key " + jobKey.toString());
         } else {
-            // if the job has exactly one trigger, we can just reschedule it,
-            // which allows us to update the schedule for
+            // if the job has exactly one trigger, we can just reschedule it, which allows us to update the schedule for
             // that trigger.
             List<? extends Trigger> triggers = scheduler.getTriggersOfJob(jobKey);
             if (triggers.size() == 1) {
                 scheduler.rescheduleJob(triggers.get(0).getKey(), trigger);
             } else {
-                // if for some reason the job has multiple triggers, it's
-                // easiest to just delete and re-create the job,
-                // since we want to enforce a one-to-one relationship
-                // between
-                // jobs and triggers
+                // if for some reason the job has multiple triggers, it's easiest to just delete and re-create the job,
+                // since we want to enforce a one-to-one relationship between jobs and triggers
                 scheduler.deleteJob(jobKey);
                 scheduler.scheduleJob(jobBuilder.build(), trigger);
             }
