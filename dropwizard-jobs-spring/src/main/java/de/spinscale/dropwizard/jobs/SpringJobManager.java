@@ -7,8 +7,8 @@ public class SpringJobManager extends JobManager {
 
     protected SpringJobFactory jobFactory;
 
-    public SpringJobManager(ApplicationContext context) {
-        super(context.getBeansOfType(Job.class).values().toArray(new Job[] {}));
+    public SpringJobManager(JobConfiguration config, ApplicationContext context) {
+        super(config, context.getBeansOfType(Job.class).values().toArray(new Job[] {}));
         jobFactory = new SpringJobFactory(context);
     }
 

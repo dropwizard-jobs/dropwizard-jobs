@@ -1,20 +1,22 @@
 package de.spinscale.dropwizard.jobs;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+
+import java.util.concurrent.TimeUnit;
+
 import org.junit.Test;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
-import java.util.concurrent.TimeUnit;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import io.dropwizard.Configuration;
 
 public class SpringJobManagerTest {
 
     private final ApplicationContext context = new AnnotationConfigApplicationContext(ApplicationStartTestJob.class,
             ApplicationStopTestJob.class, EveryTestJob.class, OnTestJob.class, DependencyTestJob.class,
             Dependency.class);
-    private final JobManager jobManager = new SpringJobManager(context);
+    private final JobManager jobManager = new SpringJobManager(new TestConfig(), context);
 
     @Test
     public void testThatJobsAreExecuted() throws Exception {
@@ -27,5 +29,9 @@ public class SpringJobManagerTest {
 
         jobManager.stop();
         assertThat(context.getBean(ApplicationStopTestJob.class).latch.await(1, TimeUnit.SECONDS), is(true));
+    }
+    
+    public static class TestConfig extends Configuration implements JobConfiguration {
+        
     }
 }
