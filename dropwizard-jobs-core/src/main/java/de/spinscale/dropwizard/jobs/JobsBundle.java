@@ -10,29 +10,28 @@ import io.dropwizard.setup.Environment;
 
 public class JobsBundle implements ConfiguredBundle<JobConfiguration> {
 
-    private final Job[] jobs;
-    protected JobManager jobManager;
+	private final Job[] jobs;
+	protected JobManager jobManager;
 
-    public JobsBundle(Job ... jobs) {
-        this.jobs = jobs;
-    }
+	public JobsBundle(Job... jobs) {
+		this.jobs = jobs;
+	}
 
-    @Override
-    public void run(JobConfiguration configuration, Environment environment) throws Exception {
-        jobManager = new JobManager(jobs);
-        jobManager.configure(configuration);
-        environment.lifecycle().manage(jobManager);
-    }
+	@Override
+	public void run(JobConfiguration configuration, Environment environment) throws Exception {
+		jobManager = new JobManager(configuration, jobs);
+		environment.lifecycle().manage(jobManager);
+	}
 
-    @Override
-    public void initialize(Bootstrap<?> bootstrap) {
-        // add shared metrics registry to be used by Jobs, since defaultRegistry
-        // has been removed
-        SharedMetricRegistries.add(Job.DROPWIZARD_JOBS_KEY, bootstrap.getMetricRegistry());
-    }
+	@Override
+	public void initialize(Bootstrap<?> bootstrap) {
+		// add shared metrics registry to be used by Jobs, since defaultRegistry
+		// has been removed
+		SharedMetricRegistries.add(Job.DROPWIZARD_JOBS_KEY, bootstrap.getMetricRegistry());
+	}
 
-    public Scheduler getScheduler() {
-        return jobManager.getScheduler();
-    }
+	public Scheduler getScheduler() {
+		return jobManager.getScheduler();
+	}
 
 }

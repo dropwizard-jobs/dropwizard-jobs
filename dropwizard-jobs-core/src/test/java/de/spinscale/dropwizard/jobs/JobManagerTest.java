@@ -1,28 +1,29 @@
 package de.spinscale.dropwizard.jobs;
 
-import de.spinscale.dropwizard.jobs.annotations.Every;
-import de.spinscale.dropwizard.jobs.annotations.On;
-
-import org.hamcrest.core.IsEqual;
-import org.junit.Before;
-import org.junit.Test;
-import org.quartz.JobDetail;
-import org.quartz.JobKey;
-import org.quartz.Trigger;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import io.dropwizard.Configuration;
+import org.hamcrest.Matchers;
+import org.hamcrest.core.IsEqual;
+import org.junit.Test;
+import org.quartz.JobDetail;
+import org.quartz.JobKey;
+import org.quartz.SchedulerConfigException;
+import org.quartz.Trigger;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.*;
+import de.spinscale.dropwizard.jobs.annotations.Every;
+import de.spinscale.dropwizard.jobs.annotations.On;
+import io.dropwizard.Configuration;
 
 public class JobManagerTest {
 
-    private JobManager jobManager = new JobManager();
+    private JobManager jobManager = new JobManager(new TestConfig());
     private ApplicationStartTestJob startTestJob = new ApplicationStartTestJob();
     private OnTestJob onTestJob = new OnTestJob();
     private OnTestJobWithJobName onTestJobWithJobName = new OnTestJobWithJobName();
@@ -32,19 +33,14 @@ public class JobManagerTest {
     private EveryTestJobWithJobName everyTestJobWithJobName = new EveryTestJobWithJobName();
     private ApplicationStopTestJob applicationStopTestJob = new ApplicationStopTestJob();
 
-    @Before
-    public void ensureLatchesAreUntouched() {
-        jobManager = new JobManager(startTestJob, onTestJob, onTestJobWithJobName, everyTestJob, everyTestJobWithJobName,
-                everyTestJobWithDelay, everyTestJobAlternativeConfiguration, applicationStopTestJob);
-    }
 
     @Test
     public void testThatJobsAreExecuted() throws Exception {
-        TestConfig config = new TestConfig();
-        config.getJobs().put("everyTestJobDefaultConfiguration", "50ms");
-        config.getJobs().put("testJob", "50ms");
-        jobManager.configure(config);
-
+    	TestConfig config = new TestConfig();
+    	config.getJobs().put("everyTestJobDefaultConfiguration", "50ms");
+    	config.getJobs().put("testJob", "50ms");
+        jobManager = new JobManager(config, startTestJob, onTestJob, onTestJobWithJobName, everyTestJob, everyTestJobWithJobName,
+                everyTestJobWithDelay, everyTestJobAlternativeConfiguration, applicationStopTestJob);
         jobManager.start();
 
         // a job with an @Every annotation that doesn't specify a job name should be assigned the canonical class name
@@ -85,7 +81,7 @@ public class JobManagerTest {
 
     @Test
     public void testJobsWithDefaultConfiguration() throws Exception {
-        jobManager = new JobManager(new EveryTestJobWithDefaultConfiguration(), new OnTestJobWithDefaultConfiguration());
+        jobManager = new JobManager(new TestConfig(), new EveryTestJobWithDefaultConfiguration(), new OnTestJobWithDefaultConfiguration());
 
         jobManager.start();
 
@@ -112,7 +108,7 @@ public class JobManagerTest {
 
     @Test
     public void testJobsWithNonDefaultConfiguration() throws Exception {
-        jobManager = new JobManager(new EveryTestJobWithNonDefaultConfiguration(), new OnTestJobWithNonDefaultConfiguration());
+        jobManager = new JobManager(new TestConfig(), new EveryTestJobWithNonDefaultConfiguration(), new OnTestJobWithNonDefaultConfiguration());
 
         jobManager.start();
 
@@ -136,12 +132,49 @@ public class JobManagerTest {
 
         jobManager.stop();
     }
+    
+    @Test
+    public void shouldFallbackToNormalBehaviourWhenNoPropertiesAreDefined() throws Exception {
+    	TestConfig config = new TestConfig();
+    	config.getQuartzConfiguration().clear();
+    	
+        jobManager = new JobManager(config, startTestJob, onTestJob, onTestJobWithJobName, everyTestJob, everyTestJobWithJobName);
+        jobManager.start();
+        
+        assertThat(jobManager.getScheduler().getMetaData().getThreadPoolSize(), Matchers.is(10));
+        jobManager.stop();
+    }
+    
+    @Test(expected = SchedulerConfigException.class)
+    public void throwsExceptionWhenNoPropertiesAreDefined() throws Exception {
+    	TestConfig config = new TestConfig();
+    	config.getQuartzConfiguration().clear();
+    	config.getQuartzConfiguration().put("some", "property");
+    	
+        jobManager = new JobManager(config, startTestJob, onTestJob, onTestJobWithJobName, everyTestJob, everyTestJobWithJobName);
+        jobManager.start();
+    }
+    
+    @Test
+    public void shouldSetDropwizardPropertiesOnSchedulerFactory() throws Exception {
+    	TestConfig config = new TestConfig();
+    	// change configuration 
+    	config.getQuartzConfiguration().put("org.quartz.threadPool.threadCount", "15");
+        jobManager = new JobManager(config, startTestJob, onTestJob, onTestJobWithJobName, everyTestJob, everyTestJobWithJobName);
+        jobManager.start();
+        assertThat(jobManager.getScheduler().getMetaData().getThreadPoolSize(), Matchers.is(15));
+        jobManager.stop();
+    }
 
     private static class TestConfig extends Configuration implements JobConfiguration {
         private Map<String, String> jobs = new HashMap<>();
-
+        
         public Map<String, String> getJobs() {
             return jobs;
+        }
+        
+        public Map<String, String> getQuartzConfiguration() {
+            return DefaultQuartzConfiguration.get();
         }
     }
 

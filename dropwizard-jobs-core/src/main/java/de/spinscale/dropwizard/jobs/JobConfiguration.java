@@ -7,4 +7,8 @@ public interface JobConfiguration {
     default Map<String, String> getJobs() {
         return Collections.emptyMap();
     }
+    
+    default Map<String, String> getQuartzConfiguration() {
+        return Collections.emptyMap();
+    }
 }
