@@ -226,13 +226,11 @@ public class JobManager implements Managed {
     }
 
     private void createScheduler() throws SchedulerException {
-        // backwards compatibility - only use this when something is provided in
-        // the config
         if (configuration.getQuartzConfiguration().isEmpty()) {
             scheduler = StdSchedulerFactory.getDefaultScheduler();
             return;
         }
-        
+
         StdSchedulerFactory factory = new StdSchedulerFactory();
         factory.initialize(createProperties());
         scheduler = factory.getScheduler();
