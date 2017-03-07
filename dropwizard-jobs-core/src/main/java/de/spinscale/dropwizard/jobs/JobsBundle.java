@@ -13,14 +13,13 @@ public class JobsBundle implements ConfiguredBundle<JobConfiguration> {
     private final Job[] jobs;
     protected JobManager jobManager;
 
-    public JobsBundle(Job ... jobs) {
+    public JobsBundle(Job... jobs) {
         this.jobs = jobs;
     }
 
     @Override
     public void run(JobConfiguration configuration, Environment environment) throws Exception {
-        jobManager = new JobManager(jobs);
-        jobManager.configure(configuration);
+        jobManager = new JobManager(configuration, jobs);
         environment.lifecycle().manage(jobManager);
     }
 

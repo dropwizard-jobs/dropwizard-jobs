@@ -3,6 +3,9 @@ package de.spinscale.dropwizard.jobs;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+
+import io.dropwizard.Configuration;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -25,7 +28,7 @@ public class GuiceJobManagerTest {
             binder.bind(DependencyTestJob.class).asEagerSingleton();
             binder.bind(ApplicationStopTestJob.class).asEagerSingleton();
         });
-        jobManager = new GuiceJobManager(injector);
+        jobManager = new GuiceJobManager(new TestConfig(), injector);
     }
 
     @Test
@@ -39,5 +42,9 @@ public class GuiceJobManagerTest {
 
         jobManager.stop();
         assertThat(injector.getInstance(ApplicationStopTestJob.class).latch.await(1, TimeUnit.SECONDS), is(true));
+    }
+    
+    public static class TestConfig extends Configuration implements JobConfiguration {
+        
     }
 }

@@ -14,8 +14,7 @@ public class SpringJobsBundle extends JobsBundle {
 
     @Override
     public void run(JobConfiguration configuration, Environment environment) throws Exception {
-        jobManager = new SpringJobManager(context);
-        jobManager.configure(configuration);
+        jobManager = new SpringJobManager(configuration, context);
         environment.lifecycle().manage(jobManager);
     }
 

@@ -7,6 +7,7 @@ import de.spinscale.dropwizard.jobs.annotations.OnApplicationStart;
 import de.spinscale.dropwizard.jobs.annotations.OnApplicationStop;
 import de.spinscale.dropwizard.jobs.parser.TimeParserUtil;
 import io.dropwizard.lifecycle.Managed;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
 import org.joda.time.DateTime;
@@ -27,6 +28,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 import java.util.stream.Collectors;
 
 public class JobManager implements Managed {
@@ -37,17 +39,14 @@ public class JobManager implements Managed {
     protected Scheduler scheduler;
     protected JobConfiguration configuration;
 
-    public JobManager(Job ... jobs) {
-        this.jobs = jobs;
-    }
-
-    public void configure(JobConfiguration configuration) {
+    public JobManager(JobConfiguration configuration, Job... jobs) {
         this.configuration = configuration;
+        this.jobs = jobs;
     }
 
     @Override
     public void start() throws Exception {
-        scheduler = StdSchedulerFactory.getDefaultScheduler();
+        createScheduler();
         scheduler.setJobFactory(getJobFactory());
         scheduler.start();
         scheduleAllJobs();
@@ -110,9 +109,12 @@ public class JobManager implements Managed {
             boolean storeDurably = onAnnotation.storeDurably();
 
             CronScheduleBuilder scheduleBuilder = CronScheduleBuilder.cronSchedule(cron);
-            if (misfirePolicy == On.MisfirePolicy.IGNORE_MISFIRES) scheduleBuilder.withMisfireHandlingInstructionIgnoreMisfires();
-            else if (misfirePolicy == On.MisfirePolicy.DO_NOTHING) scheduleBuilder.withMisfireHandlingInstructionDoNothing();
-            else if (misfirePolicy == On.MisfirePolicy.FIRE_AND_PROCEED) scheduleBuilder.withMisfireHandlingInstructionFireAndProceed();
+            if (misfirePolicy == On.MisfirePolicy.IGNORE_MISFIRES)
+                scheduleBuilder.withMisfireHandlingInstructionIgnoreMisfires();
+            else if (misfirePolicy == On.MisfirePolicy.DO_NOTHING)
+                scheduleBuilder.withMisfireHandlingInstructionDoNothing();
+            else if (misfirePolicy == On.MisfirePolicy.FIRE_AND_PROCEED)
+                scheduleBuilder.withMisfireHandlingInstructionFireAndProceed();
 
             Trigger trigger = TriggerBuilder.newTrigger().withSchedule(scheduleBuilder).withPriority(priority).build();
 
@@ -152,15 +154,23 @@ public class JobManager implements Managed {
             SimpleScheduleBuilder scheduleBuilder = SimpleScheduleBuilder.simpleSchedule()
                     .withIntervalInMilliseconds(milliSeconds);
 
-            if (repeatCount > -1) scheduleBuilder.withRepeatCount(repeatCount);
-            else scheduleBuilder.repeatForever();
+            if (repeatCount > -1)
+                scheduleBuilder.withRepeatCount(repeatCount);
+            else
+                scheduleBuilder.repeatForever();
 
-            if (misfirePolicy == Every.MisfirePolicy.IGNORE_MISFIRES) scheduleBuilder.withMisfireHandlingInstructionIgnoreMisfires();
-            else if (misfirePolicy == Every.MisfirePolicy.FIRE_NOW) scheduleBuilder.withMisfireHandlingInstructionFireNow();
-            else if (misfirePolicy == Every.MisfirePolicy.NOW_WITH_EXISTING_COUNT) scheduleBuilder.withMisfireHandlingInstructionNowWithExistingCount();
-            else if (misfirePolicy == Every.MisfirePolicy.NOW_WITH_REMAINING_COUNT) scheduleBuilder.withMisfireHandlingInstructionNowWithRemainingCount();
-            else if (misfirePolicy == Every.MisfirePolicy.NEXT_WITH_EXISTING_COUNT) scheduleBuilder.withMisfireHandlingInstructionNextWithExistingCount();
-            else if (misfirePolicy == Every.MisfirePolicy.NEXT_WITH_REMAINING_COUNT) scheduleBuilder.withMisfireHandlingInstructionNextWithRemainingCount();
+            if (misfirePolicy == Every.MisfirePolicy.IGNORE_MISFIRES)
+                scheduleBuilder.withMisfireHandlingInstructionIgnoreMisfires();
+            else if (misfirePolicy == Every.MisfirePolicy.FIRE_NOW)
+                scheduleBuilder.withMisfireHandlingInstructionFireNow();
+            else if (misfirePolicy == Every.MisfirePolicy.NOW_WITH_EXISTING_COUNT)
+                scheduleBuilder.withMisfireHandlingInstructionNowWithExistingCount();
+            else if (misfirePolicy == Every.MisfirePolicy.NOW_WITH_REMAINING_COUNT)
+                scheduleBuilder.withMisfireHandlingInstructionNowWithRemainingCount();
+            else if (misfirePolicy == Every.MisfirePolicy.NEXT_WITH_EXISTING_COUNT)
+                scheduleBuilder.withMisfireHandlingInstructionNextWithExistingCount();
+            else if (misfirePolicy == Every.MisfirePolicy.NEXT_WITH_REMAINING_COUNT)
+                scheduleBuilder.withMisfireHandlingInstructionNextWithRemainingCount();
 
             DateTime start = new DateTime();
             DelayStart delayAnnotation = clazz.getAnnotation(DelayStart.class);
@@ -187,7 +197,6 @@ public class JobManager implements Managed {
         }
     }
 
-    @SuppressWarnings("unchecked")
     private String readDurationFromConfig(Every annotation, Class<? extends org.quartz.Job> clazz) {
         if (configuration == null) {
             return null;
@@ -218,6 +227,23 @@ public class JobManager implements Managed {
         return TriggerBuilder.newTrigger().startNow().build();
     }
 
+    private void createScheduler() throws SchedulerException {
+        if (configuration.getQuartzConfiguration().isEmpty()) {
+            scheduler = StdSchedulerFactory.getDefaultScheduler();
+            return;
+        }
+
+        StdSchedulerFactory factory = new StdSchedulerFactory();
+        factory.initialize(createProperties());
+        scheduler = factory.getScheduler();
+    }
+
+    private Properties createProperties() {
+        Properties properties = new Properties();
+        properties.putAll(configuration.getQuartzConfiguration());
+        return properties;
+    }
+
     private void logAllOnApplicationStopJobs() {
         log.info("Jobs to run on application stop:");
 
@@ -227,8 +253,8 @@ public class JobManager implements Managed {
                 .forEach(clazz -> log.info("   " + clazz.getCanonicalName()));
     }
 
-    private void createOrUpdateJob(JobKey jobKey, Class<? extends org.quartz.Job> clazz, Trigger trigger,
-                                   boolean requestsRecovery, boolean storeDurably) throws SchedulerException {
+    private void createOrUpdateJob(JobKey jobKey, Class<? extends org.quartz.Job> clazz, Trigger trigger, boolean requestsRecovery,
+            boolean storeDurably) throws SchedulerException {
         JobBuilder jobBuilder = JobBuilder.newJob(clazz).withIdentity(jobKey).requestRecovery(requestsRecovery)
                 .storeDurably(storeDurably);
 
