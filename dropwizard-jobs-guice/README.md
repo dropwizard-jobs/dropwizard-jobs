@@ -11,7 +11,7 @@ It is located in Central Repository. http://search.maven.org/
 Add to your pom:
 ```xml
 <dependency>
-  <groupId>de.spinscale</groupId>
+  <groupId>de.spinscale.dropwizard</groupId>
   <artifactId>dropwizard-jobs-guice</artifactId>
   <version>3.0.0</version>
 </dependency>
