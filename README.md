@@ -205,6 +205,7 @@ As of 1.0.2, the period for @Every jobs can be read from the dropwizard config f
 jobs:
   myJob: 10s
   myOtherJob: 20s
+  cronJob: "0 0/3 0 ? * * *"
 ```
   
 Where MyJob and MyOtherJob are the names of Job classes in the application. In the <code>Configuration</code> class add the corresponding property:
@@ -235,6 +236,15 @@ An alternative label to the class name can also be specified:
 
 ```java
 @Every("${foobar}")
+public class MyJob extends Job {
+    ...
+}
+```
+The same can be done with the <code>@On</code> annotation as well, as second option to cron-base jobs configuration
+An alternative label to the class name can also be specified:
+
+```java
+@On("${cronJob}")
 public class MyJob extends Job {
     ...
 }
