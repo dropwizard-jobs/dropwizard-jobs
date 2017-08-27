@@ -23,6 +23,7 @@ public @interface On {
     /**
      * The name of this job. If not specified, the name of the job will default to the canonical name of the annotated
      * class
+     * @return the name of the job
      */
     String jobName() default "";
 

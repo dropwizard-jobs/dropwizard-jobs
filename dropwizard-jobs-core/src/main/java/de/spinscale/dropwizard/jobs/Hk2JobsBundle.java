@@ -19,11 +19,11 @@ import java.util.Objects;
  * </p>
  * 
  * <pre>
- * public class MyDropwizardApplication extends Application<MyConfiguration> {
+ * public class MyDropwizardApplication extends Application&lt;MyConfiguration&gt; {
  *     ...
  * 
  *     &#64;Override
- *     public void initialize(Bootstrap<MyConfiguration> bootstrap) {
+ *     public void initialize(Bootstrap&lt;MyConfiguration&gt; bootstrap) {
  *         bootstrap.addBundle(new Hk2JobsBundle(BuilderHelper.createContractFilter(Job.class.getName())));
  *     }
  * 
