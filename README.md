@@ -65,11 +65,38 @@ After installing the plugin locally you can include it in your pom.xml
 </dependency>
 ```
 
-## Activating the bundle
+## Activating the bundle: Configuration
 
-Similar to the AssetsBundle or the ViewBundle you need to activate the JobsBundle class.
+Your Dropwizard application configuration class must implement `JobConfiguration`:
 
-### Usage
+```java
+public class ApplicationConfiguration extends Configuration implements JobConfiguration {
+
+...
+
+}
+
+```
+
+By default, `JobConfiguration` will return an empty configuration. If you want to allow configuring Quartz from your Dropwizard YML config file (recommended), then implement the `getQuartzConfiguration` method:
+
+```java
+public class ApplicationConfiguration extends Configuration implements JobConfiguration {
+
+...
+    @JsonProperty("quartz")
+    public Map<String,String> quartz;
+
+    @Override
+    public Map<String,String> getQuartzConfiguration() {
+        return quartz;
+    }
+}
+```
+
+## Activating the bundle: Initialization
+
+In your application's `initialize` method, call `bootstrap.addBundle(new JobsBundle(<list of jobs>))`:
 
 ```java
 @Override
@@ -150,31 +177,31 @@ public class OnTestJob extends Job {
 
 ## Using dropwizard-jobs in a Clustered Environment
 
-By default, dropwizard-jobs is designed to be used with an in-memory Quartz scheduler. If you wish to deploy it in a clustered environment that consists of more than one node, you'll need to use a scheduler that has some sort of persistence. You can either add a file called `quartz.properties` to your classpath or you can provide the quartz configuration in your Dropwizard configuration file. The content of the `quartz` element is passed to the Quartz scheduler directly (so you can take the properties from the official docs). If you'd like to add the config to your Dropwizard configuration file, you need to override the `getQuartzConfiguration()` method in your application's configuration. You can set the map to `DefaultQuartzConfiguration.get()`. 
+By default, dropwizard-jobs is designed to be used with an in-memory Quartz scheduler. If you wish to deploy it in a clustered environment that consists of more than one node, you'll need to use a scheduler that has some sort of persistence. You can either add a file called `quartz.properties` to your classpath or you can provide the quartz configuration in your Dropwizard configuration file. The content of the `quartz` element is passed to the Quartz scheduler directly (so you can take the properties from the official docs). If you'd like to add the config to your Dropwizard configuration file, you need to override the `getQuartzConfiguration()` method in your application's configuration. You can set the map to `DefaultQuartzConfiguration.get()`.
 
 See the full Quartz configuration reference at http://www.quartz-scheduler.org/documentation/quartz-2.x/configuration/
 ```yaml
 [...]
 quartz:
-	org.quartz.scheduler.instanceName: "scheduler"
-	org.quartz.scheduler.instanceId: "AUTO"
-	org.quartz.scheduler.skipUpdateCheck: "true"
-	org.quartz.threadPool.class: "org.quartz.simpl.SimpleThreadPool"
-	org.quartz.threadPool.threadCount: "10"
-	org.quartz.threadPool.threadPriority: "5"
-	org.quartz.jobStore.misfireThreshold: "60000"
-	org.quartz.jobStore.class: "org.quartz.impl.jdbcjobstore.JobStoreTX"
-	org.quartz.jobStore.driverDelegateClass: "org.quartz.impl.jdbcjobstore.StdJDBCDelegate"
-	org.quartz.jobStore.useProperties: "false"
-	org.quartz.jobStore.dataSource: "myDS"
-	org.quartz.jobStore.tablePrefix: "QRTZ_"
-	org.quartz.jobStore.isClustered: "true"
-	org.quartz.dataSource.myDS.driver: "com.mysql.cj.jdbc.Driver"
-	org.quartz.dataSource.myDS.URL: "jdbc:mysql://localhost:3306/quartz"
-	org.quartz.dataSource.myDS.user: "fami"
-	org.quartz.dataSource.myDS.password: "ageClXl5mrSg"
-	org.quartz.dataSource.myDS.maxConnections: "5"
-	org.quartz.dataSource.myDS.validationQuery: "select 1"
+  org.quartz.scheduler.instanceName: "scheduler"
+  org.quartz.scheduler.instanceId: "AUTO"
+  org.quartz.scheduler.skipUpdateCheck: "true"
+  org.quartz.threadPool.class: "org.quartz.simpl.SimpleThreadPool"
+  org.quartz.threadPool.threadCount: "10"
+  org.quartz.threadPool.threadPriority: "5"
+  org.quartz.jobStore.misfireThreshold: "60000"
+  org.quartz.jobStore.class: "org.quartz.impl.jdbcjobstore.JobStoreTX"
+  org.quartz.jobStore.driverDelegateClass: "org.quartz.impl.jdbcjobstore.StdJDBCDelegate"
+  org.quartz.jobStore.useProperties: "false"
+  org.quartz.jobStore.dataSource: "myDS"
+  org.quartz.jobStore.tablePrefix: "QRTZ_"
+  org.quartz.jobStore.isClustered: "true"
+  org.quartz.dataSource.myDS.driver: "com.mysql.cj.jdbc.Driver"
+  org.quartz.dataSource.myDS.URL: "jdbc:mysql://localhost:3306/quartz"
+  org.quartz.dataSource.myDS.user: "fami"
+  org.quartz.dataSource.myDS.password: "ageClXl5mrSg"
+  org.quartz.dataSource.myDS.maxConnections: "5"
+  org.quartz.dataSource.myDS.validationQuery: "select 1"
 ```
 
 When you do this, dropwizard-jobs will ensure that only one instance of each job is scheduled, regardless of the number of nodes in your cluster by using the fully-qualified class name of your job implementation as the name of your job. For example, if your job implementation resides in a class called `MyJob`, which in turn is located in the package `com.my.awesome.web.app`, then the name of your job (so far as Quartz is concerned) will be `com.my.awesome.web.app.MyJob`.
@@ -192,7 +219,7 @@ public class MyJob extends Job {
   @Override
   public void doJob(JobExecutionContext context) throws JobExecutionException {
     // do some work here
-  } 
+  }
 }
 ```
 This property is not supported in the `@OnApplicationStart` or `@ApplicationStop` annotations, as they are designed for jobs that will fire reliably when Dropwizard starts or stops your web application. As such, jobs annotated with `@OnApplicationStart` or `@OnApplicationStop` will be given unique names, and will be fired according to schedule on every node in your cluster.
@@ -207,7 +234,7 @@ jobs:
   myOtherJob: 20s
   cronJob: "0 0/3 0 ? * * *"
 ```
-  
+
 Where MyJob and MyOtherJob are the names of Job classes in the application. In the <code>Configuration</code> class add the corresponding property:
 
 ```java
@@ -217,7 +244,7 @@ private Map<String , String> jobs;
 public Map<String, String> getJobs() {
     return jobs;
 }
-   
+
 public void setJobs(Map<String, String> jobs) {
     this.jobs = jobs;
 }
@@ -257,31 +284,6 @@ jobs:
   foobar: 10s
 ```
 
-# Usage with Dropwizard
-
-```java
-public class ExampleApplication extends Application<ApplicationConfiguration> {
-
-    @Override
-    public void initialize(final Bootstrap<ApplicationConfiguration> bootstrap) {
-        Logger jobLogger = LoggerFactory.getLogger("jobs");
-        bootstrap.addBundle(new JobsBundle(new StartJob(jobLogger), new StopJob(jobLogger)));
-    }
-
-}
-```
-
-This also means, that your `ApplicationConfiguration` needs to implement `JobConfiguration`
-
-```java
-public class ApplicationConfiguration extends Configuration implements JobConfiguration {
-
-...
-
-}
-
-```
-
 # Limitations
 * Configuration mechanism is still in early stages. Might be enhanced in the future.
 
@@ -296,4 +298,3 @@ public class ApplicationConfiguration extends Configuration implements JobConfig
  * [Eyal Golan](https://github.com/eyalgo)
  * [Jonathan Fritz](https://github.com/MusikPolice)
  * [Ahsan Rabbani](https://github.com/xargsgrep)
-
