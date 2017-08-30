@@ -1,18 +1,8 @@
 package io.dropwizard.jobs;
 
-import io.dropwizard.jobs.annotations.DelayStart;
-import io.dropwizard.jobs.annotations.Every;
-import io.dropwizard.jobs.annotations.On;
-import io.dropwizard.jobs.annotations.OnApplicationStart;
-import io.dropwizard.jobs.annotations.OnApplicationStop;
+import io.dropwizard.jobs.annotations.*;
 import io.dropwizard.jobs.parser.TimeParserUtil;
 import io.dropwizard.lifecycle.Managed;
-import java.time.ZoneId;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Properties;
-import java.util.TimeZone;
-import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.WordUtils;
 import org.joda.time.DateTime;
@@ -23,6 +13,13 @@ import org.quartz.spi.JobFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.ZoneId;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Properties;
+import java.util.TimeZone;
+import java.util.stream.Collectors;
+
 public class JobManager implements Managed {
 
     protected static final Logger log = LoggerFactory.getLogger(JobManager.class);
@@ -31,9 +28,16 @@ public class JobManager implements Managed {
     protected Scheduler scheduler;
     protected JobConfiguration configuration;
 
+    protected TimeZone defaultTimezone;
+
     public JobManager(JobConfiguration configuration, Job... jobs) {
         this.configuration = configuration;
         this.jobs = jobs;
+        if (configuration.getQuartzConfiguration().containsKey("de.spinscale.dropwizard.jobs.timezone")) {
+            defaultTimezone = TimeZone.getTimeZone(configuration.getQuartzConfiguration().get("de.spinscale.dropwizard.jobs.timezone"));
+        } else {
+            defaultTimezone = TimeZone.getDefault();
+        }
     }
 
     @Override
@@ -81,6 +85,22 @@ public class JobManager implements Managed {
         for (JobDetail jobDetail : jobDetails) {
             scheduler.scheduleJob(jobDetail, executeNowTrigger());
         }
+    }
+
+    /**
+     * Allow timezone to be configured on a per-cron basis with [timezoneName] appended to the cron format
+     * @param cronExpr  the modified cron format
+     * @return  the cron schedule with the timezone applied to it if needed
+     */
+    protected CronScheduleBuilder createCronScheduleBuilder(String cronExpr) {
+        int i = cronExpr.indexOf("[");
+        int j = cronExpr.indexOf("]");
+        TimeZone timezone = defaultTimezone;
+        if (i > -1 && j > -1) {
+            timezone = TimeZone.getTimeZone(cronExpr.substring(i+1, j));
+            cronExpr = cronExpr.substring(0, i).trim();
+        }
+        return CronScheduleBuilder.cronSchedule(cronExpr).inTimeZone(timezone);
     }
 
     protected void scheduleAllJobsWithOnAnnotation() throws SchedulerException {
