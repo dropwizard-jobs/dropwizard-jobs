@@ -6,16 +6,16 @@ import de.spinscale.dropwizard.jobs.annotations.On;
 import org.hamcrest.Matchers;
 import org.hamcrest.core.IsEqual;
 import org.junit.Test;
-import org.quartz.JobDetail;
-import org.quartz.JobKey;
-import org.quartz.SchedulerConfigException;
-import org.quartz.Trigger;
+import org.quartz.*;
 
+import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 import io.dropwizard.Configuration;
+import org.quartz.impl.triggers.CronTriggerImpl;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -169,6 +169,25 @@ public class JobManagerTest {
         jobManager.start();
         assertThat(jobManager.getScheduler().getMetaData().getThreadPoolSize(), Matchers.is(15));
         jobManager.stop();
+    }
+
+    @Test
+    public void allowTimezoneConfiguration() throws Exception {
+        TestConfig config = new TestConfig();
+        config.getQuartzConfiguration().put("de.spinscale.dropwizard.jobs.timezone", "Europe/London");
+
+        jobManager = new JobManager(config, startTestJob, onTestJob, onTestJobWithJobName, everyTestJob,
+                everyTestJobWithJobName);
+
+        // by default, crons should use the configuration setting's timezone
+        CronTriggerImpl trigger1 = (CronTriggerImpl)(jobManager.createCronScheduleBuilder("0 15 10 ? * *").build());
+        assertEquals(TimeZone.getTimeZone("Europe/London"), trigger1.getTimeZone());
+        assertEquals("0 15 10 ? * *", trigger1.getCronExpression());
+
+        // can use [timezone] syntax to set a specific cron to a specific timezone
+        CronTriggerImpl trigger2 = (CronTriggerImpl)(jobManager.createCronScheduleBuilder("0 15 10 ? * * [America/Los_Angeles]").build());
+        assertEquals(TimeZone.getTimeZone("America/Los_Angeles"), trigger2.getTimeZone());
+        assertEquals("0 15 10 ? * *", trigger2.getCronExpression());
     }
 
     private static class TestConfig extends Configuration implements JobConfiguration {

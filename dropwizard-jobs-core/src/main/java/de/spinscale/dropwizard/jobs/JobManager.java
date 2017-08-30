@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
+import java.util.TimeZone;
 import java.util.stream.Collectors;
 
 public class JobManager implements Managed {
@@ -39,9 +40,16 @@ public class JobManager implements Managed {
     protected Scheduler scheduler;
     protected JobConfiguration configuration;
 
+    protected TimeZone defaultTimezone;
+
     public JobManager(JobConfiguration configuration, Job... jobs) {
         this.configuration = configuration;
         this.jobs = jobs;
+        if (configuration.getQuartzConfiguration().containsKey("de.spinscale.dropwizard.jobs.timezone")) {
+            defaultTimezone = TimeZone.getTimeZone(configuration.getQuartzConfiguration().get("de.spinscale.dropwizard.jobs.timezone"));
+        } else {
+            defaultTimezone = TimeZone.getDefault();
+        }
     }
 
     @Override
@@ -88,6 +96,22 @@ public class JobManager implements Managed {
         }
     }
 
+    /**
+     * Allow timezone to be configured on a per-cron basis with [timezoneName] appended to the cron format
+     * @param cronExpr  the modified cron format
+     * @return  the cron schedule with the timezone applied to it if needed
+     */
+    protected CronScheduleBuilder createCronScheduleBuilder(String cronExpr) {
+        int i = cronExpr.indexOf("[");
+        int j = cronExpr.indexOf("]");
+        TimeZone timezone = defaultTimezone;
+        if (i > -1 && j > -1) {
+            timezone = TimeZone.getTimeZone(cronExpr.substring(i+1, j));
+            cronExpr = cronExpr.substring(0, i).trim();
+        }
+        return CronScheduleBuilder.cronSchedule(cronExpr).inTimeZone(timezone);
+    }
+
     protected void scheduleAllJobsWithOnAnnotation() throws SchedulerException {
         List<Class<? extends Job>> onJobClasses = Arrays.stream(this.jobs)
                 .filter(job -> job.getClass().isAnnotationPresent(On.class))
@@ -114,7 +138,7 @@ public class JobManager implements Managed {
             boolean requestRecovery = onAnnotation.requestRecovery();
             boolean storeDurably = onAnnotation.storeDurably();
 
-            CronScheduleBuilder scheduleBuilder = CronScheduleBuilder.cronSchedule(cron);
+            CronScheduleBuilder scheduleBuilder = createCronScheduleBuilder(cron);
             if (misfirePolicy == On.MisfirePolicy.IGNORE_MISFIRES)
                 scheduleBuilder.withMisfireHandlingInstructionIgnoreMisfires();
             else if (misfirePolicy == On.MisfirePolicy.DO_NOTHING)
