@@ -45,7 +45,7 @@ public class JobManager implements Managed {
     public JobManager(JobConfiguration configuration, Job... jobs) {
         this.configuration = configuration;
         this.jobs = jobs;
-        if (configuration.getQuartzConfiguration().containsKey("de.spinscale.dropwizard.jobs.timezone")) {
+        if (configuration != null && configuration.getQuartzConfiguration().containsKey("de.spinscale.dropwizard.jobs.timezone")) {
             defaultTimezone = TimeZone.getTimeZone(configuration.getQuartzConfiguration().get("de.spinscale.dropwizard.jobs.timezone"));
         } else {
             defaultTimezone = TimeZone.getDefault();
