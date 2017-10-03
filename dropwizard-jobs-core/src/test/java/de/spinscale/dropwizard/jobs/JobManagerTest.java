@@ -1,28 +1,24 @@
 package de.spinscale.dropwizard.jobs;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import de.spinscale.dropwizard.jobs.annotations.Every;
 import de.spinscale.dropwizard.jobs.annotations.On;
 import io.dropwizard.Configuration;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.hamcrest.Matchers;
 import org.hamcrest.core.IsEqual;
 import org.junit.Test;
+import org.quartz.CronTrigger;
 import org.quartz.JobDetail;
 import org.quartz.JobKey;
 import org.quartz.SchedulerConfigException;
 import org.quartz.Trigger;
-import org.quartz.impl.matchers.GroupMatcher;
 
 public class JobManagerTest {
 
@@ -156,6 +152,18 @@ public class JobManagerTest {
     }
 
     @Test
+    public void testJobsWithTimeZoneInOnAnnotation() throws Exception {
+        jobManager = new JobManager(new TestConfig(), new OnTestJobWithTimeZoneConfiguration(),
+            new OnTestJobWithDefaultConfiguration());
+        jobManager.start();
+
+        String jobName = OnTestJobWithTimeZoneConfiguration.class.getCanonicalName();
+        CronTrigger trigger = (CronTrigger) jobManager.scheduler.getTriggersOfJob(JobKey.jobKey(jobName)).get(0);
+
+        assertEquals("Europe/Stockholm", trigger.getTimeZone().getID());
+    }
+
+    @Test
     public void testJobsWithNonDefaultConfiguration() throws Exception {
         jobManager = new JobManager(new TestConfig(), new EveryTestJobWithNonDefaultConfiguration(),
                 new OnTestJobWithNonDefaultConfiguration());
@@ -242,13 +250,6 @@ public class JobManagerTest {
     class OnTestJobWithDefaultConfiguration extends AbstractJob {
         public OnTestJobWithDefaultConfiguration() {
             super(1);
-        }
-    }
-
-    @On("0/1 * * * * ?")
-    class OnTestJobWithVariableGroupName extends AbstractJob {
-        public OnTestJobWithVariableGroupName(String groupName) {
-            super(1, groupName);
         }
     }
 
