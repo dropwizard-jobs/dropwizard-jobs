@@ -102,6 +102,12 @@ public class JobManager implements Managed {
         for (Class<? extends org.quartz.Job> clazz : onJobClasses) {
             On onAnnotation = clazz.getAnnotation(On.class);
             String cron = onAnnotation.value();
+            
+            if(cron.isEmpty() || cron.matches("\\$\\{.*\\}")) {
+                cron = this.readDurationFromConfig(onAnnotation, clazz);
+                log.info(clazz + " is configured in the config file to run every " + cron);
+            }
+
             String key = StringUtils.isNotBlank(onAnnotation.jobName()) ? onAnnotation.jobName() : clazz.getCanonicalName();
             int priority = onAnnotation.priority();
             On.MisfirePolicy misfirePolicy = onAnnotation.misfirePolicy();
@@ -194,6 +200,18 @@ public class JobManager implements Managed {
                 logMessage += " (" + delayAnnotation.value() + " delay)";
             }
             log.info(logMessage);
+        }
+    }
+
+    private String readDurationFromConfig(On annotation, Class<? extends org.quartz.Job> clazz) {
+        if(this.configuration == null) {
+            return null;
+        } else {
+            String property = WordUtils.uncapitalize(clazz.getSimpleName());
+            if(!annotation.value().isEmpty()) {
+                property = annotation.value().substring(2, annotation.value().length() - 1);
+            }
+            return (String)this.configuration.getJobs().getOrDefault(property,  null);
         }
     }
 
