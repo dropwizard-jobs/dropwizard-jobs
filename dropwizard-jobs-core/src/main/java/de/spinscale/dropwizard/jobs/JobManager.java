@@ -7,7 +7,10 @@ import de.spinscale.dropwizard.jobs.annotations.OnApplicationStart;
 import de.spinscale.dropwizard.jobs.annotations.OnApplicationStop;
 import de.spinscale.dropwizard.jobs.parser.TimeParserUtil;
 import io.dropwizard.lifecycle.Managed;
-
+import java.util.Arrays;
+import java.util.List;
+import java.util.Properties;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
 import org.joda.time.DateTime;
@@ -25,11 +28,6 @@ import org.quartz.impl.StdSchedulerFactory;
 import org.quartz.spi.JobFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.Properties;
-import java.util.stream.Collectors;
 
 public class JobManager implements Managed {
 
@@ -80,35 +78,37 @@ public class JobManager implements Managed {
 
     protected void scheduleAllJobsOnApplicationStop() throws SchedulerException {
         List<JobDetail> jobDetails = Arrays.stream(jobs)
-                .filter(job -> job.getClass().isAnnotationPresent(OnApplicationStop.class))
-                .map(job -> JobBuilder.newJob(job.getClass()).build())
-                .collect(Collectors.toList());
+            .filter(job -> job.getClass().isAnnotationPresent(OnApplicationStop.class))
+            .map(job -> JobBuilder
+                .newJob(job.getClass())
+                .withIdentity(job.getClass().getName(), job.getGroupName())
+                .build())
+            .collect(Collectors.toList());
         for (JobDetail jobDetail : jobDetails) {
             scheduler.scheduleJob(jobDetail, executeNowTrigger());
         }
     }
 
     protected void scheduleAllJobsWithOnAnnotation() throws SchedulerException {
-        List<Class<? extends Job>> onJobClasses = Arrays.stream(this.jobs)
-                .filter(job -> job.getClass().isAnnotationPresent(On.class))
-                .map(job -> job.getClass())
-                .collect(Collectors.toList());
+        List<Job> onJobs = Arrays.stream(this.jobs)
+            .filter(job -> job.getClass().isAnnotationPresent(On.class))
+            .collect(Collectors.toList());
 
-        if (onJobClasses.isEmpty()) {
+        if (onJobs.isEmpty()) {
             return;
         }
 
         log.info("Jobs with @On annotation:");
-        for (Class<? extends org.quartz.Job> clazz : onJobClasses) {
+        for (Job job : onJobs) {
+            Class<? extends Job> clazz = job.getClass();
             On onAnnotation = clazz.getAnnotation(On.class);
             String cron = onAnnotation.value();
-            
+
             if(cron.isEmpty() || cron.matches("\\$\\{.*\\}")) {
                 cron = this.readDurationFromConfig(onAnnotation, clazz);
                 log.info(clazz + " is configured in the config file to run every " + cron);
             }
 
-            String key = StringUtils.isNotBlank(onAnnotation.jobName()) ? onAnnotation.jobName() : clazz.getCanonicalName();
             int priority = onAnnotation.priority();
             On.MisfirePolicy misfirePolicy = onAnnotation.misfirePolicy();
             boolean requestRecovery = onAnnotation.requestRecovery();
@@ -125,24 +125,30 @@ public class JobManager implements Managed {
             Trigger trigger = TriggerBuilder.newTrigger().withSchedule(scheduleBuilder).withPriority(priority).build();
 
             // ensure that only one instance of each job is scheduled
-            JobKey jobKey = JobKey.jobKey(key);
+            JobKey jobKey = createJobKey(onAnnotation.jobName(), job);
+
             createOrUpdateJob(jobKey, clazz, trigger, requestRecovery, storeDurably);
             log.info(String.format("    %-21s %s", cron, jobKey.toString()));
         }
     }
 
-    protected void scheduleAllJobsWithEveryAnnotation() throws SchedulerException {
-        List<Class<? extends Job>> everyJobClasses = Arrays.stream(this.jobs)
-                .filter(job -> job.getClass().isAnnotationPresent(Every.class))
-                .map(job -> job.getClass())
-                .collect(Collectors.toList());
+    private JobKey createJobKey(final String annotationJobName, final Job job) {
+        String key = StringUtils.isNotBlank(annotationJobName) ? annotationJobName : job.getClass().getCanonicalName();
+        return JobKey.jobKey(key, job.getGroupName());
+    }
 
-        if (everyJobClasses.isEmpty()) {
+    protected void scheduleAllJobsWithEveryAnnotation() throws SchedulerException {
+        List<Job> everyJobs = Arrays.stream(this.jobs)
+            .filter(job -> job.getClass().isAnnotationPresent(Every.class))
+            .collect(Collectors.toList());
+
+        if (everyJobs.isEmpty()) {
             return;
         }
 
         log.info("Jobs with @Every annotation:");
-        for (Class<? extends org.quartz.Job> clazz : everyJobClasses) {
+        for (Job job : everyJobs) {
+            Class<? extends Job> clazz = job.getClass();
             Every everyAnnotation = clazz.getAnnotation(Every.class);
             int priority = everyAnnotation.priority();
             Every.MisfirePolicy misfirePolicy = everyAnnotation.misfirePolicy();
@@ -191,8 +197,7 @@ public class JobManager implements Managed {
                     .build();
 
             // ensure that only one instance of each job is scheduled
-            String key = StringUtils.isNotBlank(everyAnnotation.jobName()) ? everyAnnotation.jobName() : clazz.getCanonicalName();
-            JobKey jobKey = JobKey.jobKey(key);
+            JobKey jobKey = createJobKey(everyAnnotation.jobName(), job);
             createOrUpdateJob(jobKey, clazz, trigger, requestRecovery, storeDurably);
 
             String logMessage = String.format("    %-7s %s", everyAnnotation.value(), jobKey.toString());
@@ -228,9 +233,12 @@ public class JobManager implements Managed {
 
     protected void scheduleAllJobsOnApplicationStart() throws SchedulerException {
         List<JobDetail> jobDetails = Arrays.stream(this.jobs)
-                .filter(job -> job.getClass().isAnnotationPresent(OnApplicationStart.class))
-                .map(job -> JobBuilder.newJob(job.getClass()).build())
-                .collect(Collectors.toList());
+            .filter(job -> job.getClass().isAnnotationPresent(OnApplicationStart.class))
+            .map(job -> JobBuilder
+                .newJob(job.getClass())
+                .withIdentity(job.getClass().getName(), job.getGroupName())
+                .build())
+            .collect(Collectors.toList());
 
         if (!jobDetails.isEmpty()) {
             log.info("Jobs to run on application start:");

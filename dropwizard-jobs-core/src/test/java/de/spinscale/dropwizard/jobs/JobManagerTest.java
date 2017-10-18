@@ -1,8 +1,20 @@
 package de.spinscale.dropwizard.jobs;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import de.spinscale.dropwizard.jobs.annotations.Every;
 import de.spinscale.dropwizard.jobs.annotations.On;
-
+import io.dropwizard.Configuration;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import org.hamcrest.Matchers;
 import org.hamcrest.core.IsEqual;
 import org.junit.Test;
@@ -10,16 +22,7 @@ import org.quartz.JobDetail;
 import org.quartz.JobKey;
 import org.quartz.SchedulerConfigException;
 import org.quartz.Trigger;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
-import io.dropwizard.Configuration;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.*;
+import org.quartz.impl.matchers.GroupMatcher;
 
 public class JobManagerTest {
 
@@ -103,6 +106,51 @@ public class JobManagerTest {
         assertEquals(false, jobDetail.isDurable());
         assertEquals(Trigger.DEFAULT_PRIORITY, trigger.getPriority());
         assertEquals(Trigger.MISFIRE_INSTRUCTION_SMART_POLICY, trigger.getMisfireInstruction());
+
+        jobManager.stop();
+    }
+
+    @Test
+    public void testJobsWithMultipleInstances() throws Exception {
+        jobManager = new JobManager(
+            new TestConfig(),
+            new OnTestJobWithVariableGroupName("group_one"),
+            new OnTestJobWithVariableGroupName("group_two"),
+            new EveryTestJobWithDefaultConfiguration()
+        );
+
+        jobManager.start();
+        List<String> jobGroupNames = jobManager.scheduler.getJobGroupNames();
+
+        String jobName = EveryTestJobWithDefaultConfiguration.class.getCanonicalName();
+        JobDetail jobDetail = jobManager.scheduler.getJobDetail(JobKey.jobKey(jobName));
+        Trigger trigger = jobManager.scheduler.getTriggersOfJob(JobKey.jobKey(jobName)).get(0);
+
+        assertNotNull(jobDetail);
+        assertNotNull(trigger);
+        assertTrue(jobGroupNames.containsAll(Arrays.asList("group_one", "group_two")));
+        assertThat(jobManager.scheduler.getJobKeys(GroupMatcher.anyGroup()).size(), equalTo(3));
+
+        jobManager.stop();
+    }
+
+    @Test
+    public void testJobsWithoutGroupShouldOnlyHaveOneInstance() throws Exception {
+        jobManager = new JobManager(
+            new TestConfig(),
+            new EveryTestJobWithDefaultConfiguration(),
+            new EveryTestJobWithDefaultConfiguration()
+        );
+
+        jobManager.start();
+
+        String jobName = EveryTestJobWithDefaultConfiguration.class.getCanonicalName();
+        JobDetail jobDetail = jobManager.scheduler.getJobDetail(JobKey.jobKey(jobName));
+        Trigger trigger = jobManager.scheduler.getTriggersOfJob(JobKey.jobKey(jobName)).get(0);
+
+        assertNotNull(jobDetail);
+        assertNotNull(trigger);
+        assertThat(jobManager.scheduler.getJobKeys(GroupMatcher.anyGroup()).size(), equalTo(1));
 
         jobManager.stop();
     }
@@ -194,6 +242,13 @@ public class JobManagerTest {
     class OnTestJobWithDefaultConfiguration extends AbstractJob {
         public OnTestJobWithDefaultConfiguration() {
             super(1);
+        }
+    }
+
+    @On("0/1 * * * * ?")
+    class OnTestJobWithVariableGroupName extends AbstractJob {
+        public OnTestJobWithVariableGroupName(String groupName) {
+            super(1, groupName);
         }
     }
 
