@@ -13,6 +13,11 @@ public abstract class AbstractJob extends Job {
         latch = new CountDownLatch(count);
     }
 
+    public AbstractJob(int count, String groupName) {
+        super(groupName);
+        latch = new CountDownLatch(count);
+    }
+
     @Override
     public void doJob(JobExecutionContext context) throws JobExecutionException {
         latch.countDown();
