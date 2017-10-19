@@ -106,7 +106,6 @@ public class JobManager implements Managed {
             String timeZoneStr = onAnnotation.timeZone();
             TimeZone timeZone = StringUtils.isNotBlank(timeZoneStr) ? TimeZone.getTimeZone(ZoneId.of(timeZoneStr)) : TimeZone.getDefault();
 
-            String key = StringUtils.isNotBlank(onAnnotation.jobName()) ? onAnnotation.jobName() : clazz.getCanonicalName();
             int priority = onAnnotation.priority();
             On.MisfirePolicy misfirePolicy = onAnnotation.misfirePolicy();
             boolean requestRecovery = onAnnotation.requestRecovery();

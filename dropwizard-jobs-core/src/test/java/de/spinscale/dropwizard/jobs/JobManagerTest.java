@@ -1,14 +1,18 @@
 package de.spinscale.dropwizard.jobs;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import de.spinscale.dropwizard.jobs.annotations.Every;
 import de.spinscale.dropwizard.jobs.annotations.On;
 import io.dropwizard.Configuration;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.hamcrest.Matchers;
@@ -19,6 +23,7 @@ import org.quartz.JobDetail;
 import org.quartz.JobKey;
 import org.quartz.SchedulerConfigException;
 import org.quartz.Trigger;
+import org.quartz.impl.matchers.GroupMatcher;
 
 public class JobManagerTest {
 
@@ -161,6 +166,8 @@ public class JobManagerTest {
         CronTrigger trigger = (CronTrigger) jobManager.scheduler.getTriggersOfJob(JobKey.jobKey(jobName)).get(0);
 
         assertEquals("Europe/Stockholm", trigger.getTimeZone().getID());
+
+        jobManager.stop();
     }
 
     @Test
@@ -249,6 +256,20 @@ public class JobManagerTest {
     @On("0/1 * * * * ?")
     class OnTestJobWithDefaultConfiguration extends AbstractJob {
         public OnTestJobWithDefaultConfiguration() {
+            super(1);
+        }
+    }
+
+    @On("0/1 * * * * ?")
+    class OnTestJobWithVariableGroupName extends AbstractJob {
+        public OnTestJobWithVariableGroupName(String groupName) {
+            super(1, groupName);
+        }
+    }
+
+    @On(value = "0 0 13 ? * MON", timeZone = "Europe/Stockholm")
+    class OnTestJobWithTimeZoneConfiguration extends AbstractJob {
+        public OnTestJobWithTimeZoneConfiguration() {
             super(1);
         }
     }
