@@ -1,11 +1,10 @@
 package de.spinscale.dropwizard.jobs.annotations;
 
-import org.quartz.Trigger;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import org.quartz.Trigger;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
@@ -26,6 +25,8 @@ public @interface On {
      * @return the name of the job
      */
     String jobName() default "";
+
+    String timeZone() default "";
 
     boolean requestRecovery() default false;
 

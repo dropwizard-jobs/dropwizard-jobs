@@ -7,23 +7,17 @@ import de.spinscale.dropwizard.jobs.annotations.OnApplicationStart;
 import de.spinscale.dropwizard.jobs.annotations.OnApplicationStop;
 import de.spinscale.dropwizard.jobs.parser.TimeParserUtil;
 import io.dropwizard.lifecycle.Managed;
+import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
+import java.util.TimeZone;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
-import org.quartz.CronScheduleBuilder;
-import org.quartz.JobBuilder;
-import org.quartz.JobDetail;
-import org.quartz.JobKey;
-import org.quartz.Scheduler;
-import org.quartz.SchedulerException;
-import org.quartz.SimpleScheduleBuilder;
-import org.quartz.Trigger;
-import org.quartz.TriggerBuilder;
+import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
 import org.quartz.spi.JobFactory;
 import org.slf4j.Logger;
@@ -109,12 +103,15 @@ public class JobManager implements Managed {
                 log.info(clazz + " is configured in the config file to run every " + cron);
             }
 
+            String timeZoneStr = onAnnotation.timeZone();
+            TimeZone timeZone = StringUtils.isNotBlank(timeZoneStr) ? TimeZone.getTimeZone(ZoneId.of(timeZoneStr)) : TimeZone.getDefault();
+
             int priority = onAnnotation.priority();
             On.MisfirePolicy misfirePolicy = onAnnotation.misfirePolicy();
             boolean requestRecovery = onAnnotation.requestRecovery();
             boolean storeDurably = onAnnotation.storeDurably();
 
-            CronScheduleBuilder scheduleBuilder = CronScheduleBuilder.cronSchedule(cron);
+            CronScheduleBuilder scheduleBuilder = CronScheduleBuilder.cronSchedule(cron).inTimeZone(timeZone);
             if (misfirePolicy == On.MisfirePolicy.IGNORE_MISFIRES)
                 scheduleBuilder.withMisfireHandlingInstructionIgnoreMisfires();
             else if (misfirePolicy == On.MisfirePolicy.DO_NOTHING)

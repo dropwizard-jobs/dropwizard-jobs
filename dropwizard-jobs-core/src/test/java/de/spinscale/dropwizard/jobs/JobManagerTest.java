@@ -18,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 import org.hamcrest.Matchers;
 import org.hamcrest.core.IsEqual;
 import org.junit.Test;
+import org.quartz.CronTrigger;
 import org.quartz.JobDetail;
 import org.quartz.JobKey;
 import org.quartz.SchedulerConfigException;
@@ -156,6 +157,20 @@ public class JobManagerTest {
     }
 
     @Test
+    public void testJobsWithTimeZoneInOnAnnotation() throws Exception {
+        jobManager = new JobManager(new TestConfig(), new OnTestJobWithTimeZoneConfiguration(),
+            new OnTestJobWithDefaultConfiguration());
+        jobManager.start();
+
+        String jobName = OnTestJobWithTimeZoneConfiguration.class.getCanonicalName();
+        CronTrigger trigger = (CronTrigger) jobManager.scheduler.getTriggersOfJob(JobKey.jobKey(jobName)).get(0);
+
+        assertEquals("Europe/Stockholm", trigger.getTimeZone().getID());
+
+        jobManager.stop();
+    }
+
+    @Test
     public void testJobsWithNonDefaultConfiguration() throws Exception {
         jobManager = new JobManager(new TestConfig(), new EveryTestJobWithNonDefaultConfiguration(),
                 new OnTestJobWithNonDefaultConfiguration());
@@ -249,6 +264,13 @@ public class JobManagerTest {
     class OnTestJobWithVariableGroupName extends AbstractJob {
         public OnTestJobWithVariableGroupName(String groupName) {
             super(1, groupName);
+        }
+    }
+
+    @On(value = "0 0 13 ? * MON", timeZone = "Europe/Stockholm")
+    class OnTestJobWithTimeZoneConfiguration extends AbstractJob {
+        public OnTestJobWithTimeZoneConfiguration() {
+            super(1);
         }
     }
 
