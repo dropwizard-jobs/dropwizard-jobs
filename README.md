@@ -163,14 +163,24 @@ public class EveryTestJobWithDelayedStart extends Job {
 
 The <code>@On</code> annotation allows one to use cron-like expressions for complex time settings. You can read more about possible cron expressions at http://quartz-scheduler.org/documentation/quartz-2.1.x/tutorials/tutorial-lesson-06
 
-This expression allows you to run a job every 15 seconds and could possibly also be run via a @Every annotation.
+This expression would run on Mondays at 1pm, Los Angeles time. If the optional parameter `timeZone` is not set system default will be used. 
 
 ```java
-@On("0/15 * * * * ?")
+@On("0 0 13 ? * MON", timeZone = "America/Los_Angeles")
 public class OnTestJob extends Job {
   @Override
   public void doJob(JobExecutionContext context) throws JobExecutionException {
     // logic run via cron expression
+  }
+}
+```
+
+By default a class can only be scheduled once in the jobs bundle, this can be overridden by setting a unique `groupName` to the instance.
+```java
+@Every("15m")
+public class GroupNameJob extends Job {
+  public GroupNameJob(String groupName) {
+      super(groupName);
   }
 }
 ```
