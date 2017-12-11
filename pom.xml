@@ -1,15 +1,20 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>de.spinscale.dropwizard</groupId>
+    <parent>
+        <groupId>com.izettle</groupId>
+        <artifactId>izettle</artifactId>
+        <version>1.14</version>
+    </parent>
+
     <artifactId>dropwizard-jobs</artifactId>
-    <version>3.0.1-SNAPSHOT</version>
+    <version>3.0.2-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>dropwizard-jobs</name>
-    <url>https://github.com/spinscale/dropwizard-jobs</url>
+    <url>https://github.com/iZettle/dropwizard-jobs</url>
 
-    <description>https://github.com/spinscale/dropwizard-jobs</description>
+    <description>https://github.com/iZettle/dropwizard-jobs</description>
 
     <!-- To check for outdated dependencies, run: mvn versions:display-dependency-updates -->
     <properties>
@@ -27,33 +32,6 @@
         </developer>
     </developers>
 
-    <contributors>
-        <contributor>
-            <name>Yun Zhi Lin</name>
-            <url>https://github.com/yunspace</url>
-        </contributor>
-        <contributor>
-            <name>Hakan Dilek</name>
-            <url>https://github.com/hakandilek</url>
-        </contributor>
-        <contributor>
-            <name>Eyal Golan</name>
-            <url>https://github.com/eyalgo</url>
-        </contributor>
-        <contributor>
-            <name>Simon Curd</name>
-            <url>https://github.com/simoncurd</url>
-        </contributor>
-        <contributor>
-            <name>Tomasz Kubacki</name>
-            <url>https://github.com/tomaszkubacki</url>
-        </contributor>
-        <contributor>
-            <name>Jonathan Fritz</name>
-            <url>https://github.com/MusikPolice</url>
-        </contributor>
-    </contributors>
-
     <licenses>
         <license>
             <name>Apache License, Version 2.0</name>
@@ -63,30 +41,11 @@
     </licenses>
 
     <scm>
-        <url>https://github.com/spinscale/dropwizard-jobs</url>
-        <connection>scm:git:git@github.com:spinscale/dropwizard-jobs.git</connection>
-        <developerConnection>scm:git:git@github.com:spinscale/dropwizard-jobs.git</developerConnection>
-        <tag>dropwizard-jobs-3.0.0</tag>
+        <url>https://github.com/iZettle/dropwizard-jobs</url>
+        <connection>scm:git:git@github.com:iZettle/dropwizard-jobs.git</connection>
+        <developerConnection>scm:git:git@github.com:iZettle/dropwizard-jobs.git</developerConnection>
+        <tag>dropwizard-jobs-3.0.1</tag>
     </scm>
-
-    <distributionManagement>
-        <repository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-        </repository>
-        <snapshotRepository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-        </snapshotRepository>
-    </distributionManagement>
-
-    <repositories>
-        <repository>
-            <id>releases</id>
-            <name>Releases</name>
-            <url>https://oss.sonatype.org/content/repositories/releases</url>
-        </repository>
-    </repositories>
 
     <dependencies>
         <dependency>
@@ -169,72 +128,6 @@
             </plugins>
         </pluginManagement>
     </build>
-
-    <profiles>
-        <profile>
-            <id>release</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.sonatype.plugins</groupId>
-                        <artifactId>nexus-staging-maven-plugin</artifactId>
-                        <version>1.6.7</version>
-                        <extensions>true</extensions>
-                        <configuration>
-                            <serverId>ossrh</serverId>
-                            <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-                            <autoReleaseAfterClose>true</autoReleaseAfterClose>
-                        </configuration>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-source-plugin</artifactId>
-                        <version>3.0.1</version>
-                        <executions>
-                            <execution>
-                                <id>attach-sources</id>
-                                <goals>
-                                    <goal>jar-no-fork</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>2.10.4</version>
-                        <executions>
-                            <execution>
-                                <id>attach-javadocs</id>
-                                <goals>
-                                    <goal>jar</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-gpg-plugin</artifactId>
-                        <version>1.6</version>
-                        <executions>
-                            <execution>
-                                <id>sign-artifacts</id>
-                                <phase>verify</phase>
-                                <goals>
-                                    <goal>sign</goal>
-                                </goals>
-                                <configuration>
-                                    <gpg.useagent>true</gpg.useagent>
-                                    <keyname>${gpg.keyname}</keyname>
-                                    <passphraseServerId>${gpg.keyname}</passphraseServerId>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 
     <modules>
         <module>dropwizard-jobs-core</module>

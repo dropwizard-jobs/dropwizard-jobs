@@ -2,9 +2,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>de.spinscale.dropwizard</groupId>
+        <groupId>com.izettle</groupId>
         <artifactId>dropwizard-jobs</artifactId>
-        <version>3.0.1-SNAPSHOT</version>
+        <version>3.0.2-SNAPSHOT</version>
     </parent>
 
     <artifactId>dropwizard-jobs-guice</artifactId>
@@ -12,7 +12,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>de.spinscale.dropwizard</groupId>
+            <groupId>com.izettle</groupId>
             <artifactId>dropwizard-jobs-core</artifactId>
             <version>${project.version}</version>
         </dependency>
