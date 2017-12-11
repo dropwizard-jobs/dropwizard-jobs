@@ -8,7 +8,7 @@
     </parent>
 
     <artifactId>dropwizard-jobs</artifactId>
-    <version>3.0.1-SNAPSHOT</version>
+    <version>3.0.1</version>
     <packaging>pom</packaging>
 
     <name>dropwizard-jobs</name>
