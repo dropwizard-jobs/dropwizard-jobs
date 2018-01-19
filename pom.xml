@@ -8,7 +8,7 @@
     </parent>
 
     <artifactId>dropwizard-jobs</artifactId>
-    <version>3.0.2-SNAPSHOT</version>
+    <version>3.0.2</version>
     <packaging>pom</packaging>
 
     <name>dropwizard-jobs</name>
@@ -44,7 +44,7 @@
         <url>https://github.com/iZettle/dropwizard-jobs</url>
         <connection>scm:git:git@github.com:iZettle/dropwizard-jobs.git</connection>
         <developerConnection>scm:git:git@github.com:iZettle/dropwizard-jobs.git</developerConnection>
-        <tag>dropwizard-jobs-3.0.1</tag>
+        <tag>dropwizard-jobs-3.0.2</tag>
     </scm>
 
     <dependencies>
