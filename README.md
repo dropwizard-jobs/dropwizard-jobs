@@ -19,7 +19,7 @@ It is located in Central Repository. http://search.maven.org/
 Add to your pom:
 ```xml
 <dependency>
-  <groupId>de.spinscale.dropwizard</groupId>
+  <groupId>dropwizard-jobs</groupId>
   <artifactId>dropwizard-jobs-core</artifactId>
   <version>3.0.0</version>
 </dependency>
@@ -59,7 +59,7 @@ After installing the plugin locally you can include it in your pom.xml
 
 ```xml
 <dependency>
-  <groupId>de.spinscale.dropwizard</groupId>
+  <groupId>dropwizard-jobs</groupId>
   <artifactId>dropwizard-jobs</artifactId>
   <version>$VERSION</version>
 </dependency>
