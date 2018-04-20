@@ -65,8 +65,8 @@
 
     <scm>
         <url>https://github.com/dropwizard-jobs/dropwizard-jobs</url>
-        <connection>scm:git:git@github.com:spinscale/dropwizard-jobs.git</connection>
-        <developerConnection>scm:git:git@github.com:spinscale/dropwizard-jobs.git</developerConnection>
+        <connection>scm:git:git@github.com:dropwizard-jobs/dropwizard-jobs.git</connection>
+        <developerConnection>scm:git:git@github.com:dropwizard-jobs/dropwizard-jobs.git</developerConnection>
         <tag>dropwizard-jobs-3.0.0</tag>
     </scm>
 

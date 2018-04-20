@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/spinscale/dropwizard-jobs.svg?branch=master)](https://travis-ci.org/spinscale/dropwizard-jobs)
+[![Build Status](https://travis-ci.org/dropwizard-jobs/dropwizard-jobs.svg?branch=master)](https://travis-ci.org/dropwizard-jobs/dropwizard-jobs)
 
 # Dropwizard quartz integration
 
