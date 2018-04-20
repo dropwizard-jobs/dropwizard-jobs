@@ -1,6 +1,6 @@
 # Dropwizard quartz integration with Guice
 
-This is a extension for [dropwizard-jobs](https://github.com/spinscale/dropwizard-jobs) to use
+This is a extension for [dropwizard-jobs](https://github.com/dropwizard-jobs/dropwizard-jobs) to use
 [Google Guice] (https://code.google.com/p/google-guice/) to provide Dependency Injection. This is especially handy when you need to inject
 arguments into Jobs.
 
@@ -22,7 +22,7 @@ Add to your pom:
 ## Installing the bundle from source
 
 ```
-git clone https://github.com/spinscale/dropwizard-jobs
+git clone https://github.com/dropwizard-jobs/dropwizard-jobs
 cd dropwizard-jobs
 mvn install
 ```

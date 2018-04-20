@@ -7,9 +7,9 @@
     <packaging>pom</packaging>
 
     <name>dropwizard-jobs</name>
-    <url>https://github.com/spinscale/dropwizard-jobs</url>
+    <url>https://github.com/dropwizard-jobs/dropwizard-jobs</url>
 
-    <description>https://github.com/spinscale/dropwizard-jobs</description>
+    <description>https://github.com/dropwizard-jobs/dropwizard-jobs</description>
 
     <!-- To check for outdated dependencies, run: mvn versions:display-dependency-updates -->
     <properties>
@@ -64,7 +64,7 @@
     </licenses>
 
     <scm>
-        <url>https://github.com/spinscale/dropwizard-jobs</url>
+        <url>https://github.com/dropwizard-jobs/dropwizard-jobs</url>
         <connection>scm:git:git@github.com:spinscale/dropwizard-jobs.git</connection>
         <developerConnection>scm:git:git@github.com:spinscale/dropwizard-jobs.git</developerConnection>
         <tag>dropwizard-jobs-3.0.0</tag>

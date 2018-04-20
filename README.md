@@ -50,7 +50,7 @@ argument and also throws a <code>JobExecutionException</code>.
 ## Installing the bundle from source code
 
 ```
-git clone https://github.com/spinscale/dropwizard-jobs
+git clone https://github.com/dropwizard-jobs/dropwizard-jobs
 cd dropwizard-jobs
 mvn install
 ```
