@@ -32,7 +32,7 @@ import java.util.Objects;
  *         environment.jersey().register(new AbstractBinder() {
  *             &#64;Override
  *             protected void configure() {
- *                 // Register jobs with contract type `de.spinscale.dropwizard.jobs.Job`.
+ *                 // Register jobs with contract type `io.dropwizard.jobs.Job`.
  *                 bind(MyJobWithPerLookup.class).to(Job.class);
  *                 bind(MyJobWithPerThread.class).to(Job.class).in(PerThread.class);
  *                 bind(MyJobWithSingleton.class).to(Job.class).in(Singleton.class);
