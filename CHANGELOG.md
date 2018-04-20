@@ -1,5 +1,12 @@
 # Changelog
 
+
+## 4.0.0
+
+* The `groupId` has been renamed to `dropwizard-jobs`
+* Repository moved to `https://github.com/dropwizard-jobs/dropwizard-jobs`
+* Java packages are renamed to `io.dropwizard.jobs.*` 
+
 ## 2.0.0
 
 * The `groupId` has been renamed to `de.spinscale.dropwizard`
