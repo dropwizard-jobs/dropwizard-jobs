@@ -21,7 +21,7 @@ Add to your pom:
 <dependency>
   <groupId>de.spinscale.dropwizard</groupId>
   <artifactId>dropwizard-jobs-core</artifactId>
-  <version>3.0.0</version>
+  <version>4.0.0</version>
 </dependency>
 ```
 
