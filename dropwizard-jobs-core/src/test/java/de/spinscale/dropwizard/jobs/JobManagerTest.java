@@ -36,15 +36,17 @@ public class JobManagerTest {
     private EveryTestJobAlternativeConfiguration everyTestJobAlternativeConfiguration = new EveryTestJobAlternativeConfiguration();
     private EveryTestJobWithJobName everyTestJobWithJobName = new EveryTestJobWithJobName();
     private ApplicationStopTestJob applicationStopTestJob = new ApplicationStopTestJob();
+    private OnTestJobAlternativeConfiguration onTestJobAlternativeConfiguration = new OnTestJobAlternativeConfiguration();
 
     @Test
     public void testThatJobsAreExecuted() throws Exception {
         TestConfig config = new TestConfig();
         config.getJobs().put("everyTestJobDefaultConfiguration", "50ms");
         config.getJobs().put("testJob", "50ms");
+        config.getJobs().put("onTestJob", "0/1 * * * * ?");
         jobManager = new JobManager(config, startTestJob, onTestJob, onTestJobWithJobName, everyTestJob,
                 everyTestJobWithJobName, everyTestJobWithDelay, everyTestJobAlternativeConfiguration,
-                applicationStopTestJob);
+                applicationStopTestJob, onTestJobAlternativeConfiguration);
         jobManager.start();
 
         // a job with an @Every annotation that doesn't specify a job name should be assigned the canonical class name
@@ -77,6 +79,9 @@ public class JobManagerTest {
 
         assertThat(everyTestJobWithDelay.latch().await(2, TimeUnit.SECONDS), is(true));
         assertThat(onTestJob.latch().await(2, TimeUnit.SECONDS), is(true));
+
+        // test an @On job which reads the cron expression from the config file
+        assertThat(onTestJobAlternativeConfiguration.latch().await(2, TimeUnit.SECONDS), is(true));
 
         jobManager.stop();
 
