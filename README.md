@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/spinscale/dropwizard-jobs.svg?branch=master)](https://travis-ci.org/spinscale/dropwizard-jobs)
+[![Build Status](https://travis-ci.org/dropwizard-jobs/dropwizard-jobs.svg?branch=master)](https://travis-ci.org/dropwizard-jobs/dropwizard-jobs)
 
 # Dropwizard quartz integration
 
@@ -19,7 +19,7 @@ It is located in Central Repository. http://search.maven.org/
 Add to your pom:
 ```xml
 <dependency>
-  <groupId>de.spinscale.dropwizard</groupId>
+  <groupId>dropwizard-jobs</groupId>
   <artifactId>dropwizard-jobs-core</artifactId>
   <version>4.0.0</version>
 </dependency>
@@ -50,7 +50,7 @@ argument and also throws a <code>JobExecutionException</code>.
 ## Installing the bundle from source code
 
 ```
-git clone https://github.com/spinscale/dropwizard-jobs
+git clone https://github.com/dropwizard-jobs/dropwizard-jobs
 cd dropwizard-jobs
 mvn install
 ```
@@ -59,7 +59,7 @@ After installing the plugin locally you can include it in your pom.xml
 
 ```xml
 <dependency>
-  <groupId>de.spinscale.dropwizard</groupId>
+  <groupId>dropwizard-jobs</groupId>
   <artifactId>dropwizard-jobs</artifactId>
   <version>$VERSION</version>
 </dependency>

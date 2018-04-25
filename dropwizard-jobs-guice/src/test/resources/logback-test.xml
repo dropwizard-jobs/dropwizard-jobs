@@ -7,7 +7,7 @@
         </encoder>
     </appender>
 
-    <logger name="de.spinscale.dropwizard.jobs" level="INFO"/>
+    <logger name="io.dropwizard.jobs" level="INFO"/>
 
     <root level="WARN">
         <appender-ref ref="STDOUT" />

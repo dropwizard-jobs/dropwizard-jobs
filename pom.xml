@@ -1,15 +1,15 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>de.spinscale.dropwizard</groupId>
+    <groupId>dropwizard-jobs</groupId>
     <artifactId>dropwizard-jobs</artifactId>
     <version>4.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>dropwizard-jobs</name>
-    <url>https://github.com/spinscale/dropwizard-jobs</url>
+    <url>https://github.com/dropwizard-jobs/dropwizard-jobs</url>
 
-    <description>https://github.com/spinscale/dropwizard-jobs</description>
+    <description>https://github.com/dropwizard-jobs/dropwizard-jobs</description>
 
     <!-- To check for outdated dependencies, run: mvn versions:display-dependency-updates -->
     <properties>
@@ -64,9 +64,9 @@
     </licenses>
 
     <scm>
-        <url>https://github.com/spinscale/dropwizard-jobs</url>
-        <connection>scm:git:git@github.com:spinscale/dropwizard-jobs.git</connection>
-        <developerConnection>scm:git:git@github.com:spinscale/dropwizard-jobs.git</developerConnection>
+        <url>https://github.com/dropwizard-jobs/dropwizard-jobs</url>
+        <connection>scm:git:git@github.com:dropwizard-jobs/dropwizard-jobs.git</connection>
+        <developerConnection>scm:git:git@github.com:dropwizard-jobs/dropwizard-jobs.git</developerConnection>
         <tag>dropwizard-jobs-4.0.0</tag>
     </scm>
 
