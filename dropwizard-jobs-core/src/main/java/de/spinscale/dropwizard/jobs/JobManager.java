@@ -100,6 +100,9 @@ public class JobManager implements Managed {
 
             if(cron.isEmpty() || cron.matches("\\$\\{.*\\}")) {
                 cron = this.readDurationFromConfig(onAnnotation, clazz);
+                if (cron == null) {
+                    throw new SchedulerConfigException("Missing config for " + clazz.getSimpleName());
+                }
                 log.info(clazz + " is configured in the config file to run every " + cron);
             }
 
