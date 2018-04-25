@@ -1,6 +1,6 @@
-package de.spinscale.dropwizard.jobs;
+package io.dropwizard.jobs;
 
-import de.spinscale.dropwizard.jobs.annotations.On;
+import io.dropwizard.jobs.annotations.On;
 
 @On("${onTestJob}")
 public class OnTestJobAlternativeConfiguration extends AbstractJob {
