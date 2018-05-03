@@ -6,3 +6,6 @@ jdk:
 #workaround for https://github.com/travis-ci/travis-ci/issues/5227
 addons:
   hostname: dropwizard-jobs-ci
+
+before_install:
+  - chmod +x mvnw
