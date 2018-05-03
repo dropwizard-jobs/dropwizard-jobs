@@ -11,7 +11,7 @@ It is located in Central Repository. http://search.maven.org/
 Add to your pom:
 ```xml
 <dependency>
-  <groupId>dropwizard-jobs</groupId>
+  <groupId>io.github.dropwizard-jobs</groupId>
   <artifactId>dropwizard-jobs-guice</artifactId>
   <version>4.0.0</version>
 </dependency>
@@ -31,7 +31,7 @@ After installing the plugin locally, include the following dependencies only:
 
 ```xml
 <dependency>
-  <groupId>dropwizard-jobs</groupId>
+  <groupId>io.github.dropwizard-jobs</groupId>
   <artifactId>dropwizard-jobs-guice</artifactId>
   <version><current version></version>
 </dependency>
