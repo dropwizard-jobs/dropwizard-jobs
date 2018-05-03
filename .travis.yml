@@ -6,8 +6,9 @@ jdk:
 addons:
   hostname: dropwizard-jobs-ci
 
-  before_install:
-- ulimit -c unlimited -S
+before_install:
+  - ulimit -c unlimited -S
+  - chmod +x mvnw
 
 cache:
   directories:

@@ -52,7 +52,7 @@ argument and also throws a <code>JobExecutionException</code>.
 ```
 git clone https://github.com/dropwizard-jobs/dropwizard-jobs
 cd dropwizard-jobs
-mvn install
+./mvn install
 ```
 
 After installing the plugin locally you can include it in your pom.xml
