@@ -14,7 +14,7 @@ import java.util.Properties;
 import java.util.TimeZone;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.text.WordUtils;
+import org.apache.commons.text.WordUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.quartz.*;
