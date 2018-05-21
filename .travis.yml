@@ -8,7 +8,6 @@ addons:
 
 before_install:
   - ulimit -c unlimited -S
-  - chmod +x mvnw
 
 cache:
   directories:
