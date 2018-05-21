@@ -1,11 +1,29 @@
 language: java
 
 jdk:
-  - oraclejdk8
+- oraclejdk8
 
-#workaround for https://github.com/travis-ci/travis-ci/issues/5227
 addons:
   hostname: dropwizard-jobs-ci
 
 before_install:
   - ulimit -c unlimited -S
+
+cache:
+  directories:
+  - "$HOME/.m2"
+
+deploy:
+  provider: script
+  script: "./mvnw -B deploy --settings maven_deploy_settings.xml -Dmaven.test.skip=true
+    -Dfindbugs.skip=true"
+  on:
+    repo: dropwizard-jobs/dropwizard-jobs
+    branch: master
+    jdk: oraclejdk8
+
+env:
+  global:
+  - JAVA_OPTS: "'-Xms512m -Xmx2g'"
+  - secure: LGD9kWPTbRthg72NCCf8e8ztAugu4AFvivb7wBUYbRpFV8wwu3okLpWw3kCIuIsBnFA89nwoqPXqOr1EjOXMVj3CFbi1vlB49MF22vmfjMgpDXmaxeqO2FSclN+r8gvLJ4v7yPocTnwOGVTMQsnb5IhPLf4UZsY2mfwEnllsdO0=
+  - secure: NK5FIaI/LKb34WhkHUdj91HAj++BRKMe4iPA8BTOmWm6q8auL/Tw5tpEU6uwbNNINDRqEg3qv8Oy+Vccv+AJLiNqKvIdCwFTpTNXPdqa5Vj4x5PtIOIxjtiVgK9PZJvr+cCsYX5/5pFdFcg3BE24ETTF2meXmzsEjoDELvrT0Tc=

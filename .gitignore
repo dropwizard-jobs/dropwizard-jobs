@@ -4,3 +4,4 @@
 *.iml
 target/
 .settings
+.vscode/
