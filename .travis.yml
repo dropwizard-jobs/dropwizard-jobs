@@ -8,4 +8,4 @@ addons:
   hostname: dropwizard-jobs-ci
 
 before_install:
-  - chmod +x mvnw
+  - ulimit -c unlimited -S
