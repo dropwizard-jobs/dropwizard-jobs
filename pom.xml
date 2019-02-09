@@ -18,7 +18,7 @@
         <spring.version>5.0.4.RELEASE</spring.version>
         <guice.version>4.2.0</guice.version>
         <quartz.version>2.3.0</quartz.version>
-        <jackson.version>2.9.5</jackson.version>
+        <jackson.version>2.9.8</jackson.version>
     </properties>
 
     <developers>
