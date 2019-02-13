@@ -126,15 +126,19 @@ public class JobManager implements Managed {
                 log.info(clazz + " is configured in the config file to run every " + cron);
             }
 
-            String timeZoneStr = onAnnotation.timeZone();
-            TimeZone timeZone = StringUtils.isNotBlank(timeZoneStr) ? TimeZone.getTimeZone(ZoneId.of(timeZoneStr)) : TimeZone.getDefault();
-
             int priority = onAnnotation.priority();
             On.MisfirePolicy misfirePolicy = onAnnotation.misfirePolicy();
             boolean requestRecovery = onAnnotation.requestRecovery();
             boolean storeDurably = onAnnotation.storeDurably();
 
-            CronScheduleBuilder scheduleBuilder = CronScheduleBuilder.cronSchedule(cron).inTimeZone(timeZone);
+            CronScheduleBuilder scheduleBuilder = createCronScheduleBuilder(cron);
+
+            String timeZoneStr = onAnnotation.timeZone();
+            if (StringUtils.isNotBlank(timeZoneStr)) {
+                TimeZone timeZone = TimeZone.getTimeZone(ZoneId.of(timeZoneStr));
+                scheduleBuilder = scheduleBuilder.inTimeZone(timeZone);
+            }
+
             if (misfirePolicy == On.MisfirePolicy.IGNORE_MISFIRES)
                 scheduleBuilder.withMisfireHandlingInstructionIgnoreMisfires();
             else if (misfirePolicy == On.MisfirePolicy.DO_NOTHING)
