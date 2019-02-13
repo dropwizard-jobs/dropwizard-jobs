@@ -236,14 +236,18 @@ This property is not supported in the `@OnApplicationStart` or `@ApplicationStop
 
 ## Configuring jobs in the Dropwizard Config File
 
-As of 1.0.2, the period for @Every jobs can be read from the dropwizard config file instead of being hard-coded. The YAML looks like this:
+The period for `@Every` and `@On` jobs can be read from the dropwizard config file instead of being hard-coded. The YAML looks like this:
 
 ```
 jobs:
   myJob: 10s
   myOtherJob: 20s
-  cronJob: "0 0/3 0 ? * * *"
+  cronJob: "0 0/3 0 ? * * * [Europe/London]"
 ```
+
+For `@On` jobs, the cron expression can have an optional timezone specified in square brackets.
+If no timezone is given, the `de.spinscale.dropwizard.jobs.timezone` system property will be used,
+otherwise your server's default timezone will apply.
 
 Where MyJob and MyOtherJob are the names of Job classes in the application. In the <code>Configuration</code> class add the corresponding property:
 
