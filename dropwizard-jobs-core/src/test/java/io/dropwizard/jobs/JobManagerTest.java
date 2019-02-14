@@ -252,6 +252,13 @@ public class JobManagerTest {
     }
 
     private static class TestConfig extends Configuration implements JobConfiguration {
+        private Map<String, String> quartzConfiguration;
+
+        @SuppressWarnings("unchecked")
+        private TestConfig() {
+            quartzConfiguration = (Map<String, String>) ((HashMap<String, String>) DefaultQuartzConfiguration.get()).clone();
+        }
+
         private Map<String, String> jobs = new HashMap<>();
 
         public Map<String, String> getJobs() {
@@ -259,7 +266,7 @@ public class JobManagerTest {
         }
 
         public Map<String, String> getQuartzConfiguration() {
-            return DefaultQuartzConfiguration.get();
+            return quartzConfiguration;
         }
     }
 
