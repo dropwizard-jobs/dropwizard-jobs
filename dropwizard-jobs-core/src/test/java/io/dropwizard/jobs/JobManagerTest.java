@@ -1,33 +1,22 @@
 package io.dropwizard.jobs;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
 import io.dropwizard.Configuration;
-import io.dropwizard.jobs.DefaultQuartzConfiguration;
-import io.dropwizard.jobs.JobConfiguration;
-import io.dropwizard.jobs.JobManager;
 import io.dropwizard.jobs.annotations.Every;
 import io.dropwizard.jobs.annotations.On;
-
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import org.hamcrest.Matchers;
 import org.hamcrest.core.IsEqual;
 import org.junit.Test;
-import org.quartz.CronTrigger;
-import org.quartz.JobDetail;
-import org.quartz.JobKey;
-import org.quartz.SchedulerConfigException;
-import org.quartz.Trigger;
+import org.quartz.*;
 import org.quartz.impl.matchers.GroupMatcher;
+import org.quartz.impl.triggers.CronTriggerImpl;
+
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.*;
 
 public class JobManagerTest {
 
@@ -243,7 +232,33 @@ public class JobManagerTest {
         jobManager.stop();
     }
 
+    @Test
+    public void allowTimezoneConfiguration() throws Exception {
+        TestConfig config = new TestConfig();
+        config.getQuartzConfiguration().put("de.spinscale.dropwizard.jobs.timezone", "Europe/London");
+
+        jobManager = new JobManager(config, startTestJob, onTestJob, onTestJobWithJobName, everyTestJob,
+                everyTestJobWithJobName);
+
+        // by default, crons should use the configuration setting's timezone
+        CronTriggerImpl trigger1 = (CronTriggerImpl)(jobManager.createCronScheduleBuilder("0 15 10 ? * *").build());
+        assertEquals(TimeZone.getTimeZone("Europe/London"), trigger1.getTimeZone());
+        assertEquals("0 15 10 ? * *", trigger1.getCronExpression());
+
+        // can use [timezone] syntax to set a specific cron to a specific timezone
+        CronTriggerImpl trigger2 = (CronTriggerImpl)(jobManager.createCronScheduleBuilder("0 15 10 ? * * [America/Los_Angeles]").build());
+        assertEquals(TimeZone.getTimeZone("America/Los_Angeles"), trigger2.getTimeZone());
+        assertEquals("0 15 10 ? * *", trigger2.getCronExpression());
+    }
+
     private static class TestConfig extends Configuration implements JobConfiguration {
+        private Map<String, String> quartzConfiguration;
+
+        @SuppressWarnings("unchecked")
+        private TestConfig() {
+            quartzConfiguration = (Map<String, String>) ((HashMap<String, String>) DefaultQuartzConfiguration.get()).clone();
+        }
+
         private Map<String, String> jobs = new HashMap<>();
 
         public Map<String, String> getJobs() {
@@ -251,7 +266,7 @@ public class JobManagerTest {
         }
 
         public Map<String, String> getQuartzConfiguration() {
-            return DefaultQuartzConfiguration.get();
+            return quartzConfiguration;
         }
     }
 

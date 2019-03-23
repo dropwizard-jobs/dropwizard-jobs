@@ -2,6 +2,7 @@ package io.dropwizard.jobs;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.TimeZone;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
