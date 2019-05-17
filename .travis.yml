@@ -8,9 +8,13 @@ before_install:
 cache:
   directories:
   - "$HOME/.m2"
+
 before_deploy:
   - mvn help:evaluate -N -Dexpression=project.version|grep -v '\['
   - export project_version=$(mvn help:evaluate -N -Dexpression=project.version|grep -v '\[')
+  - git config --local user.name "hakandilek"
+  - git config --local user.email "hakandilek@gmail.com"
+  - git tag $project_version
 
 deploy:
   provider: releases
@@ -20,9 +24,11 @@ deploy:
     - dropwizard-jobs-core/target/dropwizard-jobs-core-$project_version.jar
     - dropwizard-jobs-guice/target/dropwizard-jobs-guice-$project_version.jar
     - dropwizard-jobs-spring/target/dropwizard-jobs-spring-$project_version.jar
+  skip_cleanup: true
   on:
     repo: dropwizard-jobs/dropwizard-jobs
-  name: $project_version
+    tags: true
+  name: dropwizard-jobs-$project_version
 
 env:
   global:
