@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/dropwizard-jobs/dropwizard-jobs.svg?branch=master)](https://travis-ci.org/dropwizard-jobs/dropwizard-jobs)
+[![DepShield Badge](https://depshield.sonatype.org/badges/dropwizard-jobs/dropwizard-jobs/depshield.svg)](https://depshield.github.io)
 
 # Dropwizard quartz integration
 
