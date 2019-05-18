@@ -16,14 +16,26 @@ cache:
   directories:
   - "$HOME/.m2"
 
+before_deploy:
+  - mvn help:evaluate -N -Dexpression=project.version|grep -v '\['
+  - export project_version=$(mvn help:evaluate -N -Dexpression=project.version|grep -v '\[')
+  - git config --local user.name "hakandilek"
+  - git config --local user.email "hakandilek@gmail.com"
+  - git tag $project_version
+
 deploy:
-  provider: script
-  script: "./mvnw -B deploy --settings maven_deploy_settings.xml -Dmaven.test.skip=true
-    -Dfindbugs.skip=true"
+  provider: releases
+  api_key:
+    secure: fzMoX/r+9Kyaklq5fkZPtmfH3Gmjl1sfKOUWARnx+RiWHYK+L78MINi2kUuADSEHphKbHtzKum82byFlx6qc/xP+Mp38SVB6sRNBVab42vtKlZOZcwdUf1ZoQvoJ5lyArjJ3KjaZLb2/DAtKfjTF/5YEYuTchaUb9pPWTyeEP5Q=
+  file: 
+    - dropwizard-jobs-core/target/dropwizard-jobs-core-$project_version.jar
+    - dropwizard-jobs-guice/target/dropwizard-jobs-guice-$project_version.jar
+    - dropwizard-jobs-spring/target/dropwizard-jobs-spring-$project_version.jar
+  skip_cleanup: true
   on:
     repo: dropwizard-jobs/dropwizard-jobs
-    branch: master
-    jdk: oraclejdk8
+    tags: true
+  name: dropwizard-jobs-$project_version
 
 env:
   global:
