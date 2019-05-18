@@ -1,10 +1,17 @@
 language: java
+
 jdk:
-- oraclejdk8
+  - oraclejdk8
+  - openjdk8
+  - openjdk10
+  - openjdk11
+
 addons:
   hostname: dropwizard-jobs-ci
+
 before_install:
-- ulimit -c unlimited -S
+  - ulimit -c unlimited -S
+
 cache:
   directories:
   - "$HOME/.m2"
