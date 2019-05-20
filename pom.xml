@@ -95,13 +95,6 @@
             <name>Nexus Release Repository</name>
             <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
         </repository>
-        <!--
-        <site>
-            <id>dropwizard-jobs-site</id>
-            <name>Dropwizard Jobs</name>
-            <url>http://dropwizard-jobs.github.io/${project.version}</url>
-        </site>
-        -->
     </distributionManagement>
 
     <dependencies>
@@ -195,6 +188,13 @@
     <profiles>
         <profile>
             <id>release</id>
+
+            <activation>
+                <property>
+                    <name>release</name>
+                </property>
+            </activation>
+
             <build>
                 <plugins>
                     <plugin>
@@ -245,11 +245,6 @@
                                 <goals>
                                     <goal>sign</goal>
                                 </goals>
-                                <configuration>
-                                    <gpg.useagent>true</gpg.useagent>
-                                    <keyname>${gpg.keyname}</keyname>
-                                    <passphraseServerId>${gpg.keyname}</passphraseServerId>
-                                </configuration>
                             </execution>
                         </executions>
                     </plugin>

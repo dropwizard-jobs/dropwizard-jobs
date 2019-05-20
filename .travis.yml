@@ -14,7 +14,25 @@ before_install:
 
 cache:
   directories:
-  - "$HOME/.m2"
+    - "$HOME/.m2"
+
+env:
+  global:
+    - JAVA_OPTS: "'-Xms512m -Xmx2g'"
+    - secure: LGD9kWPTbRthg72NCCf8e8ztAugu4AFvivb7wBUYbRpFV8wwu3okLpWw3kCIuIsBnFA89nwoqPXqOr1EjOXMVj3CFbi1vlB49MF22vmfjMgpDXmaxeqO2FSclN+r8gvLJ4v7yPocTnwOGVTMQsnb5IhPLf4UZsY2mfwEnllsdO0=
+    - secure: NK5FIaI/LKb34WhkHUdj91HAj++BRKMe4iPA8BTOmWm6q8auL/Tw5tpEU6uwbNNINDRqEg3qv8Oy+Vccv+AJLiNqKvIdCwFTpTNXPdqa5Vj4x5PtIOIxjtiVgK9PZJvr+cCsYX5/5pFdFcg3BE24ETTF2meXmzsEjoDELvrT0Tc=
+
+before_install:
+  - ulimit -c unlimited -S
+  - echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import
+  - echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust
+
+install:
+    mvn --settings .maven.xml install -DskipTests=true -Dgpg.skip -Dmaven.javadoc.skip=true -B -V
+
+## Build and release to maven central
+script:
+    mvn clean deploy --settings .maven.xml -DskipTests=true -B -U -Prelease
 
 before_deploy:
   - mvn help:evaluate -N -Dexpression=project.version|grep -v '\['
@@ -36,9 +54,3 @@ deploy:
     repo: dropwizard-jobs/dropwizard-jobs
     tags: true
   name: dropwizard-jobs-$project_version
-
-env:
-  global:
-  - JAVA_OPTS: "'-Xms512m -Xmx2g'"
-  - secure: LGD9kWPTbRthg72NCCf8e8ztAugu4AFvivb7wBUYbRpFV8wwu3okLpWw3kCIuIsBnFA89nwoqPXqOr1EjOXMVj3CFbi1vlB49MF22vmfjMgpDXmaxeqO2FSclN+r8gvLJ4v7yPocTnwOGVTMQsnb5IhPLf4UZsY2mfwEnllsdO0=
-  - secure: NK5FIaI/LKb34WhkHUdj91HAj++BRKMe4iPA8BTOmWm6q8auL/Tw5tpEU6uwbNNINDRqEg3qv8Oy+Vccv+AJLiNqKvIdCwFTpTNXPdqa5Vj4x5PtIOIxjtiVgK9PZJvr+cCsYX5/5pFdFcg3BE24ETTF2meXmzsEjoDELvrT0Tc=
