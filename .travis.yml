@@ -31,8 +31,9 @@ cache:
     - "$HOME/.m2"
 
 env:
-  - PUBLISH=true
-  - PUBLISH=false
+  matrix: 
+    - PUBLISH: true
+    - PUBLISH: false
   global:
     - JAVA_OPTS: "'-Xms512m -Xmx2g'"
     - secure: LGD9kWPTbRthg72NCCf8e8ztAugu4AFvivb7wBUYbRpFV8wwu3okLpWw3kCIuIsBnFA89nwoqPXqOr1EjOXMVj3CFbi1vlB49MF22vmfjMgpDXmaxeqO2FSclN+r8gvLJ4v7yPocTnwOGVTMQsnb5IhPLf4UZsY2mfwEnllsdO0=
