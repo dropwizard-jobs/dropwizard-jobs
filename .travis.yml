@@ -1,6 +1,9 @@
 language: java
 
 jdk:
+  - oraclejdk8	
+  - openjdk8	
+  - openjdk10
   - openjdk11
 
 addons:
@@ -33,7 +36,9 @@ after_success:
     - export project_version=$(mvn help:evaluate -N -Dexpression=project.version|grep -v '\[')
     - echo ${TRAVIS_TAG+x}
     - echo $project_version
+    - echo $jdk
     - test -z ${TRAVIS_TAG+x} && 
+           $jdk = "openjdk11" &&
       mvn clean deploy --settings .maven.xml -DskipTests=true -B -U -Prelease
     
 before_deploy:
