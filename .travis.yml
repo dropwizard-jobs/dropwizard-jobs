@@ -1,8 +1,8 @@
 language: java
 
 jdk:
-  - oraclejdk8	
-  - openjdk8	
+  - oraclejdk8
+  - openjdk8
   - openjdk10
   - openjdk11
   - openjdk-ea
@@ -15,8 +15,6 @@ matrix:
     - jdk: oraclejdk8
       env: PUBLISH=false
     - jdk: openjdk8
-      env: PUBLISH=false
-    - jdk: oraclejdk8
       env: PUBLISH=false
     - jdk: openjdk10
       env: PUBLISH=false
