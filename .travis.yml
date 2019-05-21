@@ -5,18 +5,36 @@ jdk:
   - openjdk8	
   - openjdk10
   - openjdk11
+  - openjdk-ea
+
+matrix:
+  allow_failures:
+    - jdk: openjdk-ea
+  fast_finish: true
+  include:
+    - jdk: oraclejdk8
+      env: PUBLISH=false
+    - jdk: openjdk8
+      env: PUBLISH=false
+    - jdk: oraclejdk8
+      env: PUBLISH=false
+    - jdk: openjdk10
+      env: PUBLISH=false
+    - jdk: openjdk11
+      env: PUBLISH=true # only one publish should be active at a time.
+    - jdk: openjdk-ea
+      env: PUBLISH=false
 
 addons:
   hostname: dropwizard-jobs-ci
-
-before_install:
-  - ulimit -c unlimited -S
 
 cache:
   directories:
     - "$HOME/.m2"
 
 env:
+  - PUBLISH=true
+  - PUBLISH=false
   global:
     - JAVA_OPTS: "'-Xms512m -Xmx2g'"
     - secure: LGD9kWPTbRthg72NCCf8e8ztAugu4AFvivb7wBUYbRpFV8wwu3okLpWw3kCIuIsBnFA89nwoqPXqOr1EjOXMVj3CFbi1vlB49MF22vmfjMgpDXmaxeqO2FSclN+r8gvLJ4v7yPocTnwOGVTMQsnb5IhPLf4UZsY2mfwEnllsdO0=
@@ -35,12 +53,11 @@ after_success:
     - mvn help:evaluate -N -Dexpression=project.version|grep -v '\['
     - export project_version=$(mvn help:evaluate -N -Dexpression=project.version|grep -v '\[')
     - echo ${TRAVIS_TAG+x}
-    - echo $project_version
-    - echo $JDK
+    - echo $PUBLISH
     - test ${TRAVIS_TAG+x} != "x" && 
-           $JDK = "openjdk11" &&
+      test $PUBLISH = "true" &&
       mvn clean deploy --settings .maven.xml -DskipTests=true -B -U -Prelease
-    
+
 before_deploy:
   - git config --local user.name "hakandilek"
   - git config --local user.email "hakandilek@gmail.com"
