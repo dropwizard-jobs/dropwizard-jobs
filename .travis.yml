@@ -29,11 +29,14 @@ install:
 
 ## Build and release to maven central if tests are successful & tag is set
 after_success:
-    - if [ -z ${TRAVIS_TAG+x} ]; then echo "no tag is set, skipping deployment"; else mvn clean deploy --settings .maven.xml -DskipTests=true -B -U -Prelease ; fi
+    - mvn help:evaluate -N -Dexpression=project.version|grep -v '\['
+    - export project_version=$(mvn help:evaluate -N -Dexpression=project.version|grep -v '\[')
+    - echo ${TRAVIS_TAG+x}
+    - echo $project_version
+    - test -z ${TRAVIS_TAG+x} && 
+      mvn clean deploy --settings .maven.xml -DskipTests=true -B -U -Prelease
     
 before_deploy:
-  - mvn help:evaluate -N -Dexpression=project.version|grep -v '\['
-  - export project_version=$(mvn help:evaluate -N -Dexpression=project.version|grep -v '\[')
   - git config --local user.name "hakandilek"
   - git config --local user.email "hakandilek@gmail.com"
   - git tag $project_version
