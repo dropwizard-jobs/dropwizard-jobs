@@ -16,6 +16,7 @@ import org.glassfish.hk2.api.Filter;
 import org.glassfish.hk2.api.ServiceLocator;
 import org.glassfish.hk2.utilities.Binder;
 import org.glassfish.hk2.utilities.BuilderHelper;
+import org.glassfish.hk2.utilities.ServiceLocatorUtilities;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.internal.inject.InjectionManager;
 import org.glassfish.jersey.server.ApplicationHandler;
@@ -45,11 +46,17 @@ public class Hk2JobsBundleTest {
         final DropwizardResourceConfig resourceConfig = DropwizardResourceConfig.forTesting();
         when(environment.jersey()).thenReturn(new JerseyEnvironment(null, resourceConfig));
         jobsBundle.run(configuration, environment);
-        TestBinder binder = new TestBinder();
-        resourceConfig.register(binder);
         final ApplicationHandler applicationHandler = new ApplicationHandler(resourceConfig);
         final InjectionManager im = applicationHandler.getInjectionManager();
         final ServiceLocator serviceLocator = im.getInstance(ServiceLocator.class);
+        ServiceLocatorUtilities.bind(serviceLocator, new AbstractBinder() {
+            @Override
+            protected void configure() {
+                bind(ApplicationStartTestJob.class).to(Job.class).in(Singleton.class);
+                bind(ApplicationStopTestJob.class).to(Job.class).in(Singleton.class);
+                bind(EveryTestJob.class).to(EveryTestJob.class);
+            }
+        });
         final Container container = mock(Container.class);
         when(container.getApplicationHandler()).thenReturn(applicationHandler);
         when(container.getConfiguration()).thenReturn(resourceConfig);
@@ -116,16 +123,6 @@ public class Hk2JobsBundleTest {
     private AbstractJob getJob(final List<AbstractJob> jobs, final Class<?> implementationClass) {
         return jobs.stream().filter(job -> job.getClass().equals(implementationClass)).findFirst()
                 .orElseThrow(IllegalStateException::new);
-    }
-    
-    private static class TestBinder extends AbstractBinder implements Binder {
-        @Override
-        protected void configure() {
-            bind(ApplicationStartTestJob.class).to(Job.class).in(Singleton.class);
-            bind(ApplicationStopTestJob.class).to(Job.class).in(Singleton.class);
-            bind(EveryTestJob.class).to(EveryTestJob.class);
-        }
-
     }
     
 }
