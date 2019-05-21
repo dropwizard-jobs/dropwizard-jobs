@@ -21,7 +21,7 @@ Add to your pom:
 ```xml
 <dependency>
   <groupId>io.github.dropwizard-jobs</groupId>
-  <artifactId>dropwizard-jobs-core</artifactId>
+  <artifactId>dropwizard-jobs</artifactId>
   <version>4.0.0-RC1</version>
 </dependency>
 ```
