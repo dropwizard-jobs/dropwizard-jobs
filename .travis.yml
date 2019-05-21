@@ -13,7 +13,7 @@ matrix:
   fast_finish: true
   include:
     - jdk: openjdk11
-      env: PUBLISH=false # only one publish should be active at a time.
+      env: PUBLISH=true # only one publish should be active at a time.
   exclude:
     - env: PUBLISH=true
 
@@ -41,13 +41,14 @@ before_install:
 install:
     mvn --settings .maven.xml install -DskipTests=true -Dgpg.skip -Dmaven.javadoc.skip=true -B -V
 
-## Build and release to maven central if tests are successful & tag is set
 after_success:
     - mvn help:evaluate -N -Dexpression=project.version|grep -v '\['
     - export project_version=$(mvn help:evaluate -N -Dexpression=project.version|grep -v '\[')
-    - echo ${TRAVIS_TAG+x}
-    - echo $PUBLISH
-    - test ${TRAVIS_TAG+x} != "x" && 
+    - echo $TRAVIS_TAG
+    - echo $project_version
+    ## Build and release to maven central if tests are successful & tag is set & artifact is not a snapshot & PUBLISH flag set to true
+    - test "${project_version:-8}" != "SNAPSHOT" && 
+      test $TRAVIS_TAG &&
       test $PUBLISH = "true" &&
       mvn clean deploy --settings .maven.xml -DskipTests=true -B -U -Prelease
 
