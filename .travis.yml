@@ -12,16 +12,10 @@ matrix:
     - jdk: openjdk-ea
   fast_finish: true
   include:
-    - jdk: oraclejdk8
-      env: PUBLISH=false
-    - jdk: openjdk8
-      env: PUBLISH=false
-    - jdk: openjdk10
-      env: PUBLISH=false
     - jdk: openjdk11
-      env: PUBLISH=true # only one publish should be active at a time.
-    - jdk: openjdk-ea
-      env: PUBLISH=false
+      env: PUBLISH=false # only one publish should be active at a time.
+  exclude:
+    - env: PUBLISH=true
 
 addons:
   hostname: dropwizard-jobs-ci
