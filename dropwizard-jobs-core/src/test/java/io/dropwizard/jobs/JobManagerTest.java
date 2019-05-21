@@ -1,22 +1,32 @@
 package io.dropwizard.jobs;
 
-import io.dropwizard.Configuration;
-import io.dropwizard.jobs.annotations.Every;
-import io.dropwizard.jobs.annotations.On;
-import org.hamcrest.Matchers;
-import org.hamcrest.core.IsEqual;
-import org.junit.Test;
-import org.quartz.*;
-import org.quartz.impl.matchers.GroupMatcher;
-import org.quartz.impl.triggers.CronTriggerImpl;
-
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TimeZone;
+import java.util.concurrent.TimeUnit;
+
+import org.hamcrest.Matchers;
+import org.hamcrest.core.IsEqual;
+import org.junit.Test;
+import org.quartz.CronTrigger;
+import org.quartz.JobDetail;
+import org.quartz.JobKey;
+import org.quartz.SchedulerConfigException;
+import org.quartz.Trigger;
+import org.quartz.impl.matchers.GroupMatcher;
+import org.quartz.impl.triggers.CronTriggerImpl;
+
+import io.dropwizard.jobs.annotations.Every;
+import io.dropwizard.jobs.annotations.On;
 
 public class JobManagerTest {
 
@@ -251,7 +261,7 @@ public class JobManagerTest {
         assertEquals("0 15 10 ? * *", trigger2.getCronExpression());
     }
 
-    private static class TestConfig extends Configuration implements JobConfiguration {
+    private static class TestConfig extends JobConfiguration {
         private Map<String, String> quartzConfiguration;
 
         @SuppressWarnings("unchecked")

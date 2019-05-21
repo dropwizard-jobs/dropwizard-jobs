@@ -2,32 +2,30 @@ package io.dropwizard.jobs;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-
-import com.codahale.metrics.MetricRegistry;
-import io.dropwizard.jersey.DropwizardResourceConfig;
-import io.dropwizard.jersey.setup.JerseyEnvironment;
-import io.dropwizard.jobs.Hk2JobsBundle;
-import io.dropwizard.jobs.Job;
-import io.dropwizard.jobs.JobConfiguration;
-import io.dropwizard.jobs.JobManager;
-import io.dropwizard.setup.Environment;
-import org.glassfish.hk2.api.Filter;
-import org.glassfish.hk2.api.ServiceLocator;
-import org.glassfish.hk2.utilities.BuilderHelper;
-import org.glassfish.hk2.utilities.binding.AbstractBinder;
-import org.glassfish.jersey.server.ApplicationHandler;
-import org.glassfish.jersey.server.spi.AbstractContainerLifecycleListener;
-import org.glassfish.jersey.server.spi.Container;
-import org.junit.Test;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.inject.Singleton;
+
+import org.glassfish.hk2.api.Filter;
+import org.glassfish.hk2.api.ServiceLocator;
+import org.glassfish.hk2.utilities.Binder;
+import org.glassfish.hk2.utilities.BuilderHelper;
+import org.glassfish.hk2.utilities.binding.AbstractBinder;
+import org.glassfish.jersey.internal.inject.InjectionManager;
+import org.glassfish.jersey.server.ApplicationHandler;
+import org.glassfish.jersey.server.spi.AbstractContainerLifecycleListener;
+import org.glassfish.jersey.server.spi.Container;
+import org.junit.Test;
+
+import io.dropwizard.jersey.DropwizardResourceConfig;
+import io.dropwizard.jersey.setup.JerseyEnvironment;
+import io.dropwizard.setup.Environment;
 
 public class Hk2JobsBundleTest {
 
@@ -41,28 +39,23 @@ public class Hk2JobsBundleTest {
     @Test
     public void registerToContainer() throws Exception {
         final Filter searchCriteria = BuilderHelper.createContractFilter(Job.class.getName());
-        final Hk2JobsBundle instance = new Hk2JobsBundle(searchCriteria);
+        final Hk2JobsBundle jobsBundle = new Hk2JobsBundle(searchCriteria);
 
         // initialization
-        final DropwizardResourceConfig resourceConfig = DropwizardResourceConfig.forTesting(new MetricRegistry());
+        final DropwizardResourceConfig resourceConfig = DropwizardResourceConfig.forTesting();
         when(environment.jersey()).thenReturn(new JerseyEnvironment(null, resourceConfig));
-        instance.run(configuration, environment);
-        resourceConfig.register(new AbstractBinder() {
-            @Override
-            protected void configure() {
-                bind(ApplicationStartTestJob.class).to(Job.class).in(Singleton.class);
-                bind(ApplicationStopTestJob.class).to(Job.class).in(Singleton.class);
-                bind(EveryTestJob.class).to(EveryTestJob.class);
-            }
-        });
+        jobsBundle.run(configuration, environment);
+        TestBinder binder = new TestBinder();
+        resourceConfig.register(binder);
         final ApplicationHandler applicationHandler = new ApplicationHandler(resourceConfig);
-        final ServiceLocator serviceLocator = applicationHandler.getServiceLocator();
+        final InjectionManager im = applicationHandler.getInjectionManager();
+        final ServiceLocator serviceLocator = im.getInstance(ServiceLocator.class);
         final Container container = mock(Container.class);
         when(container.getApplicationHandler()).thenReturn(applicationHandler);
         when(container.getConfiguration()).thenReturn(resourceConfig);
 
         // verify precondition
-        assertThat(instance.getScheduler()).isNull();
+        assertThat(jobsBundle.getScheduler()).isNull();
 
         // startup container
         applicationHandler.onStartup(container);
@@ -76,7 +69,7 @@ public class Hk2JobsBundleTest {
         assertThat(jobs).hasSize(2);
         assertThat(applicationStartTestJob.latch().getCount()).isEqualTo(0);
         assertThat(applicationStopTestJob.latch().getCount()).isEqualTo(1);
-        assertThat(instance.getScheduler().isStarted()).isTrue();
+        assertThat(jobsBundle.getScheduler().isStarted()).isTrue();
 
         // shutdown container
         applicationHandler.onShutdown(container);
@@ -84,7 +77,7 @@ public class Hk2JobsBundleTest {
 
         // verify at shutdown
         assertThat(applicationStopTestJob.latch().getCount()).isEqualTo(0);
-        assertThat(instance.getScheduler().isShutdown()).isTrue();
+        assertThat(jobsBundle.getScheduler().isShutdown()).isTrue();
     }
 
     /**
@@ -124,5 +117,15 @@ public class Hk2JobsBundleTest {
         return jobs.stream().filter(job -> job.getClass().equals(implementationClass)).findFirst()
                 .orElseThrow(IllegalStateException::new);
     }
+    
+    private static class TestBinder extends AbstractBinder implements Binder {
+        @Override
+        protected void configure() {
+            bind(ApplicationStartTestJob.class).to(Job.class).in(Singleton.class);
+            bind(ApplicationStopTestJob.class).to(Job.class).in(Singleton.class);
+            bind(EveryTestJob.class).to(EveryTestJob.class);
+        }
 
+    }
+    
 }

@@ -1,25 +1,16 @@
 package io.dropwizard.jobs;
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.google.inject.Module;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
-import io.dropwizard.Configuration;
-import io.dropwizard.jobs.ApplicationStartTestJob;
-import io.dropwizard.jobs.ApplicationStopTestJob;
-import io.dropwizard.jobs.EveryTestJob;
-import io.dropwizard.jobs.GuiceJobManager;
-import io.dropwizard.jobs.JobConfiguration;
-import io.dropwizard.jobs.JobManager;
-import io.dropwizard.jobs.OnTestJob;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.concurrent.TimeUnit;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.Module;
 
 public class GuiceJobManagerTest {
 
@@ -51,7 +42,7 @@ public class GuiceJobManagerTest {
         assertThat(injector.getInstance(ApplicationStopTestJob.class).latch.await(1, TimeUnit.SECONDS), is(true));
     }
     
-    public static class TestConfig extends Configuration implements JobConfiguration {
+    public static class TestConfig extends JobConfiguration {
         
     }
 }
