@@ -36,9 +36,9 @@ after_success:
     - export project_version=$(mvn help:evaluate -N -Dexpression=project.version|grep -v '\[')
     - echo ${TRAVIS_TAG+x}
     - echo $project_version
-    - echo $jdk
+    - echo $JDK
     - test ${TRAVIS_TAG+x} != "x" && 
-           $jdk = "openjdk11" &&
+           $JDK = "openjdk11" &&
       mvn clean deploy --settings .maven.xml -DskipTests=true -B -U -Prelease
     
 before_deploy:
