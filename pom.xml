@@ -18,6 +18,7 @@
         <spring.version>5.0.14.RELEASE</spring.version>
         <guice.version>4.2.2</guice.version>
         <quartz.version>2.3.1</quartz.version>
+        <c3p0.version>0.9.5.4</c3p0.version>
         <jackson.version>2.9.8</jackson.version>
     </properties>
 
@@ -107,6 +108,13 @@
             <groupId>org.quartz-scheduler</groupId>
             <artifactId>quartz</artifactId>
             <version>${quartz.version}</version>
+        </dependency>
+        <!-- c3p0 is a transitive dependency through quartz. Following dependency is added to overcome   -->
+        <!-- this vulnerability: https://ossindex.sonatype.org/vuln/657b67c4-d9b9-49a4-ba79-3e8233cf7213 -->
+        <dependency>
+            <groupId>com.mchange</groupId>
+            <artifactId>c3p0</artifactId>
+            <version>${c3p0.version}</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
