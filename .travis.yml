@@ -37,7 +37,7 @@ after_success:
     - echo ${TRAVIS_TAG+x}
     - echo $project_version
     - echo $jdk
-    - test -z ${TRAVIS_TAG+x} && 
+    - test ${TRAVIS_TAG+x} != "x" && 
            $jdk = "openjdk11" &&
       mvn clean deploy --settings .maven.xml -DskipTests=true -B -U -Prelease
     
