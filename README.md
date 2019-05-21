@@ -22,7 +22,7 @@ Add to your pom:
 <dependency>
   <groupId>io.github.dropwizard-jobs</groupId>
   <artifactId>dropwizard-jobs-core</artifactId>
-  <version>4.0.0</version>
+  <version>4.0.0-RC1</version>
 </dependency>
 ```
 
