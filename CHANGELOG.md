@@ -3,9 +3,10 @@
 
 ## 4.0.0
 
-* The `groupId` has been renamed to `dropwizard-jobs`
+* The `groupId` has been renamed to `io.github.dropwizard-jobs`
 * Repository moved to `https://github.com/dropwizard-jobs/dropwizard-jobs`
 * Java packages are renamed to `io.dropwizard.jobs.*` 
+* See [release notes](https://github.com/dropwizard-jobs/dropwizard-jobs/releases/tag/v4.0.0-RELEASE) for a full list of changes 
 
 ## 2.0.0
 
