@@ -1,19 +1,33 @@
 language: java
 
 jdk:
+  - oraclejdk8
+  - openjdk8
+  - openjdk10
   - openjdk11
+  - openjdk-ea
+
+matrix:
+  allow_failures:
+    - jdk: openjdk-ea
+  fast_finish: true
+  include:
+    - jdk: openjdk11
+      env: PUBLISH=true # only one publish should be active at a time.
+  exclude:
+    - env: PUBLISH=true
 
 addons:
   hostname: dropwizard-jobs-ci
-
-before_install:
-  - ulimit -c unlimited -S
 
 cache:
   directories:
     - "$HOME/.m2"
 
 env:
+  matrix: 
+    - PUBLISH: true
+    - PUBLISH: false
   global:
     - JAVA_OPTS: "'-Xms512m -Xmx2g'"
     - secure: LGD9kWPTbRthg72NCCf8e8ztAugu4AFvivb7wBUYbRpFV8wwu3okLpWw3kCIuIsBnFA89nwoqPXqOr1EjOXMVj3CFbi1vlB49MF22vmfjMgpDXmaxeqO2FSclN+r8gvLJ4v7yPocTnwOGVTMQsnb5IhPLf4UZsY2mfwEnllsdO0=
@@ -27,13 +41,18 @@ before_install:
 install:
     mvn --settings .maven.xml install -DskipTests=true -Dgpg.skip -Dmaven.javadoc.skip=true -B -V
 
-## Build and release to maven central if tests are successful & tag is set
 after_success:
-    - if [ -z ${TRAVIS_TAG+x} ]; then echo "no tag is set, skipping deployment"; else mvn clean deploy --settings .maven.xml -DskipTests=true -B -U -Prelease ; fi
-    
+    - mvn help:evaluate -N -Dexpression=project.version|grep -v '\['
+    - export project_version=$(mvn help:evaluate -N -Dexpression=project.version|grep -v '\[')
+    - echo $TRAVIS_TAG
+    - echo $project_version
+    ## Build and release to maven central if tests are successful & tag is set & artifact is not a snapshot & PUBLISH flag set to true
+    - test "${project_version:-8}" != "SNAPSHOT" && 
+      test $TRAVIS_TAG &&
+      test $PUBLISH = "true" &&
+      mvn clean deploy --settings .maven.xml -DskipTests=true -B -U -Prelease
+
 before_deploy:
-  - mvn help:evaluate -N -Dexpression=project.version|grep -v '\['
-  - export project_version=$(mvn help:evaluate -N -Dexpression=project.version|grep -v '\[')
   - git config --local user.name "hakandilek"
   - git config --local user.email "hakandilek@gmail.com"
   - git tag $project_version
