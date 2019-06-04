@@ -1,6 +1,7 @@
 [![Build Status](https://travis-ci.org/dropwizard-jobs/dropwizard-jobs.svg?branch=master)](https://travis-ci.org/dropwizard-jobs/dropwizard-jobs)
 [![DepShield Badge](https://depshield.sonatype.org/badges/dropwizard-jobs/dropwizard-jobs/depshield.svg)](https://depshield.github.io)
 [![CodeFactor](https://www.codefactor.io/repository/github/dropwizard-jobs/dropwizard-jobs/badge)](https://www.codefactor.io/repository/github/dropwizard-jobs/dropwizard-jobs)
+[![Open Source Helpers](https://www.codetriage.com/dropwizard-jobs/dropwizard-jobs/badges/users.svg)](https://www.codetriage.com/dropwizard-jobs/dropwizard-jobs)
 
 # Dropwizard quartz integration
 
