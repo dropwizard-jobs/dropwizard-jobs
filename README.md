@@ -1,8 +1,8 @@
 [![Build Status](https://travis-ci.org/dropwizard-jobs/dropwizard-jobs.svg?branch=master)](https://travis-ci.org/dropwizard-jobs/dropwizard-jobs)
 [![DepShield Badge](https://depshield.sonatype.org/badges/dropwizard-jobs/dropwizard-jobs/depshield.svg)](https://depshield.github.io)
 [![CodeFactor](https://www.codefactor.io/repository/github/dropwizard-jobs/dropwizard-jobs/badge)](https://www.codefactor.io/repository/github/dropwizard-jobs/dropwizard-jobs)
-[![Open Source Helpers](https://www.codetriage.com/dropwizard-jobs/dropwizard-jobs/badges/users.svg)](https://www.codetriage.com/dropwizard-jobs/dropwizard-jobs)
-
+[![Maintainability](https://api.codeclimate.com/v1/badges/71ea62844095d88b2264/maintainability)](https://codeclimate.com/github/dropwizard-jobs/dropwizard-jobs/maintainability)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/71ea62844095d88b2264/test_coverage)](https://codeclimate.com/github/dropwizard-jobs/dropwizard-jobs/test_coverage)
 # Dropwizard quartz integration
 
 This plugin integrates the [quartz scheduler](http://quartz-scheduler.org/) with dropwizard and allows you to easily create background jobs, which are not bound to the HTTP request-response cycle.
