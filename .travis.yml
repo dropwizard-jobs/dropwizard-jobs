@@ -24,7 +24,7 @@ cache:
     - "$HOME/.m2"
 
 env:
-  matrix: 
+  matrix:
     - PUBLISH: true
     - PUBLISH: false
   global:
@@ -46,7 +46,7 @@ after_success:
     - echo $TRAVIS_TAG
     - echo $project_version
     ## Build and release to maven central if tests are successful & tag is set & artifact is not a snapshot & PUBLISH flag set to true
-    - test "${project_version:-8}" != "SNAPSHOT" && 
+    - test "${project_version:-8}" != "SNAPSHOT" &&
       test $TRAVIS_TAG &&
       test $PUBLISH = "true" &&
       mvn clean deploy --settings .maven.xml -DskipTests=true -B -U -Prelease
@@ -60,7 +60,7 @@ deploy:
   provider: releases
   api_key:
     secure: fzMoX/r+9Kyaklq5fkZPtmfH3Gmjl1sfKOUWARnx+RiWHYK+L78MINi2kUuADSEHphKbHtzKum82byFlx6qc/xP+Mp38SVB6sRNBVab42vtKlZOZcwdUf1ZoQvoJ5lyArjJ3KjaZLb2/DAtKfjTF/5YEYuTchaUb9pPWTyeEP5Q=
-  file: 
+  file:
     - dropwizard-jobs-core/target/dropwizard-jobs-core-$project_version.jar
     - dropwizard-jobs-guice/target/dropwizard-jobs-guice-$project_version.jar
     - dropwizard-jobs-spring/target/dropwizard-jobs-spring-$project_version.jar
