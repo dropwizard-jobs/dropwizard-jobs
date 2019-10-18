@@ -19,7 +19,7 @@
         <guice.version>4.2.2</guice.version>
         <quartz.version>2.3.1</quartz.version>
         <c3p0.version>0.9.5.4</c3p0.version>
-        <jackson.version>2.9.9.3</jackson.version>
+        <jackson.version>2.10.0</jackson.version>
         <javax.activation.version>1.1.1</javax.activation.version>
         <jaxb-api.version>2.4.0-b180830.0359</jaxb-api.version>
         <jaxb-runtime.version>2.4.0-b180830.0438</jaxb-runtime.version>
