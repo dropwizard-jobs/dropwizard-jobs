@@ -28,6 +28,7 @@ env:
     - PUBLISH: true
     - PUBLISH: false
   global:
+    - CC_TEST_REPORTER_ID: d98c3b59e883e8a0b5dbbcda340827dd501fd5e041f1c3eadb367e29d69ec487
     - JAVA_OPTS: "'-Xms512m -Xmx2g'"
     - secure: LGD9kWPTbRthg72NCCf8e8ztAugu4AFvivb7wBUYbRpFV8wwu3okLpWw3kCIuIsBnFA89nwoqPXqOr1EjOXMVj3CFbi1vlB49MF22vmfjMgpDXmaxeqO2FSclN+r8gvLJ4v7yPocTnwOGVTMQsnb5IhPLf4UZsY2mfwEnllsdO0=
     - secure: NK5FIaI/LKb34WhkHUdj91HAj++BRKMe4iPA8BTOmWm6q8auL/Tw5tpEU6uwbNNINDRqEg3qv8Oy+Vccv+AJLiNqKvIdCwFTpTNXPdqa5Vj4x5PtIOIxjtiVgK9PZJvr+cCsYX5/5pFdFcg3BE24ETTF2meXmzsEjoDELvrT0Tc=
@@ -36,6 +37,14 @@ before_install:
   - ulimit -c unlimited -S
   - echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import
   - echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust
+
+before_script:
+  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+  - chmod +x ./cc-test-reporter
+  - ./cc-test-reporter before-build
+
+after_script:
+  - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
 
 install:
     mvn --settings .maven.xml install -DskipTests=true -Dgpg.skip -Dmaven.javadoc.skip=true -B -V
