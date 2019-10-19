@@ -44,7 +44,11 @@ before_script:
   - ./cc-test-reporter before-build
 
 after_script:
-  - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
+  - JACOCO_SOURCE_PATH=dropwizard-jobs-core/src/main/java ./cc-test-reporter format-coverage -t jacoco dropwizard-jobs-core/target/site/jacoco/jacoco.xml -o coverage/codeclimate-core.json
+  - JACOCO_SOURCE_PATH=dropwizard-jobs-guice/src/main/java ./cc-test-reporter format-coverage -t jacoco dropwizard-jobs-guice/target/site/jacoco/jacoco.xml -o coverage/codeclimate-guice.json
+  - JACOCO_SOURCE_PATH=dropwizard-jobs-spring/src/main/java ./cc-test-reporter format-coverage -t jacoco dropwizard-jobs-spring/target/site/jacoco/jacoco.xml -o coverage/codeclimate-spring.json
+  - ./cc-test-reporter sum-coverage coverage/codeclimate-*.json -p 3
+  - if [[ "$TRAVIS_TEST_RESULT" == 0 ]]; then ./cc-test-reporter upload-coverage; fi
 
 install:
     mvn --settings .maven.xml install -DskipTests=true -Dgpg.skip -Dmaven.javadoc.skip=true -B -V
