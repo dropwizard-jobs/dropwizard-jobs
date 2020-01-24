@@ -3,7 +3,6 @@ package io.dropwizard.jobs;
 import com.google.inject.Binding;
 import com.google.inject.Injector;
 import com.google.inject.Key;
-
 import org.quartz.spi.JobFactory;
 
 import java.util.ArrayList;

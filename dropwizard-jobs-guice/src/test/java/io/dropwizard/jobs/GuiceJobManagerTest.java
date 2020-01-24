@@ -5,8 +5,8 @@ import static org.hamcrest.Matchers.is;
 
 import java.util.concurrent.TimeUnit;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -17,7 +17,7 @@ public class GuiceJobManagerTest {
     private JobManager jobManager;
     private Injector injector;
 
-    @Before
+    @BeforeEach
     public void ensureLatchesAreZero() {
         injector = Guice.createInjector((Module) binder -> {
             binder.bind(ApplicationStartTestJob.class).asEagerSingleton();

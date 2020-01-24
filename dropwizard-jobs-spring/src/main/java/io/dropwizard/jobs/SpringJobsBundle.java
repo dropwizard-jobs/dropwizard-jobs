@@ -1,8 +1,7 @@
 package io.dropwizard.jobs;
 
-import org.springframework.context.ApplicationContext;
-
 import io.dropwizard.core.setup.Environment;
+import org.springframework.context.ApplicationContext;
 
 public class SpringJobsBundle extends JobsBundle {
 

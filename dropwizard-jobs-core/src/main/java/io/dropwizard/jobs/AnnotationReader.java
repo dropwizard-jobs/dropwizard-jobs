@@ -1,9 +1,8 @@
 package io.dropwizard.jobs;
 
-import org.apache.commons.text.WordUtils;
-
 import io.dropwizard.jobs.annotations.Every;
 import io.dropwizard.jobs.annotations.On;
+import org.apache.commons.text.WordUtils;
 
 abstract class AnnotationReader {
 

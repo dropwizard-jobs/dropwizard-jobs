@@ -1,9 +1,7 @@
 package io.dropwizard.jobs;
 
 import com.google.inject.Inject;
-
 import io.dropwizard.jobs.annotations.Every;
-
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 

@@ -1,10 +1,11 @@
 package io.dropwizard.jobs.annotations;
 
+import org.quartz.Trigger;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import org.quartz.Trigger;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)

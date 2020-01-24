@@ -1,12 +1,10 @@
 package io.dropwizard.jobs;
 
 import com.codahale.metrics.SharedMetricRegistries;
-
-import org.quartz.Scheduler;
-
 import io.dropwizard.core.ConfiguredBundle;
 import io.dropwizard.core.setup.Bootstrap;
 import io.dropwizard.core.setup.Environment;
+import org.quartz.Scheduler;
 
 public class JobsBundle implements ConfiguredBundle<JobConfiguration> {
 
