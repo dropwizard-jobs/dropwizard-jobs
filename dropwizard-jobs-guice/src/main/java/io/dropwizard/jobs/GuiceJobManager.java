@@ -20,7 +20,6 @@ public class GuiceJobManager extends JobManager {
 
     public GuiceJobManager(JobConfiguration config, Injector injector) {
         super(config, getJobs(injector));
-        jobs = getJobs(injector);
         jobFactory = new GuiceJobFactory(injector);
     }
 
