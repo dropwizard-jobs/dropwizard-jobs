@@ -3,6 +3,7 @@ package io.dropwizard.jobs;
 import com.google.inject.Binding;
 import com.google.inject.Injector;
 import com.google.inject.Key;
+import com.google.inject.TypeLiteral;
 import org.quartz.spi.JobFactory;
 
 import java.util.ArrayList;
@@ -20,8 +21,10 @@ public class GuiceJobManager extends JobManager {
 
     static Job[] getJobs(Injector injector) {
         List<Job> jobs = new ArrayList<>();
-        for (Map.Entry<Key<?>, Binding<?>> entry : injector.getBindings().entrySet()) {
-            Class<?> clazz = entry.getValue().getKey().getTypeLiteral().getRawType();
+        Map<Key<?>, Binding<?>> bindings = injector.getBindings();
+        for (Key<?> key : bindings.keySet()) {
+            TypeLiteral<?> typeLiteral = key.getTypeLiteral();
+            Class<?> clazz = typeLiteral.getRawType();
             if (Job.class.isAssignableFrom(clazz)) {
                 jobs.add((Job) injector.getInstance(clazz));
             }
