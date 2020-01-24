@@ -1,7 +1,6 @@
 package io.dropwizard.jobs;
 
 import com.google.inject.Injector;
-
 import io.dropwizard.core.setup.Environment;
 
 public class GuiceJobsBundle extends JobsBundle {

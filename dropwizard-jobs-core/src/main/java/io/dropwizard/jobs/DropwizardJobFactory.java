@@ -1,6 +1,5 @@
 package io.dropwizard.jobs;
 
-import java.util.Objects;
 import org.quartz.JobDetail;
 import org.quartz.JobKey;
 import org.quartz.Scheduler;
@@ -8,6 +7,8 @@ import org.quartz.SchedulerException;
 import org.quartz.spi.JobFactory;
 import org.quartz.spi.TriggerFiredBundle;
 import org.quartz.utils.Key;
+
+import java.util.Objects;
 
 class DropwizardJobFactory implements JobFactory {
 

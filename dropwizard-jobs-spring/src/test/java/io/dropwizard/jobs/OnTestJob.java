@@ -1,7 +1,6 @@
 package io.dropwizard.jobs;
 
 import io.dropwizard.jobs.annotations.On;
-
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 

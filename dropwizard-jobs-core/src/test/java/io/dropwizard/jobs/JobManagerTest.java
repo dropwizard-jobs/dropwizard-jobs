@@ -3,9 +3,10 @@ package io.dropwizard.jobs;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -16,7 +17,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.hamcrest.Matchers;
 import org.hamcrest.core.IsEqual;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.quartz.CronTrigger;
 import org.quartz.JobDetail;
 import org.quartz.JobKey;
@@ -219,15 +220,17 @@ public class JobManagerTest {
         jobManager.stop();
     }
 
-    @Test(expected = SchedulerConfigException.class)
-    public void throwsExceptionWhenNoPropertiesAreDefined() throws Exception {
-        TestConfig config = new TestConfig();
-        config.getQuartzConfiguration().clear();
-        config.getQuartzConfiguration().put("some", "property");
+    @Test
+    public void throwsExceptionWhenNoPropertiesAreDefined() {
+        assertThrows(SchedulerConfigException.class, () -> {
+            TestConfig config = new TestConfig();
+            config.getQuartzConfiguration().clear();
+            config.getQuartzConfiguration().put("some", "property");
 
-        jobManager = new JobManager(config, startTestJob, onTestJob, onTestJobWithJobName, everyTestJob,
-                everyTestJobWithJobName);
-        jobManager.start();
+            jobManager = new JobManager(config, startTestJob, onTestJob, onTestJobWithJobName, everyTestJob,
+                    everyTestJobWithJobName);
+            jobManager.start();
+        });
     }
 
     @Test
@@ -243,7 +246,7 @@ public class JobManagerTest {
     }
 
     @Test
-    public void allowTimezoneConfiguration() throws Exception {
+    public void allowTimezoneConfiguration() {
         TestConfig config = new TestConfig();
         config.getQuartzConfiguration().put("de.spinscale.dropwizard.jobs.timezone", "Europe/London");
 
