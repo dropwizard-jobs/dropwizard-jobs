@@ -1,6 +1,7 @@
 package io.dropwizard.jobs;
 
 import io.dropwizard.jobs.annotations.*;
+import io.dropwizard.jobs.annotations.Every.MisfirePolicy;
 import io.dropwizard.jobs.parser.TimeParserUtil;
 import io.dropwizard.lifecycle.Managed;
 import org.apache.commons.lang3.StringUtils;
@@ -89,7 +90,7 @@ public class JobManager implements Managed {
 
     /**
      * Allow timezone to be configured on a per-cron basis with [timezoneName] appended to the cron format
-     * 
+     *
      * @param cronExpr the modified cron format
      * @return the cron schedule with the timezone applied to it if needed
      */
@@ -144,8 +145,7 @@ public class JobManager implements Managed {
                     JobKey jobKey = createJobKey(onAnnotation.jobName(), job);
 
                     String message = String.format("    %-21s %s", cron, jobKey.toString());
-                    ScheduledJob scheduledJob = new ScheduledJob(jobKey, clazz, trigger, requestRecovery, storeDurably, message);
-                    return scheduledJob;
+                    return new ScheduledJob(jobKey, clazz, trigger, requestRecovery, storeDurably, message);
                 });
     }
 
@@ -160,11 +160,8 @@ public class JobManager implements Managed {
                 .map(job -> {
                     Class<? extends Job> clazz = job.getClass();
                     Every everyAnnotation = clazz.getAnnotation(Every.class);
-                    int priority = everyAnnotation.priority();
-                    Every.MisfirePolicy misfirePolicy = everyAnnotation.misfirePolicy();
                     boolean requestRecovery = everyAnnotation.requestRecovery();
                     boolean storeDurably = everyAnnotation.storeDurably();
-                    int repeatCount = everyAnnotation.repeatCount();
 
                     String value = everyAnnotation.value();
                     if (value.isEmpty() || value.matches("\\$\\{.*\\}")) {
@@ -176,31 +173,14 @@ public class JobManager implements Managed {
                     SimpleScheduleBuilder scheduleBuilder = SimpleScheduleBuilder.simpleSchedule()
                             .withIntervalInMilliseconds(milliSeconds);
 
-                    if (repeatCount > -1)
-                        scheduleBuilder.withRepeatCount(repeatCount);
-                    else
-                        scheduleBuilder.repeatForever();
+                    int repeatCount = everyAnnotation.repeatCount();
+                    applyRepeatCount(repeatCount, scheduleBuilder);
 
-                    if (misfirePolicy == Every.MisfirePolicy.IGNORE_MISFIRES)
-                        scheduleBuilder.withMisfireHandlingInstructionIgnoreMisfires();
-                    else if (misfirePolicy == Every.MisfirePolicy.FIRE_NOW)
-                        scheduleBuilder.withMisfireHandlingInstructionFireNow();
-                    else if (misfirePolicy == Every.MisfirePolicy.NOW_WITH_EXISTING_COUNT)
-                        scheduleBuilder.withMisfireHandlingInstructionNowWithExistingCount();
-                    else if (misfirePolicy == Every.MisfirePolicy.NOW_WITH_REMAINING_COUNT)
-                        scheduleBuilder.withMisfireHandlingInstructionNowWithRemainingCount();
-                    else if (misfirePolicy == Every.MisfirePolicy.NEXT_WITH_EXISTING_COUNT)
-                        scheduleBuilder.withMisfireHandlingInstructionNextWithExistingCount();
-                    else if (misfirePolicy == Every.MisfirePolicy.NEXT_WITH_REMAINING_COUNT)
-                        scheduleBuilder.withMisfireHandlingInstructionNextWithRemainingCount();
+                    MisfirePolicy misfirePolicy = everyAnnotation.misfirePolicy();
+                    applyMisfirePolicy(misfirePolicy, scheduleBuilder);
 
-                    Instant start = Instant.now();
-                    DelayStart delayAnnotation = clazz.getAnnotation(DelayStart.class);
-                    if (delayAnnotation != null) {
-                        long milliSecondDelay = TimeParserUtil.parseDuration(delayAnnotation.value());
-                        start = start.plusMillis(milliSecondDelay);
-                    }
-
+                    Instant start = extractStart(clazz);
+                    int priority = everyAnnotation.priority();
                     Trigger trigger = TriggerBuilder.newTrigger().withSchedule(scheduleBuilder)
                             .startAt(Date.from(start))
                             .withPriority(priority)
@@ -208,16 +188,60 @@ public class JobManager implements Managed {
 
                     // ensure that only one instance of each job is scheduled
                     JobKey jobKey = createJobKey(everyAnnotation.jobName(), job);
-
-                    StringBuilder sb = new StringBuilder();
-                    sb.append(String.format("    %-7s %s", everyAnnotation.value(), jobKey.toString()));
-                    if (delayAnnotation != null) {
-                        sb.append(" (").append(delayAnnotation.value()).append(" delay)");
-                    }
-                    String message = sb.toString();
-
+                    String message = extractMessage(clazz, jobKey);
                     return new ScheduledJob(jobKey, clazz, trigger, requestRecovery, storeDurably, message);
                 });
+    }
+
+    private void applyRepeatCount(int repeatCount, SimpleScheduleBuilder scheduleBuilder) {
+        if (repeatCount > -1)
+            scheduleBuilder.withRepeatCount(repeatCount);
+        else
+            scheduleBuilder.repeatForever();
+    }
+
+    private void applyMisfirePolicy(MisfirePolicy misfirePolicy, SimpleScheduleBuilder scheduleBuilder) {
+        switch (misfirePolicy) {
+            case IGNORE_MISFIRES:
+                scheduleBuilder.withMisfireHandlingInstructionIgnoreMisfires();
+                break;
+            case FIRE_NOW:
+                scheduleBuilder.withMisfireHandlingInstructionFireNow();
+                break;
+            case NOW_WITH_EXISTING_COUNT:
+                scheduleBuilder.withMisfireHandlingInstructionNowWithExistingCount();
+                break;
+            case NOW_WITH_REMAINING_COUNT:
+                scheduleBuilder.withMisfireHandlingInstructionNowWithRemainingCount();
+                break;
+            case NEXT_WITH_EXISTING_COUNT:
+                scheduleBuilder.withMisfireHandlingInstructionNextWithExistingCount();
+                break;
+            case NEXT_WITH_REMAINING_COUNT:
+                scheduleBuilder.withMisfireHandlingInstructionNextWithRemainingCount();
+                break;
+        }
+    }
+
+    private String extractMessage(Class<? extends Job> clazz, JobKey jobKey) {
+        DelayStart delayAnnotation = clazz.getAnnotation(DelayStart.class);
+        Every everyAnnotation = clazz.getAnnotation(Every.class);
+        StringBuilder sb = new StringBuilder();
+        sb.append(String.format("    %-7s %s", everyAnnotation.value(), jobKey.toString()));
+        if (delayAnnotation != null) {
+            sb.append(" (").append(delayAnnotation.value()).append(" delay)");
+        }
+        return sb.toString();
+    }
+
+    private Instant extractStart(Class<? extends Job> clazz) {
+        Instant start = Instant.now();
+        DelayStart delayAnnotation = clazz.getAnnotation(DelayStart.class);
+        if (delayAnnotation != null) {
+            long milliSecondDelay = TimeParserUtil.parseDuration(delayAnnotation.value());
+            start = start.plusMillis(milliSecondDelay);
+        }
+        return start;
     }
 
     protected void scheduleAllJobsOnApplicationStart() throws SchedulerException {
@@ -264,7 +288,7 @@ public class JobManager implements Managed {
 
         Arrays.stream(this.jobs)
                 .filter(job -> job.getClass().isAnnotationPresent(OnApplicationStop.class))
-                .map(job -> job.getClass())
+                .map(Job::getClass)
                 .forEach(clazz -> log.info("   " + clazz.getCanonicalName()));
     }
 
@@ -274,54 +298,48 @@ public class JobManager implements Managed {
                 .requestRecovery(job.isRequestsRecovery())
                 .storeDurably(job.isStoreDurably());
 
-        boolean exists = false;
         try {
-            exists = scheduler.checkExists(job.getJobKey());
-        } catch (SchedulerException e) {
-            log.error("error occured checking the job " + job.getJobKey().toString(), e);
-            return;
-        }
-
-        if (!exists) {
-            // if the job doesn't already exist, we can create it, along with its trigger. this prevents us
-            // from creating multiple instances of the same job when running in a clustered environment
-            try {
-                scheduler.scheduleJob(jobBuilder.build(), job.getTrigger());
-            } catch (SchedulerException e) {
-                log.error("error occured scheduling the job " + job.getJobKey().toString(), e);
-                return;
-            }
-            log.info("scheduled job with key " + job.getJobKey().toString());
-        } else {
-            // if the job has exactly one trigger, we can just reschedule it, which allows us to update the schedule for
-            // that trigger.
-            List<? extends Trigger> triggers = new ArrayList<>();
-            try {
-                triggers = scheduler.getTriggersOfJob(job.getJobKey());
-            } catch (SchedulerException e) {
-                log.error("error occured reading triggers of the job " + job.getJobKey().toString(), e);
-                return;
-            }
-            if (triggers.size() == 1) {
+            if (scheduler.checkExists(job.getJobKey())) {
+                // if the job has exactly one trigger, we can just reschedule it, which allows us to update the schedule for
+                // that trigger.
                 try {
-                    scheduler.rescheduleJob(triggers.get(0).getKey(), job.getTrigger());
+                    List<? extends Trigger> triggers = scheduler.getTriggersOfJob(job.getJobKey());
+                    if (triggers.size() == 1) {
+                        try {
+                            scheduler.rescheduleJob(triggers.get(0).getKey(), job.getTrigger());
+                            log.info(job.getMessage());
+                        } catch (SchedulerException e) {
+                            log.error("error occurred re-scheduling the job " + job.getJobKey().toString(), e);
+                        }
+                    } else {
+                        // if for some reason the job has multiple triggers, it's easiest to just delete and re-create the job,
+                        // since we want to enforce a one-to-one relationship between jobs and triggers
+                        try {
+                            scheduler.deleteJob(job.getJobKey());
+                            scheduler.scheduleJob(jobBuilder.build(), job.getTrigger());
+                            log.info(job.getMessage());
+                        } catch (SchedulerException e) {
+                            log.error("error occurred deleting/scheduling the job " + job.getJobKey().toString(), e);
+                        }
+                    }
                 } catch (SchedulerException e) {
-                    log.error("error occured re-scheduling the job " + job.getJobKey().toString(), e);
-                    return;
+                    log.error("error occurred reading triggers of the job " + job.getJobKey().toString(), e);
                 }
             } else {
-                // if for some reason the job has multiple triggers, it's easiest to just delete and re-create the job,
-                // since we want to enforce a one-to-one relationship between jobs and triggers
+                // if the job doesn't already exist, we can create it, along with its trigger. this prevents us
+                // from creating multiple instances of the same job when running in a clustered environment
                 try {
-                    scheduler.deleteJob(job.getJobKey());
                     scheduler.scheduleJob(jobBuilder.build(), job.getTrigger());
+                    log.info("scheduled job with key " + job.getJobKey().toString());
+                    log.info(job.getMessage());
                 } catch (SchedulerException e) {
-                    log.error("error occured deleting/scheduling the job " + job.getJobKey().toString(), e);
-                    return;
+                    log.error("error occurred scheduling the job " + job.getJobKey().toString(), e);
                 }
             }
+
+        } catch (SchedulerException e) {
+            log.error("error occured checking the job " + job.getJobKey().toString(), e);
         }
 
-        log.info(job.getMessage());
     }
 }
