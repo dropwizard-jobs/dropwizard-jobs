@@ -1,6 +1,7 @@
 package io.dropwizard.jobs;
 
 import java.util.Objects;
+
 import org.quartz.JobDetail;
 import org.quartz.JobKey;
 import org.quartz.Scheduler;

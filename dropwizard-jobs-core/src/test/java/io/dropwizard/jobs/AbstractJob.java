@@ -1,11 +1,9 @@
 package io.dropwizard.jobs;
 
+import java.util.concurrent.CountDownLatch;
+
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
-
-import io.dropwizard.jobs.Job;
-
-import java.util.concurrent.CountDownLatch;
 
 public abstract class AbstractJob extends Job {
 

@@ -2,12 +2,13 @@ package io.dropwizard.jobs;
 
 import static com.codahale.metrics.MetricRegistry.name;
 
+import org.quartz.JobExecutionContext;
+import org.quartz.JobExecutionException;
+
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
-import org.quartz.JobExecutionContext;
-import org.quartz.JobExecutionException;
 
 public abstract class Job implements org.quartz.Job {
 

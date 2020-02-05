@@ -1,13 +1,13 @@
 package io.dropwizard.jobs;
 
-import io.dropwizard.jobs.Job;
-import io.dropwizard.jobs.annotations.Every;
+import java.util.concurrent.CountDownLatch;
+
+import javax.inject.Inject;
 
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 
-import javax.inject.Inject;
-import java.util.concurrent.CountDownLatch;
+import io.dropwizard.jobs.annotations.Every;
 
 @Every("100ms")
 public class DependencyTestJob extends Job {

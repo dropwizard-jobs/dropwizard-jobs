@@ -1,8 +1,8 @@
 package io.dropwizard.jobs;
 
-import com.codahale.metrics.SharedMetricRegistries;
-
 import org.quartz.Scheduler;
+
+import com.codahale.metrics.SharedMetricRegistries;
 
 import io.dropwizard.ConfiguredBundle;
 import io.dropwizard.setup.Bootstrap;

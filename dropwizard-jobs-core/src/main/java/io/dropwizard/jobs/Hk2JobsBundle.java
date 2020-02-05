@@ -1,15 +1,17 @@
 package io.dropwizard.jobs;
 
-import io.dropwizard.setup.Environment;
+import java.util.List;
+import java.util.Objects;
+
 import org.glassfish.hk2.api.Filter;
 import org.glassfish.hk2.api.ServiceLocator;
+import org.glassfish.jersey.internal.inject.InjectionManager;
 import org.glassfish.jersey.server.spi.AbstractContainerLifecycleListener;
 import org.glassfish.jersey.server.spi.Container;
 import org.quartz.Scheduler;
 import org.quartz.spi.JobFactory;
 
-import java.util.List;
-import java.util.Objects;
+import io.dropwizard.setup.Environment;
 
 /**
  * A {@link JobsBundle} implementation that uses HK2 to instantiate a {@link Job}.
@@ -73,7 +75,8 @@ public class Hk2JobsBundle extends JobsBundle {
         environment.jersey().register(new AbstractContainerLifecycleListener() {
             @Override
             public void onStartup(Container container) {
-                final ServiceLocator locator = container.getApplicationHandler().getServiceLocator();
+                final InjectionManager im = container.getApplicationHandler().getInjectionManager();
+                final ServiceLocator locator = im.getInstance(ServiceLocator.class);
                 // TODO: Avoid useless Job instantiation. Note: Same as GuiceJobManager and SpringJobManager.
                 @SuppressWarnings("unchecked")
                 final List<Job> jobs = (List<Job>) locator.getAllServices(searchCriteria);

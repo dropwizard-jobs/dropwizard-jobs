@@ -5,3 +5,4 @@
 target/
 .settings
 .vscode/
+dropwizard-jobs-core/.sts4-cache/classpath-data.json

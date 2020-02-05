@@ -3,13 +3,12 @@ package io.dropwizard.jobs;
 import java.util.Date;
 import java.util.List;
 
-import com.google.common.collect.Lists;
-
-import io.dropwizard.jobs.Job;
-import io.dropwizard.jobs.annotations.Every;
-
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
+
+import com.google.common.collect.Lists;
+
+import io.dropwizard.jobs.annotations.Every;
 
 // this job has the same job name as EveryTestJobWithJobName. Only one will be created
 @Every(value = "1s", jobName = "FooJob")
