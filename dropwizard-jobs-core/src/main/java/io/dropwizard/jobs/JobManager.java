@@ -119,27 +119,22 @@ public class JobManager implements Managed {
                         log.info(clazz + " is configured in the config file to run every " + cron);
                     }
 
-                    int priority = onAnnotation.priority();
-                    On.MisfirePolicy misfirePolicy = onAnnotation.misfirePolicy();
                     boolean requestRecovery = onAnnotation.requestRecovery();
                     boolean storeDurably = onAnnotation.storeDurably();
 
                     CronScheduleBuilder scheduleBuilder = createCronScheduleBuilder(cron);
 
                     String timeZoneStr = onAnnotation.timeZone();
-                    if (StringUtils.isNotBlank(timeZoneStr)) {
-                        TimeZone timeZone = TimeZone.getTimeZone(ZoneId.of(timeZoneStr));
-                        scheduleBuilder = scheduleBuilder.inTimeZone(timeZone);
-                    }
+                    applyTimezone(timeZoneStr, scheduleBuilder);
 
-                    if (misfirePolicy == On.MisfirePolicy.IGNORE_MISFIRES)
-                        scheduleBuilder.withMisfireHandlingInstructionIgnoreMisfires();
-                    else if (misfirePolicy == On.MisfirePolicy.DO_NOTHING)
-                        scheduleBuilder.withMisfireHandlingInstructionDoNothing();
-                    else if (misfirePolicy == On.MisfirePolicy.FIRE_AND_PROCEED)
-                        scheduleBuilder.withMisfireHandlingInstructionFireAndProceed();
+                    On.MisfirePolicy misfirePolicy = onAnnotation.misfirePolicy();
+                    applyMisfirePolicy(misfirePolicy, scheduleBuilder);
 
-                    Trigger trigger = TriggerBuilder.newTrigger().withSchedule(scheduleBuilder).withPriority(priority).build();
+                    int priority = onAnnotation.priority();
+                    Trigger trigger = TriggerBuilder.newTrigger()
+                            .withSchedule(scheduleBuilder)
+                            .withPriority(priority)
+                            .build();
 
                     // ensure that only one instance of each job is scheduled
                     JobKey jobKey = createJobKey(onAnnotation.jobName(), job);
@@ -147,6 +142,22 @@ public class JobManager implements Managed {
                     String message = String.format("    %-21s %s", cron, jobKey.toString());
                     return new ScheduledJob(jobKey, clazz, trigger, requestRecovery, storeDurably, message);
                 });
+    }
+
+    private void applyTimezone(String timeZoneStr, CronScheduleBuilder scheduleBuilder) {
+        if (StringUtils.isNotBlank(timeZoneStr)) {
+            TimeZone timeZone = TimeZone.getTimeZone(ZoneId.of(timeZoneStr));
+            scheduleBuilder.inTimeZone(timeZone);
+        }
+    }
+
+    private void applyMisfirePolicy(On.MisfirePolicy misfirePolicy, CronScheduleBuilder scheduleBuilder) {
+        if (misfirePolicy == On.MisfirePolicy.IGNORE_MISFIRES)
+            scheduleBuilder.withMisfireHandlingInstructionIgnoreMisfires();
+        else if (misfirePolicy == On.MisfirePolicy.DO_NOTHING)
+            scheduleBuilder.withMisfireHandlingInstructionDoNothing();
+        else if (misfirePolicy == On.MisfirePolicy.FIRE_AND_PROCEED)
+            scheduleBuilder.withMisfireHandlingInstructionFireAndProceed();
     }
 
     private JobKey createJobKey(final String annotationJobName, final Job job) {
@@ -160,18 +171,10 @@ public class JobManager implements Managed {
                 .map(job -> {
                     Class<? extends Job> clazz = job.getClass();
                     Every everyAnnotation = clazz.getAnnotation(Every.class);
-                    boolean requestRecovery = everyAnnotation.requestRecovery();
-                    boolean storeDurably = everyAnnotation.storeDurably();
 
-                    String value = everyAnnotation.value();
-                    if (value.isEmpty() || value.matches("\\$\\{.*\\}")) {
-                        value = readDurationFromConfig(everyAnnotation, clazz, configuration);
-                        log.info(clazz + " is configured in the config file to run every " + value);
-                    }
-                    long milliSeconds = TimeParserUtil.parseDuration(value);
-
+                    long interval = getInterval(clazz, everyAnnotation);
                     SimpleScheduleBuilder scheduleBuilder = SimpleScheduleBuilder.simpleSchedule()
-                            .withIntervalInMilliseconds(milliSeconds);
+                            .withIntervalInMilliseconds(interval);
 
                     int repeatCount = everyAnnotation.repeatCount();
                     applyRepeatCount(repeatCount, scheduleBuilder);
@@ -189,8 +192,19 @@ public class JobManager implements Managed {
                     // ensure that only one instance of each job is scheduled
                     JobKey jobKey = createJobKey(everyAnnotation.jobName(), job);
                     String message = extractMessage(clazz, jobKey);
+                    boolean requestRecovery = everyAnnotation.requestRecovery();
+                    boolean storeDurably = everyAnnotation.storeDurably();
                     return new ScheduledJob(jobKey, clazz, trigger, requestRecovery, storeDurably, message);
                 });
+    }
+
+    private long getInterval(Class<? extends Job> clazz, Every everyAnnotation) {
+        String value = everyAnnotation.value();
+        if (value.isEmpty() || value.matches("\\$\\{.*\\}")) {
+            value = readDurationFromConfig(everyAnnotation, clazz, configuration);
+            log.info(clazz + " is configured in the config file to run every " + value);
+        }
+        return TimeParserUtil.parseDuration(value);
     }
 
     private void applyRepeatCount(int repeatCount, SimpleScheduleBuilder scheduleBuilder) {
@@ -296,52 +310,37 @@ public class JobManager implements Managed {
     }
 
     private void scheduleOrRescheduleJob(ScheduledJob job) {
+        JobKey jobKey = job.getJobKey();
+        Trigger trigger = job.getTrigger();
         JobBuilder jobBuilder = JobBuilder.newJob(job.getClazz())
-                .withIdentity(job.getJobKey())
+                .withIdentity(jobKey)
                 .requestRecovery(job.isRequestsRecovery())
                 .storeDurably(job.isStoreDurably());
 
         try {
-            if (scheduler.checkExists(job.getJobKey())) {
+            if (scheduler.checkExists(jobKey)) {
                 // if the job has exactly one trigger, we can just reschedule it, which allows us to update the schedule for
                 // that trigger.
-                try {
-                    List<? extends Trigger> triggers = scheduler.getTriggersOfJob(job.getJobKey());
-                    if (triggers.size() == 1) {
-                        try {
-                            scheduler.rescheduleJob(triggers.get(0).getKey(), job.getTrigger());
-                            log.info(job.getMessage());
-                        } catch (SchedulerException e) {
-                            log.error("error occurred re-scheduling the job " + job.getJobKey().toString(), e);
-                        }
-                    } else {
-                        // if for some reason the job has multiple triggers, it's easiest to just delete and re-create the job,
-                        // since we want to enforce a one-to-one relationship between jobs and triggers
-                        try {
-                            scheduler.deleteJob(job.getJobKey());
-                            scheduler.scheduleJob(jobBuilder.build(), job.getTrigger());
-                            log.info(job.getMessage());
-                        } catch (SchedulerException e) {
-                            log.error("error occurred deleting/scheduling the job " + job.getJobKey().toString(), e);
-                        }
-                    }
-                } catch (SchedulerException e) {
-                    log.error("error occurred reading triggers of the job " + job.getJobKey().toString(), e);
+                List<? extends Trigger> triggers = scheduler.getTriggersOfJob(jobKey);
+                if (triggers.size() == 1) {
+                    scheduler.rescheduleJob(triggers.get(0).getKey(), trigger);
+                    log.info(job.getMessage());
+                } else {
+                    // if for some reason the job has multiple triggers, it's easiest to just delete and re-create the job,
+                    // since we want to enforce a one-to-one relationship between jobs and triggers
+                    scheduler.deleteJob(jobKey);
+                    scheduler.scheduleJob(jobBuilder.build(), trigger);
+                    log.info(job.getMessage());
                 }
             } else {
                 // if the job doesn't already exist, we can create it, along with its trigger. this prevents us
                 // from creating multiple instances of the same job when running in a clustered environment
-                try {
-                    scheduler.scheduleJob(jobBuilder.build(), job.getTrigger());
-                    log.info("scheduled job with key " + job.getJobKey().toString());
-                    log.info(job.getMessage());
-                } catch (SchedulerException e) {
-                    log.error("error occurred scheduling the job " + job.getJobKey().toString(), e);
-                }
+                scheduler.scheduleJob(jobBuilder.build(), trigger);
+                log.info("scheduled job with key {}", jobKey.toString());
+                log.info(job.getMessage());
             }
-
         } catch (SchedulerException e) {
-            log.error("error occured checking the job " + job.getJobKey().toString(), e);
+            log.error(String.format("error occurred scheduling the job %s", jobKey), e);
         }
 
     }
