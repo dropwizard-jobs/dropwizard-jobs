@@ -14,7 +14,7 @@
     <!-- To check for outdated dependencies, run: mvn versions:display-dependency-updates -->
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <dropwizard.version>2.0.0</dropwizard.version>
+        <dropwizard.version>2.0.1</dropwizard.version>
         <spring.version>5.2.3.RELEASE</spring.version>
         <guice.version>4.2.2</guice.version>
         <quartz.version>2.3.2</quartz.version>
