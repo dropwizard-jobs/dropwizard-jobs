@@ -6,7 +6,7 @@ arguments into Jobs.
 
 ## Using maven central repository
 dropwizard jobs can be used with maven.
-It is located in Central Repository. http://search.maven.org/
+It is located in Central Repository. https://search.maven.org/
 
 Add to your pom:
 ```xml
