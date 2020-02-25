@@ -1,22 +1,20 @@
 package io.dropwizard.jobs;
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import io.dropwizard.Configuration;
-import io.dropwizard.jobs.GuiceJobsBundle;
-import io.dropwizard.jobs.JobConfiguration;
-import io.dropwizard.jobs.JobManager;
-import io.dropwizard.lifecycle.setup.LifecycleEnvironment;
-import io.dropwizard.setup.Environment;
-import org.junit.Test;
-import org.mockito.ArgumentCaptor;
-
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import org.junit.Test;
+import org.mockito.ArgumentCaptor;
+
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+
+import io.dropwizard.lifecycle.setup.LifecycleEnvironment;
+import io.dropwizard.setup.Environment;
 
 public class GuiceJobsBundleTest {
 
@@ -37,5 +35,5 @@ public class GuiceJobsBundleTest {
         assertThat(jobManager, is(notNullValue()));
     }
 
-    private static class MyConfiguration extends Configuration implements JobConfiguration {}
+    private static class MyConfiguration extends JobConfiguration {}
 }

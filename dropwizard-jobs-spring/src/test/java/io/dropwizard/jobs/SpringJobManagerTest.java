@@ -9,15 +9,6 @@ import org.junit.Test;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
-import io.dropwizard.Configuration;
-import io.dropwizard.jobs.ApplicationStartTestJob;
-import io.dropwizard.jobs.ApplicationStopTestJob;
-import io.dropwizard.jobs.EveryTestJob;
-import io.dropwizard.jobs.JobConfiguration;
-import io.dropwizard.jobs.JobManager;
-import io.dropwizard.jobs.OnTestJob;
-import io.dropwizard.jobs.SpringJobManager;
-
 public class SpringJobManagerTest {
 
     private final ApplicationContext context = new AnnotationConfigApplicationContext(ApplicationStartTestJob.class,
@@ -38,7 +29,7 @@ public class SpringJobManagerTest {
         assertThat(context.getBean(ApplicationStopTestJob.class).latch.await(1, TimeUnit.SECONDS), is(true));
     }
     
-    public static class TestConfig extends Configuration implements JobConfiguration {
+    public static class TestConfig extends JobConfiguration {
         
     }
 }
