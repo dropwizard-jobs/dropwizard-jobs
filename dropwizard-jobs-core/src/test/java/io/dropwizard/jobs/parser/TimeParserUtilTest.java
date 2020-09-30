@@ -11,8 +11,9 @@ public class TimeParserUtilTest {
 
     @Test
     public void timeParserShouldWork() {
-        assertThat(parseDuration("1mn"), is(60000L));
-        assertThat(parseDuration("1min"), is(60000L));
+        assertThat(parseDuration("1m"), is(60000L));
+        assertThat(parseDuration("2mn"), is(120000L));
+        assertThat(parseDuration("3min"), is(180000L));
         assertThat(parseDuration("10d"), is(864000000L));
         assertThat(parseDuration("20h"), is(72000000L));
         assertThat(parseDuration("40s"), is(40000L));
