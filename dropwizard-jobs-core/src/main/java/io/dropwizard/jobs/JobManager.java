@@ -267,8 +267,10 @@ public class JobManager implements Managed {
         if (!jobDetails.isEmpty()) {
             log.info("Jobs to run on application start:");
             for (JobDetail jobDetail : jobDetails) {
-                scheduler.scheduleJob(jobDetail, executeNowTrigger());
-                log.info("   " + jobDetail.getJobClass().getCanonicalName());
+                if (!scheduler.checkExists(jobDetail.getKey())) {
+                    scheduler.scheduleJob(jobDetail, executeNowTrigger());
+                    log.info("   " + jobDetail.getJobClass().getCanonicalName());
+                }
             }
         }
     }
