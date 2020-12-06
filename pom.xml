@@ -24,7 +24,7 @@
         <jaxb-api.version>2.4.0-b180830.0359</jaxb-api.version>
         <jaxb-runtime.version>2.4.0-b180830.0438</jaxb-runtime.version>
         <junit.version>4.13.1</junit.version>
-        <junit.jupiter.version>5.6.0</junit.jupiter.version>
+        <junit.jupiter.version>5.7.0</junit.jupiter.version>
         <hamcrest.version>2.2</hamcrest.version>
         <mockito.version>3.2.4</mockito.version>
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
