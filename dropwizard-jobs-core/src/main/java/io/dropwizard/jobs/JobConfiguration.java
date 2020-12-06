@@ -5,13 +5,15 @@ import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public interface JobConfiguration {
-    default Map<String, String> getJobs() {
+import io.dropwizard.Configuration;
+
+public class JobConfiguration extends Configuration {
+    public Map<String, String> getJobs() {
         return Collections.emptyMap();
     }
 
     @JsonProperty("quartz")
-    default Map<String, String> getQuartzConfiguration() {
+    public Map<String, String> getQuartzConfiguration() {
         return Collections.emptyMap();
     }
 }

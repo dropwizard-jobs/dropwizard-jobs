@@ -3,7 +3,7 @@
 
     <groupId>io.github.dropwizard-jobs</groupId>
     <artifactId>dropwizard-jobs</artifactId>
-    <version>4.0.0-SNAPSHOT</version>
+    <version>4.1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>dropwizard-jobs</name>
@@ -14,11 +14,26 @@
     <!-- To check for outdated dependencies, run: mvn versions:display-dependency-updates -->
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <dropwizard.version>1.3.0</dropwizard.version>
-        <spring.version>5.0.4.RELEASE</spring.version>
-        <guice.version>4.2.0</guice.version>
-        <quartz.version>2.3.0</quartz.version>
-        <jackson.version>2.9.5</jackson.version>
+        <dropwizard.version>2.0.1</dropwizard.version>
+        <spring.version>5.2.3.RELEASE</spring.version>
+        <guice.version>4.2.2</guice.version>
+        <quartz.version>2.3.2</quartz.version>
+        <c3p0.version>0.9.5.5</c3p0.version>
+        <jackson.version>2.10.1</jackson.version>
+        <javax.activation.version>1.1.1</javax.activation.version>
+        <jaxb-api.version>2.4.0-b180830.0359</jaxb-api.version>
+        <jaxb-runtime.version>2.4.0-b180830.0438</jaxb-runtime.version>
+        <junit.version>4.13.1</junit.version>
+        <junit.jupiter.version>5.6.0</junit.jupiter.version>
+        <hamcrest.version>2.2</hamcrest.version>
+        <mockito.version>3.2.4</mockito.version>
+        <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
+        <jacoco-maven-plugin.version>0.8.5</jacoco-maven-plugin.version>
+        <nexus-staging-maven-plugin.version>1.6.8</nexus-staging-maven-plugin.version>
+        <maven-source-plugin.version>3.2.1</maven-source-plugin.version>
+        <maven-javadoc-plugin.version>3.2.1</maven-javadoc-plugin.version>
+        <maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>
+        <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
     </properties>
 
     <developers>
@@ -67,7 +82,7 @@
         <url>https://github.com/dropwizard-jobs/dropwizard-jobs</url>
         <connection>scm:git:git@github.com:dropwizard-jobs/dropwizard-jobs.git</connection>
         <developerConnection>scm:git:git@github.com:dropwizard-jobs/dropwizard-jobs.git</developerConnection>
-        <tag>dropwizard-jobs-4.0.0</tag>
+        <tag>dropwizard-jobs-4.1.0</tag>
     </scm>
 
     <repositories>
@@ -95,13 +110,6 @@
             <name>Nexus Release Repository</name>
             <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
         </repository>
-        <!--
-        <site>
-            <id>dropwizard-jobs-site</id>
-            <name>Dropwizard Jobs</name>
-            <url>http://dropwizard-jobs.github.io/${project.version}</url>
-        </site>
-        -->
     </distributionManagement>
 
     <dependencies>
@@ -115,21 +123,62 @@
             <artifactId>quartz</artifactId>
             <version>${quartz.version}</version>
         </dependency>
+        <!-- c3p0 is a transitive dependency through quartz. Following dependency is added to overcome   -->
+        <!-- this vulnerability: https://ossindex.sonatype.org/vuln/657b67c4-d9b9-49a4-ba79-3e8233cf7213 -->
+        <dependency>
+            <groupId>com.mchange</groupId>
+            <artifactId>c3p0</artifactId>
+            <version>${c3p0.version}</version>
+        </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
             <version>${jackson.version}</version>
         </dependency>
         <dependency>
+            <groupId>javax.activation</groupId>
+            <artifactId>activation</artifactId>
+            <version>${javax.activation.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>javax.xml.bind</groupId>
+            <artifactId>jaxb-api</artifactId>
+            <version>${jaxb-api.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>jaxb-runtime</artifactId>
+            <version>${jaxb-runtime.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
             <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest-all</artifactId>
-            <version>1.3</version>
+            <artifactId>hamcrest</artifactId>
+            <version>${hamcrest.version}</version>
+            <scope>test</scope>
+        </dependency>
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter</artifactId>
+			<version>${junit.jupiter.version}</version>
+			<scope>test</scope>
+		</dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+			<version>${junit.jupiter.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.12</version>
+			<version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.vintage</groupId>
+            <artifactId>junit-vintage-engine</artifactId>
+			<version>${junit.jupiter.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -141,7 +190,7 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>2.17.0</version>
+            <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -152,6 +201,14 @@
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
             </plugin>
+			<plugin>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>${maven-surefire-plugin.version}</version>
+			</plugin>
+            <plugin>
+                <artifactId>maven-failsafe-plugin</artifactId>
+				<version>${maven-surefire-plugin.version}</version>
+            </plugin>            
         </plugins>
 
         <pluginManagement>
@@ -159,7 +216,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.7.0</version>
+                    <version>${maven-compiler-plugin.version}</version>
                     <configuration>
                         <source>1.8</source>
                         <target>1.8</target>
@@ -169,7 +226,7 @@
                 <plugin>
                     <groupId>org.jacoco</groupId>
                     <artifactId>jacoco-maven-plugin</artifactId>
-                    <version>0.8.1</version>
+                    <version>${jacoco-maven-plugin.version}</version>
                     <executions>
                         <execution>
                             <id>default-prepare-agent</id>
@@ -195,12 +252,19 @@
     <profiles>
         <profile>
             <id>release</id>
+
+            <activation>
+                <property>
+                    <name>release</name>
+                </property>
+            </activation>
+
             <build>
                 <plugins>
                     <plugin>
                         <groupId>org.sonatype.plugins</groupId>
                         <artifactId>nexus-staging-maven-plugin</artifactId>
-                        <version>1.6.8</version>
+                        <version>${nexus-staging-maven-plugin.version}</version>
                         <extensions>true</extensions>
                         <configuration>
                             <serverId>ossrh</serverId>
@@ -211,7 +275,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
-                        <version>3.0.1</version>
+                        <version>${maven-source-plugin.version}</version>
                         <executions>
                             <execution>
                                 <id>attach-sources</id>
@@ -224,7 +288,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>3.0.0</version>
+                        <version>${maven-javadoc-plugin.version}</version>
                         <executions>
                             <execution>
                                 <id>attach-javadocs</id>
@@ -233,11 +297,14 @@
                                 </goals>
                             </execution>
                         </executions>
+                        <configuration> 
+                            <source>8</source> 
+                        </configuration>                         
                     </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <version>1.6</version>
+                        <version>${maven-gpg-plugin.version}</version>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>
@@ -245,11 +312,6 @@
                                 <goals>
                                     <goal>sign</goal>
                                 </goals>
-                                <configuration>
-                                    <gpg.useagent>true</gpg.useagent>
-                                    <keyname>${gpg.keyname}</keyname>
-                                    <passphraseServerId>${gpg.keyname}</passphraseServerId>
-                                </configuration>
                             </execution>
                         </executions>
                     </plugin>

@@ -11,7 +11,7 @@ public class TimeParserUtil {
 
     private static Pattern days = Pattern.compile("^([0-9]+)d$");
     private static Pattern hours = Pattern.compile("^([0-9]+)h$");
-    private static Pattern minutes = Pattern.compile("^([0-9]+)mi?n$");
+    private static Pattern minutes = Pattern.compile("^([0-9]+)mi?n?$");
     private static Pattern seconds = Pattern.compile("^([0-9]+)s$");
     private static Pattern milliseconds = Pattern.compile("^([0-9]+)ms$");
 

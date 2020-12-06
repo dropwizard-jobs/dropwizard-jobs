@@ -1,29 +1,84 @@
 language: java
 
 jdk:
-- oraclejdk8
+  - openjdk8
+  - openjdk11
+  - openjdk14
+  - openjdk-ea
+
+matrix:
+  allow_failures:
+    - jdk: openjdk-ea
+  fast_finish: true
+  include:
+    - jdk: openjdk11
+      env: PUBLISH=true # only one publish should be active at a time.
+  exclude:
+    - env: PUBLISH=true
 
 addons:
   hostname: dropwizard-jobs-ci
 
-before_install:
-  - ulimit -c unlimited -S
-
 cache:
   directories:
-  - "$HOME/.m2"
-
-deploy:
-  provider: script
-  script: "./mvnw -B deploy --settings maven_deploy_settings.xml -Dmaven.test.skip=true
-    -Dfindbugs.skip=true"
-  on:
-    repo: dropwizard-jobs/dropwizard-jobs
-    branch: master
-    jdk: oraclejdk8
+    - "$HOME/.m2"
 
 env:
+  matrix:
+    - PUBLISH: true
+    - PUBLISH: false
   global:
-  - JAVA_OPTS: "'-Xms512m -Xmx2g'"
-  - secure: LGD9kWPTbRthg72NCCf8e8ztAugu4AFvivb7wBUYbRpFV8wwu3okLpWw3kCIuIsBnFA89nwoqPXqOr1EjOXMVj3CFbi1vlB49MF22vmfjMgpDXmaxeqO2FSclN+r8gvLJ4v7yPocTnwOGVTMQsnb5IhPLf4UZsY2mfwEnllsdO0=
-  - secure: NK5FIaI/LKb34WhkHUdj91HAj++BRKMe4iPA8BTOmWm6q8auL/Tw5tpEU6uwbNNINDRqEg3qv8Oy+Vccv+AJLiNqKvIdCwFTpTNXPdqa5Vj4x5PtIOIxjtiVgK9PZJvr+cCsYX5/5pFdFcg3BE24ETTF2meXmzsEjoDELvrT0Tc=
+    - CC_TEST_REPORTER_ID: d98c3b59e883e8a0b5dbbcda340827dd501fd5e041f1c3eadb367e29d69ec487
+    - JAVA_OPTS: "'-Xms512m -Xmx2g'"
+    - secure: LGD9kWPTbRthg72NCCf8e8ztAugu4AFvivb7wBUYbRpFV8wwu3okLpWw3kCIuIsBnFA89nwoqPXqOr1EjOXMVj3CFbi1vlB49MF22vmfjMgpDXmaxeqO2FSclN+r8gvLJ4v7yPocTnwOGVTMQsnb5IhPLf4UZsY2mfwEnllsdO0=
+    - secure: NK5FIaI/LKb34WhkHUdj91HAj++BRKMe4iPA8BTOmWm6q8auL/Tw5tpEU6uwbNNINDRqEg3qv8Oy+Vccv+AJLiNqKvIdCwFTpTNXPdqa5Vj4x5PtIOIxjtiVgK9PZJvr+cCsYX5/5pFdFcg3BE24ETTF2meXmzsEjoDELvrT0Tc=
+
+before_install:
+  - ulimit -c unlimited -S
+  - echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import
+  - echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust
+
+before_script:
+  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+  - chmod +x ./cc-test-reporter
+  - ./cc-test-reporter before-build
+
+after_script:
+  - JACOCO_SOURCE_PATH=dropwizard-jobs-core/src/main/java ./cc-test-reporter format-coverage -t jacoco dropwizard-jobs-core/target/site/jacoco/jacoco.xml -o coverage/codeclimate-core.json
+  - JACOCO_SOURCE_PATH=dropwizard-jobs-guice/src/main/java ./cc-test-reporter format-coverage -t jacoco dropwizard-jobs-guice/target/site/jacoco/jacoco.xml -o coverage/codeclimate-guice.json
+  - JACOCO_SOURCE_PATH=dropwizard-jobs-spring/src/main/java ./cc-test-reporter format-coverage -t jacoco dropwizard-jobs-spring/target/site/jacoco/jacoco.xml -o coverage/codeclimate-spring.json
+  - ./cc-test-reporter sum-coverage coverage/codeclimate-*.json -p 3
+  - if [[ "$TRAVIS_TEST_RESULT" == 0 ]]; then ./cc-test-reporter upload-coverage; fi
+
+install:
+    mvn --settings .maven.xml install -DskipTests=true -Dgpg.skip -Dmaven.javadoc.skip=true -B -V
+
+after_success:
+    - mvn help:evaluate -N -Dexpression=project.version|grep -v '\['
+    - export project_version=$(mvn help:evaluate -N -Dexpression=project.version|grep -v '\[')
+    - echo $TRAVIS_TAG
+    - echo $project_version
+    ## Build and release to maven central if tests are successful & tag is set & artifact is not a snapshot & PUBLISH flag set to true
+    - test "${project_version:-8}" != "SNAPSHOT" &&
+      test $TRAVIS_TAG &&
+      test $PUBLISH = "true" &&
+      mvn clean deploy --settings .maven.xml -DskipTests=true -B -U -Prelease
+
+before_deploy:
+  - git config --local user.name "hakandilek"
+  - git config --local user.email "hakandilek@gmail.com"
+  - git tag $project_version
+
+deploy:
+  provider: releases
+  api_key:
+    secure: fzMoX/r+9Kyaklq5fkZPtmfH3Gmjl1sfKOUWARnx+RiWHYK+L78MINi2kUuADSEHphKbHtzKum82byFlx6qc/xP+Mp38SVB6sRNBVab42vtKlZOZcwdUf1ZoQvoJ5lyArjJ3KjaZLb2/DAtKfjTF/5YEYuTchaUb9pPWTyeEP5Q=
+  file:
+    - dropwizard-jobs-core/target/dropwizard-jobs-core-$project_version.jar
+    - dropwizard-jobs-guice/target/dropwizard-jobs-guice-$project_version.jar
+    - dropwizard-jobs-spring/target/dropwizard-jobs-spring-$project_version.jar
+  skip_cleanup: true
+  on:
+    repo: dropwizard-jobs/dropwizard-jobs
+    tags: true
+  name: dropwizard-jobs-$project_version

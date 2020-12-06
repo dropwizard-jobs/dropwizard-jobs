@@ -1,17 +1,5 @@
 package io.dropwizard.jobs;
 
-import com.codahale.metrics.SharedMetricRegistries;
-import io.dropwizard.Application;
-import io.dropwizard.Configuration;
-import io.dropwizard.jobs.JobConfiguration;
-import io.dropwizard.jobs.JobManager;
-import io.dropwizard.jobs.JobsBundle;
-import io.dropwizard.lifecycle.setup.LifecycleEnvironment;
-import io.dropwizard.setup.Bootstrap;
-import io.dropwizard.setup.Environment;
-import org.junit.Test;
-import org.mockito.ArgumentCaptor;
-
 import static io.dropwizard.jobs.Job.DROPWIZARD_JOBS_KEY;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItem;
@@ -20,6 +8,16 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import org.junit.Test;
+import org.mockito.ArgumentCaptor;
+
+import com.codahale.metrics.SharedMetricRegistries;
+
+import io.dropwizard.Application;
+import io.dropwizard.lifecycle.setup.LifecycleEnvironment;
+import io.dropwizard.setup.Bootstrap;
+import io.dropwizard.setup.Environment;
 
 public class JobsBundleTest {
 
@@ -52,5 +50,5 @@ public class JobsBundleTest {
         assertThat(SharedMetricRegistries.names(), hasItem(DROPWIZARD_JOBS_KEY));
     }
 
-    private static class MyConfiguration extends Configuration implements JobConfiguration {}
+    private static class MyConfiguration extends JobConfiguration {}
 }
