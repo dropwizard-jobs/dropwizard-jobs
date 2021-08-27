@@ -204,6 +204,11 @@
 			<plugin>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>${maven-surefire-plugin.version}</version>
+				<configuration>
+					<parallel>classes</parallel>
+					<useUnlimitedThreads>true</useUnlimitedThreads>
+				</configuration>
+
 			</plugin>
             <plugin>
                 <artifactId>maven-failsafe-plugin</artifactId>
