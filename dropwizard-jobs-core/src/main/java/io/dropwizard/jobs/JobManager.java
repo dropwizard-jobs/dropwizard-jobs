@@ -3,6 +3,7 @@ package io.dropwizard.jobs;
 import io.dropwizard.jobs.annotations.*;
 import io.dropwizard.jobs.parser.TimeParserUtil;
 import io.dropwizard.lifecycle.Managed;
+import io.dropwizard.util.Sets;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.WordUtils;
 import org.joda.time.DateTime;
@@ -267,7 +268,7 @@ public class JobManager implements Managed {
         if (!jobDetails.isEmpty()) {
             log.info("Jobs to run on application start:");
             for (JobDetail jobDetail : jobDetails) {
-                scheduler.scheduleJob(jobDetail, executeNowTrigger());
+                scheduler.scheduleJob(jobDetail, Sets.of(executeNowTrigger()), true);
                 log.info("   " + jobDetail.getJobClass().getCanonicalName());
             }
         }
