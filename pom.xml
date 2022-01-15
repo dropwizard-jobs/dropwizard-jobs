@@ -34,6 +34,7 @@
         <maven-javadoc-plugin.version>3.2.1</maven-javadoc-plugin.version>
         <maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>
         <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
+    	<closeTestReports>true</closeTestReports>
     </properties>
 
     <developers>
@@ -204,6 +205,11 @@
 			<plugin>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>${maven-surefire-plugin.version}</version>
+				<configuration>
+					<parallel>classes</parallel>
+					<useUnlimitedThreads>true</useUnlimitedThreads>
+					<disableXmlReport>${closeTestReports}</disableXmlReport>
+				</configuration>
 			</plugin>
             <plugin>
                 <artifactId>maven-failsafe-plugin</artifactId>
