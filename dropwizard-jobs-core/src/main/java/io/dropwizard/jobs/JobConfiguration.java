@@ -5,7 +5,7 @@ import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import io.dropwizard.Configuration;
+import io.dropwizard.core.Configuration;
 
 public class JobConfiguration extends Configuration {
     public Map<String, String> getJobs() {
