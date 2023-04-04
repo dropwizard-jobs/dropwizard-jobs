@@ -3,21 +3,21 @@ package io.dropwizard.jobs;
 import io.dropwizard.jobs.annotations.*;
 import io.dropwizard.jobs.parser.TimeParserUtil;
 import io.dropwizard.lifecycle.Managed;
-import io.dropwizard.util.Sets;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.WordUtils;
-import org.joda.time.DateTime;
-import org.joda.time.Duration;
 import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
 import org.quartz.spi.JobFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Instant;
 import java.time.ZoneId;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 import java.util.TimeZone;
 import java.util.stream.Collectors;
 
@@ -209,15 +209,15 @@ public class JobManager implements Managed {
             else if (misfirePolicy == Every.MisfirePolicy.NEXT_WITH_REMAINING_COUNT)
                 scheduleBuilder.withMisfireHandlingInstructionNextWithRemainingCount();
 
-            DateTime start = new DateTime();
+            Instant start = Instant.now();
             DelayStart delayAnnotation = clazz.getAnnotation(DelayStart.class);
             if (delayAnnotation != null) {
                 long milliSecondDelay = TimeParserUtil.parseDuration(delayAnnotation.value());
-                start = start.plus(Duration.millis(milliSecondDelay));
+                start = start.plusMillis(milliSecondDelay);
             }
 
             Trigger trigger = TriggerBuilder.newTrigger().withSchedule(scheduleBuilder)
-                    .startAt(start.toDate())
+                    .startAt(Date.from(start))
                     .withPriority(priority)
                     .build();
 
@@ -268,7 +268,7 @@ public class JobManager implements Managed {
         if (!jobDetails.isEmpty()) {
             log.info("Jobs to run on application start:");
             for (JobDetail jobDetail : jobDetails) {
-                scheduler.scheduleJob(jobDetail, Sets.of(executeNowTrigger()), true);
+                scheduler.scheduleJob(jobDetail, Set.of(executeNowTrigger()), true);
                 log.info("   " + jobDetail.getJobClass().getCanonicalName());
             }
         }

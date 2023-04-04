@@ -14,7 +14,8 @@
     <!-- To check for outdated dependencies, run: mvn versions:display-dependency-updates -->
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <dropwizard.version>2.0.35</dropwizard.version>
+        <!--dropwizard.version>2.0.1</dropwizard.version-->
+        <dropwizard.version>3.0.0</dropwizard.version>
         <spring.version>5.2.3.RELEASE</spring.version>
         <guice.version>4.2.2</guice.version>
         <quartz.version>2.3.2</quartz.version>
@@ -25,6 +26,7 @@
         <jaxb-runtime.version>2.4.0-b180830.0438</jaxb-runtime.version>
         <junit.version>4.13.1</junit.version>
         <junit.jupiter.version>5.7.0</junit.jupiter.version>
+        <assertj.version>3.24.2</assertj.version>
         <hamcrest.version>2.2</hamcrest.version>
         <mockito.version>3.2.4</mockito.version>
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
@@ -225,6 +227,13 @@
             <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>${assertj.version}</version>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
     <build>

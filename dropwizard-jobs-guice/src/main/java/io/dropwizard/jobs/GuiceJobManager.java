@@ -4,10 +4,6 @@ import com.google.inject.Binding;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 
-import io.dropwizard.jobs.Job;
-import io.dropwizard.jobs.JobConfiguration;
-import io.dropwizard.jobs.JobManager;
-
 import org.quartz.spi.JobFactory;
 
 import java.util.ArrayList;

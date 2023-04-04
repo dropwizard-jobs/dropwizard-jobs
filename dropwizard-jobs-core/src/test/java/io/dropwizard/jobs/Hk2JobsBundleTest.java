@@ -22,9 +22,9 @@ import org.glassfish.jersey.server.spi.AbstractContainerLifecycleListener;
 import org.glassfish.jersey.server.spi.Container;
 import org.junit.Test;
 
+import io.dropwizard.core.setup.Environment;
 import io.dropwizard.jersey.DropwizardResourceConfig;
 import io.dropwizard.jersey.setup.JerseyEnvironment;
-import io.dropwizard.setup.Environment;
 
 public class Hk2JobsBundleTest {
 
