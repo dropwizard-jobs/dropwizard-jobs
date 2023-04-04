@@ -2,9 +2,7 @@ package io.dropwizard.jobs;
 
 import com.google.inject.Injector;
 
-import io.dropwizard.jobs.JobConfiguration;
-import io.dropwizard.jobs.JobsBundle;
-import io.dropwizard.setup.Environment;
+import io.dropwizard.core.setup.Environment;
 
 public class GuiceJobsBundle extends JobsBundle {
     

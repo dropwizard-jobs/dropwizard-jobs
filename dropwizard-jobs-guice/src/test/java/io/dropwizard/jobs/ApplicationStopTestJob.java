@@ -1,6 +1,5 @@
 package io.dropwizard.jobs;
 
-import io.dropwizard.jobs.Job;
 import io.dropwizard.jobs.annotations.OnApplicationStop;
 
 import org.quartz.JobExecutionContext;

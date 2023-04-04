@@ -1,6 +1,5 @@
 package io.dropwizard.jobs;
 
-import io.dropwizard.setup.Environment;
 import org.glassfish.hk2.api.Filter;
 import org.glassfish.hk2.api.ServiceLocator;
 import org.glassfish.jersey.internal.inject.InjectionManager;
@@ -8,6 +7,8 @@ import org.glassfish.jersey.server.spi.AbstractContainerLifecycleListener;
 import org.glassfish.jersey.server.spi.Container;
 import org.quartz.Scheduler;
 import org.quartz.spi.JobFactory;
+
+import io.dropwizard.core.setup.Environment;
 
 import java.util.List;
 import java.util.Objects;
