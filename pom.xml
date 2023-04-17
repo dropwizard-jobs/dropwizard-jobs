@@ -36,6 +36,7 @@
         <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
         <commons-text.version>1.10.0</commons-text.version>
         <snakeyaml.version>2.0</snakeyaml.version>
+        <jetty.version>9.4.51.v20230217</jetty.version>
     	<closeTestReports>true</closeTestReports>
     </properties>
 
@@ -146,6 +147,20 @@
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
             <version>${snakeyaml.version}</version>
+        </dependency>
+        <!-- jetty-io is a transitive dependency through quartz. Following dependency is added to       -->
+        <!-- overcome this vulnerability: https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2021-28165 -->
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-webapp</artifactId>
+            <version>${jetty.version}</version>
+        </dependency>
+        <!-- jetty-webapp is a transitive dependency through quartz. Following dependency is added to   -->
+        <!-- overcome this vulnerability: https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-27216 -->
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-webapp</artifactId>
+            <version>${jetty.version}</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
