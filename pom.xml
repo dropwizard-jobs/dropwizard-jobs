@@ -35,6 +35,7 @@
         <maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>
         <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
         <commons-text.version>1.10.0</commons-text.version>
+        <snakeyaml.version>2.0</snakeyaml.version>
     	<closeTestReports>true</closeTestReports>
     </properties>
 
@@ -138,6 +139,13 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-text</artifactId>
             <version>${commons-text.version}</version>
+        </dependency>
+        <!-- snakeyaml is a transitive dependency through quartz. Following dependency is added to      -->
+        <!-- overcome this vulnerability: https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2022-1471  -->
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+            <version>${snakeyaml.version}</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
