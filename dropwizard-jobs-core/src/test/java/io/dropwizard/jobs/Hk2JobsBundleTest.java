@@ -1,7 +1,6 @@
 package io.dropwizard.jobs;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
@@ -14,7 +13,6 @@ import javax.inject.Singleton;
 
 import org.glassfish.hk2.api.Filter;
 import org.glassfish.hk2.api.ServiceLocator;
-import org.glassfish.hk2.utilities.Binder;
 import org.glassfish.hk2.utilities.BuilderHelper;
 import org.glassfish.hk2.utilities.ServiceLocatorUtilities;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
@@ -62,7 +60,7 @@ public class Hk2JobsBundleTest {
         when(container.getConfiguration()).thenReturn(resourceConfig);
 
         // verify precondition
-        assertThat(jobsBundle.getScheduler()).isNull();
+        assertNull(jobsBundle.getScheduler());
 
         // startup container
         applicationHandler.onStartup(container);
@@ -73,18 +71,18 @@ public class Hk2JobsBundleTest {
         final List<AbstractJob> jobs = (List<AbstractJob>) serviceLocator.getAllServices(searchCriteria);
         AbstractJob applicationStartTestJob = getJob(jobs, ApplicationStartTestJob.class);
         AbstractJob applicationStopTestJob = getJob(jobs, ApplicationStopTestJob.class);
-        assertThat(jobs).hasSize(2);
-        assertThat(applicationStartTestJob.latch().getCount()).isEqualTo(0);
-        assertThat(applicationStopTestJob.latch().getCount()).isEqualTo(1);
-        assertThat(jobsBundle.getScheduler().isStarted()).isTrue();
+        assertEquals(2, jobs.size());
+        assertEquals(0, applicationStartTestJob.latch().getCount());
+        assertEquals(1, applicationStopTestJob.latch().getCount());
+        assertTrue(jobsBundle.getScheduler().isStarted());
 
         // shutdown container
         applicationHandler.onShutdown(container);
         Thread.sleep(1000);
 
         // verify at shutdown
-        assertThat(applicationStopTestJob.latch().getCount()).isEqualTo(0);
-        assertThat(jobsBundle.getScheduler().isShutdown()).isTrue();
+        assertEquals(0, applicationStopTestJob.latch().getCount());
+        assertTrue(jobsBundle.getScheduler().isShutdown());
     }
 
     /**
