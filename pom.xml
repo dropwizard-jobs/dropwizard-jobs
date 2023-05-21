@@ -15,7 +15,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <dropwizard.version>3.0.0</dropwizard.version>
-        <spring.version>5.2.24.RELEASE</spring.version>
+        <spring.version>5.3.27</spring.version>
         <guice.version>4.2.2</guice.version>
         <quartz.version>2.3.2</quartz.version>
         <c3p0.version>0.9.5.5</c3p0.version>
