@@ -34,7 +34,7 @@
         <maven-source-plugin.version>3.2.1</maven-source-plugin.version>
         <maven-javadoc-plugin.version>3.5.0</maven-javadoc-plugin.version>
         <maven-gpg-plugin.version>3.1.0</maven-gpg-plugin.version>
-        <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
+        <maven-surefire-plugin.version>3.1.0</maven-surefire-plugin.version>
         <commons-text.version>1.10.0</commons-text.version>
         <snakeyaml.version>2.0</snakeyaml.version>
         <jetty.version>9.4.51.v20230217</jetty.version>
