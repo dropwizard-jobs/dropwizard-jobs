@@ -1,5 +1,12 @@
 # Changelog
 
+## 5.0.0
+
+* Dependency updates due to vulnerabilities - #161 #160 #159 
+* Updated to use Dropwizard 3 - #151 - Thanks to @eddymouthaan
+* Artifact publishing refactored to publish snapshots on [GH package repository](https://github.com/orgs/dropwizard-jobs/packages?repo_name=dropwizard-jobs) - #162
+
+
 ## 4.1.0
 
 * Mainly dependency updates due to vulnerabilities
