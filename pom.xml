@@ -29,7 +29,7 @@
         <hamcrest.version>2.2</hamcrest.version>
         <mockito.version>3.2.4</mockito.version>
         <maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
-        <jacoco-maven-plugin.version>0.8.5</jacoco-maven-plugin.version>
+        <jacoco-maven-plugin.version>0.8.10</jacoco-maven-plugin.version>
         <nexus-staging-maven-plugin.version>1.6.8</nexus-staging-maven-plugin.version>
         <maven-source-plugin.version>3.2.1</maven-source-plugin.version>
         <maven-javadoc-plugin.version>3.2.1</maven-javadoc-plugin.version>
