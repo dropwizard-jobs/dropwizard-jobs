@@ -87,22 +87,8 @@
         <url>https://github.com/dropwizard-jobs/dropwizard-jobs</url>
         <connection>scm:git:git@github.com:dropwizard-jobs/dropwizard-jobs.git</connection>
         <developerConnection>scm:git:git@github.com:dropwizard-jobs/dropwizard-jobs.git</developerConnection>
-        <tag>dropwizard-jobs-4.1.0</tag>
+        <tag>dropwizard-jobs-5.0.0</tag>
     </scm>
-
-    <repositories>
-        <repository>
-            <id>sonatype-nexus-snapshots</id>
-            <name>Sonatype Nexus Snapshots</name>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-            <releases>
-                <enabled>false</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
 
     <distributionManagement>
         <snapshotRepository>
