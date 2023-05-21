@@ -5,7 +5,7 @@
 [![Test Coverage](https://api.codeclimate.com/v1/badges/71ea62844095d88b2264/test_coverage)](https://codeclimate.com/github/dropwizard-jobs/dropwizard-jobs/test_coverage)
 # Dropwizard quartz integration
 
-This plugin integrates the [quartz scheduler](http://quartz-scheduler.org/) with dropwizard and allows you to easily create background jobs, which are not bound to the HTTP request-response cycle.
+This plugin integrates the [quartz scheduler](https://quartz-scheduler.org/) with dropwizard and allows you to easily create background jobs, which are not bound to the HTTP request-response cycle.
 Quartz creates a threadpool on application startup and uses it for background jobs.
 
 There are four different types of jobs:
@@ -17,7 +17,7 @@ There are four different types of jobs:
 
 ## Using maven central repository
 dropwizard jobs can be used with maven.
-It is located in Central Repository. http://search.maven.org/
+It is located in Central Repository. https://search.maven.org/
 
 Add to your pom:
 ```xml
@@ -164,7 +164,7 @@ public class EveryTestJobWithDelayedStart extends Job {
 }
 ```
 
-The <code>@On</code> annotation allows one to use cron-like expressions for complex time settings. You can read more about possible cron expressions at http://quartz-scheduler.org/documentation/quartz-2.1.x/tutorials/tutorial-lesson-06
+The <code>@On</code> annotation allows one to use cron-like expressions for complex time settings. You can read more about possible cron expressions at https://quartz-scheduler.org/documentation/quartz-2.1.x/tutorials/tutorial-lesson-06
 
 This expression would run on Mondays at 1pm, Los Angeles time. If the optional parameter `timeZone` is not set system default will be used. 
 
@@ -192,7 +192,7 @@ public class GroupNameJob extends Job {
 
 By default, dropwizard-jobs is designed to be used with an in-memory Quartz scheduler. If you wish to deploy it in a clustered environment that consists of more than one node, you'll need to use a scheduler that has some sort of persistence. You can either add a file called `quartz.properties` to your classpath or you can provide the quartz configuration in your Dropwizard configuration file. The content of the `quartz` element is passed to the Quartz scheduler directly (so you can take the properties from the official docs). If you'd like to add the config to your Dropwizard configuration file, you need to override the `getQuartzConfiguration()` method in your application's configuration. You can set the map to `DefaultQuartzConfiguration.get()`.
 
-See the full Quartz configuration reference at http://www.quartz-scheduler.org/documentation/quartz-2.x/configuration/
+See the full Quartz configuration reference at https://www.quartz-scheduler.org/documentation/quartz-2.x/configuration/
 ```yaml
 [...]
 quartz:
