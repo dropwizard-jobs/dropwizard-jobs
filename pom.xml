@@ -25,7 +25,7 @@
         <jacoco-maven-plugin.version>0.8.10</jacoco-maven-plugin.version>
         <javax.activation.version>1.1.1</javax.activation.version>
         <jaxb-api.version>2.4.0-b180830.0359</jaxb-api.version>
-        <jaxb-runtime.version>2.4.0-b180830.0438</jaxb-runtime.version>
+        <jaxb-runtime.version>4.0.2</jaxb-runtime.version>
         <jetty.version>9.4.51.v20230217</jetty.version>
         <junit.jupiter.version>5.7.0</junit.jupiter.version>
         <junit.version>4.13.1</junit.version>
