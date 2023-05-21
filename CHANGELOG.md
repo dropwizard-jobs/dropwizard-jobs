@@ -1,12 +1,26 @@
 # Changelog
 
+## 5.0.0
+
+* Dependency updates due to vulnerabilities - #161 #160 #159 
+* Updated to use Dropwizard 3 - #151 - Thanks to @eddymouthaan
+* Artifact publishing refactored to publish snapshots on [GH package repository](https://github.com/orgs/dropwizard-jobs/packages?repo_name=dropwizard-jobs) - #162
+
+
+## 4.1.0
+
+* Mainly dependency updates due to vulnerabilities
+* JUnit 5 support #134
+* Fix: Cleanup exisint jobs on @OnApplicationStart #131
+* Fix: duplicate job initiation #123
+
 
 ## 4.0.0
 
 * The `groupId` has been renamed to `io.github.dropwizard-jobs`
 * Repository moved to `https://github.com/dropwizard-jobs/dropwizard-jobs`
 * Java packages are renamed to `io.dropwizard.jobs.*` 
-* See [release notes](https://github.com/dropwizard-jobs/dropwizard-jobs/releases/tag/v4.0.0-RELEASE) for a full list of changes 
+* See [release notes](https://github.com/dropwizard-jobs/dropwizard-jobs/releases/tag/v4.1.0-RELEASE) for a full list of changes 
 
 ## 2.0.0
 

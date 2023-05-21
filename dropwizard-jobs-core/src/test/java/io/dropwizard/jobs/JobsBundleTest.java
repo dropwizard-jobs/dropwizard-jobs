@@ -14,10 +14,10 @@ import org.mockito.ArgumentCaptor;
 
 import com.codahale.metrics.SharedMetricRegistries;
 
-import io.dropwizard.Application;
+import io.dropwizard.core.Application;
+import io.dropwizard.core.setup.Bootstrap;
+import io.dropwizard.core.setup.Environment;
 import io.dropwizard.lifecycle.setup.LifecycleEnvironment;
-import io.dropwizard.setup.Bootstrap;
-import io.dropwizard.setup.Environment;
 
 public class JobsBundleTest {
 

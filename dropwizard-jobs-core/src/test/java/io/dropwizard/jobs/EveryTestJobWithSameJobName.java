@@ -5,7 +5,6 @@ import java.util.List;
 
 import com.google.common.collect.Lists;
 
-import io.dropwizard.jobs.Job;
 import io.dropwizard.jobs.annotations.Every;
 
 import org.quartz.JobExecutionContext;

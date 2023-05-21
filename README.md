@@ -24,7 +24,7 @@ Add to your pom:
 <dependency>
   <groupId>io.github.dropwizard-jobs</groupId>
   <artifactId>dropwizard-jobs</artifactId>
-  <version>4.0.0-RELEASE</version>
+  <version>5.0.0</version>
 </dependency>
 ```
 
@@ -138,7 +138,7 @@ public class StopJob extends Job {
 }
 ```
 
-The <code>@Every</code> annotation first triggers a job after the quartz scheduler is started and then every n times, as it is configured. You can use a number and a time unit, which can be one of "s" for seconds, "mn" or "min" for minutes, "h" for hours and "d" for days.
+The <code>@Every</code> annotation first triggers a job after the quartz scheduler is started and then every n times, as it is configured. You can use a number and a time unit, which can be one of "s" for seconds, "m" or "mn" or "min" for minutes, "h" for hours, "d" for days and "ms" for milliseconds.
 Use in conjunction with <code>@DelayStart</code> to delay the first invocation of this job.
 
 ```java
