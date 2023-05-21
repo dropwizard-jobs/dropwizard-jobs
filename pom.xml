@@ -106,9 +106,9 @@
 
     <distributionManagement>
         <snapshotRepository>
-            <id>sonatype-nexus-snapshots</id>
-            <name>Sonatype Nexus Snapshots</name>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+            <id>github</id>
+            <name>GitHub dropwizard-jobs Apache Maven Packages</name>
+            <url>https://maven.pkg.github.com/dropwizard-jobs/dropwizard-jobs</url>
         </snapshotRepository>
         <repository>
             <id>sonatype-nexus-staging</id>
