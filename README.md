@@ -23,7 +23,7 @@ Add to your pom:
 ```xml
 <dependency>
   <groupId>io.github.dropwizard-jobs</groupId>
-  <artifactId>dropwizard-jobs</artifactId>
+  <artifactId>dropwizard-jobs-core</artifactId>
   <version>5.0.1</version>
 </dependency>
 ```
@@ -63,7 +63,7 @@ After installing the plugin locally you can include it in your pom.xml
 ```xml
 <dependency>
   <groupId>io.github.dropwizard-jobs</groupId>
-  <artifactId>dropwizard-jobs</artifactId>
+  <artifactId>dropwizard-jobs-core</artifactId>
   <version>$VERSION</version>
 </dependency>
 ```
