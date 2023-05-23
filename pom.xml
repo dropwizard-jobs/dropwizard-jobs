@@ -18,7 +18,6 @@
         <assertj.version>3.24.2</assertj.version>
         <dropwizard.version>3.0.0</dropwizard.version>
         <guice.version>7.0.0</guice.version>
-        <hamcrest.version>2.2</hamcrest.version>
         <jacoco-maven-plugin.version>0.8.10</jacoco-maven-plugin.version>
         <junit.jupiter.version>5.10.0-M1</junit.jupiter.version>
         <maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
@@ -105,12 +104,6 @@
             <groupId>org.quartz-scheduler</groupId>
             <artifactId>quartz</artifactId>
             <version>${quartz.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest</artifactId>
-            <version>${hamcrest.version}</version>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.junit.vintage</groupId>
