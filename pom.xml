@@ -3,7 +3,7 @@
 
     <groupId>io.github.dropwizard-jobs</groupId>
     <artifactId>dropwizard-jobs</artifactId>
-    <version>5.0.0</version>
+    <version>5.0.1</version>
     <packaging>pom</packaging>
 
     <name>dropwizard-jobs</name>
@@ -87,7 +87,7 @@
         <url>https://github.com/dropwizard-jobs/dropwizard-jobs</url>
         <connection>scm:git:git@github.com:dropwizard-jobs/dropwizard-jobs.git</connection>
         <developerConnection>scm:git:git@github.com:dropwizard-jobs/dropwizard-jobs.git</developerConnection>
-        <tag>dropwizard-jobs-5.0.0</tag>
+        <tag>dropwizard-jobs-5.0.1</tag>
     </scm>
 
     <distributionManagement>
