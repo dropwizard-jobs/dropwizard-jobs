@@ -7,6 +7,12 @@
 * update mockito to v5.3.1 #165
 * update jaxb-runtime to v4.0.2 #166
 
+
+## 5.0.1
+
+* Fix gpg signing and source jars for publishing
+
+
 ## 5.0.0
 
 * Dependency updates due to vulnerabilities - #161 #160 #159 
