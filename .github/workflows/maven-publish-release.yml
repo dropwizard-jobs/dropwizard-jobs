@@ -29,8 +29,15 @@ jobs:
     - name: Build with Maven
       run: mvn -B package --file pom.xml
 
+    - name: Install GPG secret key
+      run: |
+        # Install gpg secret key
+        cat <(echo -e "${{ secrets.OSSRH_GPG_SECRET_KEY }}") | gpg --batch --import
+        # Verify gpg secret key
+        gpg --list-secret-keys --keyid-format LONG
+
     - name: Publish to Sonatype Nexus
-      run: mvn --batch-mode deploy
+      run: mvn --batch-mode -Dgpg.passphrase=${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }} --activate-profiles release deploy
       env:
         MAVEN_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
         MAVEN_PASSWORD: ${{ secrets.SONATYPE_TOKEN }}
