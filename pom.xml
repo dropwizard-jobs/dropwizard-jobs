@@ -15,7 +15,6 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     	<closeTestReports>true</closeTestReports>
-        <assertj.version>3.24.2</assertj.version>
         <dropwizard.version>3.0.0</dropwizard.version>
         <guice.version>7.0.0</guice.version>
         <jacoco-maven-plugin.version>0.8.10</jacoco-maven-plugin.version>
@@ -123,13 +122,6 @@
             <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.assertj</groupId>
-            <artifactId>assertj-core</artifactId>
-            <version>${assertj.version}</version>
-            <scope>test</scope>
-        </dependency>
-
     </dependencies>
 
     <build>
