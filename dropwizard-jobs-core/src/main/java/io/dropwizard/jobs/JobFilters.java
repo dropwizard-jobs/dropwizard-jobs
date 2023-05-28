@@ -47,7 +47,7 @@ public class JobFilters {
 
     private boolean equalGroupName(final Job job, final String groupName) {
         String jobGroupName = job.getGroupName();
-        return Key.DEFAULT_GROUP.equals(groupName) && jobGroupName == null
+        return (Objects.equals(groupName, Key.DEFAULT_GROUP) && jobGroupName == null)
                 || Objects.equals(jobGroupName, groupName);
     }
 }
