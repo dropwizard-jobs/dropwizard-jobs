@@ -39,6 +39,26 @@ public class JobManager implements Managed {
         }
     }
 
+    private static JobDetail build(Job job) {
+        Class<? extends Job> jobClass = job.getClass();
+        String jobClassName = jobClass.getName();
+        String jobGroupName = job.getGroupName();
+        return JobBuilder
+                .newJob(jobClass)
+                .withIdentity(jobClassName, jobGroupName)
+                .build();
+    }
+
+    private static JobDetail build(ScheduledJob job) {
+        JobKey jobKey = job.getJobKey();
+        return JobBuilder.newJob(job.getClazz())
+                .withIdentity(jobKey)
+                .requestRecovery(job.isRequestsRecovery())
+                .storeDurably(job.isStoreDurably())
+                .build();
+    }
+
+
     @Override
     public void start() throws Exception {
         createScheduler();
@@ -78,14 +98,16 @@ public class JobManager implements Managed {
     protected void scheduleAllJobsOnApplicationStop() throws SchedulerException {
         List<JobDetail> jobDetails = Arrays.stream(jobs)
                 .filter(job -> job.getClass().isAnnotationPresent(OnApplicationStop.class))
-                .map(job -> JobBuilder
-                        .newJob(job.getClass())
-                        .withIdentity(job.getClass().getName(), job.getGroupName())
-                        .build())
+                .map(JobManager::build)
                 .collect(Collectors.toList());
         for (JobDetail jobDetail : jobDetails) {
-            scheduler.scheduleJob(jobDetail, executeNowTrigger());
+            scheduleNow(jobDetail);
         }
+    }
+
+    private void scheduleNow(JobDetail jobDetail) throws SchedulerException {
+        Trigger nowTrigger = nowTrigger();
+        scheduler.scheduleJob(jobDetail, nowTrigger);
     }
 
     /**
@@ -264,22 +286,19 @@ public class JobManager implements Managed {
     protected void scheduleAllJobsOnApplicationStart() throws SchedulerException {
         List<JobDetail> jobDetails = Arrays.stream(this.jobs)
                 .filter(job -> job.getClass().isAnnotationPresent(OnApplicationStart.class))
-                .map(job -> JobBuilder
-                        .newJob(job.getClass())
-                        .withIdentity(job.getClass().getName(), job.getGroupName())
-                        .build())
+                .map(JobManager::build)
                 .collect(Collectors.toList());
 
         if (!jobDetails.isEmpty()) {
             log.info("Jobs to run on application start:");
             for (JobDetail jobDetail : jobDetails) {
-                scheduler.scheduleJob(jobDetail, Set.of(executeNowTrigger()), true);
+                scheduler.scheduleJob(jobDetail, Set.of(nowTrigger()), true);
                 log.info("   " + jobDetail.getJobClass().getCanonicalName());
             }
         }
     }
 
-    protected Trigger executeNowTrigger() {
+    protected Trigger nowTrigger() {
         return TriggerBuilder.newTrigger().startNow().build();
     }
 
@@ -312,10 +331,7 @@ public class JobManager implements Managed {
     private void scheduleOrRescheduleJob(ScheduledJob job) {
         JobKey jobKey = job.getJobKey();
         Trigger trigger = job.getTrigger();
-        JobBuilder jobBuilder = JobBuilder.newJob(job.getClazz())
-                .withIdentity(jobKey)
-                .requestRecovery(job.isRequestsRecovery())
-                .storeDurably(job.isStoreDurably());
+        JobDetail jobDetail = build(job);
 
         try {
             if (scheduler.checkExists(jobKey)) {
@@ -329,13 +345,13 @@ public class JobManager implements Managed {
                     // if for some reason the job has multiple triggers, it's easiest to just delete and re-create the job,
                     // since we want to enforce a one-to-one relationship between jobs and triggers
                     scheduler.deleteJob(jobKey);
-                    scheduler.scheduleJob(jobBuilder.build(), trigger);
+                    scheduler.scheduleJob(jobDetail, trigger);
                     log.info(job.getMessage());
                 }
             } else {
                 // if the job doesn't already exist, we can create it, along with its trigger. this prevents us
                 // from creating multiple instances of the same job when running in a clustered environment
-                scheduler.scheduleJob(jobBuilder.build(), trigger);
+                scheduler.scheduleJob(jobDetail, trigger);
                 log.info("scheduled job with key {}", jobKey.toString());
                 log.info(job.getMessage());
             }
