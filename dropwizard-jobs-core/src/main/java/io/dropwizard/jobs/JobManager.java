@@ -61,11 +61,21 @@ public class JobManager implements Managed {
 
     @Override
     public void start() throws Exception {
-        createScheduler();
+        scheduler = createScheduler();
         scheduler.setJobFactory(getJobFactory());
         scheduler.start();
         scheduleAllJobs();
         logAllOnApplicationStopJobs();
+    }
+
+    private Scheduler createScheduler() throws SchedulerException {
+        if (configuration.getQuartzConfiguration().isEmpty()) {
+            return StdSchedulerFactory.getDefaultScheduler();
+        }
+
+        StdSchedulerFactory factory = new StdSchedulerFactory();
+        factory.initialize(createProperties());
+        return factory.getScheduler();
     }
 
     @Override
@@ -302,16 +312,6 @@ public class JobManager implements Managed {
         return TriggerBuilder.newTrigger().startNow().build();
     }
 
-    private void createScheduler() throws SchedulerException {
-        if (configuration.getQuartzConfiguration().isEmpty()) {
-            scheduler = StdSchedulerFactory.getDefaultScheduler();
-            return;
-        }
-
-        StdSchedulerFactory factory = new StdSchedulerFactory();
-        factory.initialize(createProperties());
-        scheduler = factory.getScheduler();
-    }
 
     private Properties createProperties() {
         Properties properties = new Properties();
