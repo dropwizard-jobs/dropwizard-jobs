@@ -1,46 +1,35 @@
 package io.dropwizard.jobs;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.is;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TimeZone;
-import java.util.concurrent.TimeUnit;
-
+import io.dropwizard.jobs.annotations.Every;
+import io.dropwizard.jobs.annotations.On;
+import io.dropwizard.jobs.scheduler.CronExpressionParser;
 import org.hamcrest.Matchers;
 import org.hamcrest.core.IsEqual;
 import org.junit.jupiter.api.Test;
-import org.quartz.CronTrigger;
-import org.quartz.JobDetail;
-import org.quartz.JobKey;
-import org.quartz.SchedulerConfigException;
-import org.quartz.Trigger;
+import org.quartz.*;
 import org.quartz.impl.matchers.GroupMatcher;
 import org.quartz.impl.triggers.CronTriggerImpl;
 
-import io.dropwizard.jobs.annotations.Every;
-import io.dropwizard.jobs.annotations.On;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class JobManagerTest {
 
     private JobManager jobManager = new JobManager(new TestConfig());
-    private ApplicationStartTestJob startTestJob = new ApplicationStartTestJob();
-    private OnTestJob onTestJob = new OnTestJob();
-    private OnTestJobWithJobName onTestJobWithJobName = new OnTestJobWithJobName();
-    private EveryTestJob everyTestJob = new EveryTestJob();
-    private EveryTestJobWithDelay everyTestJobWithDelay = new EveryTestJobWithDelay();
-    private EveryTestJobAlternativeConfiguration everyTestJobAlternativeConfiguration = new EveryTestJobAlternativeConfiguration();
-    private EveryTestJobWithJobName everyTestJobWithJobName = new EveryTestJobWithJobName();
-    private ApplicationStopTestJob applicationStopTestJob = new ApplicationStopTestJob();
-    private OnTestJobAlternativeConfiguration onTestJobAlternativeConfiguration = new OnTestJobAlternativeConfiguration();
+    private final ApplicationStartTestJob startTestJob = new ApplicationStartTestJob();
+    private final OnTestJob onTestJob = new OnTestJob();
+    private final OnTestJobWithJobName onTestJobWithJobName = new OnTestJobWithJobName();
+    private final EveryTestJob everyTestJob = new EveryTestJob();
+    private final EveryTestJobWithDelay everyTestJobWithDelay = new EveryTestJobWithDelay();
+    private final EveryTestJobAlternativeConfiguration everyTestJobAlternativeConfiguration = new EveryTestJobAlternativeConfiguration();
+    private final EveryTestJobWithJobName everyTestJobWithJobName = new EveryTestJobWithJobName();
+    private final ApplicationStopTestJob applicationStopTestJob = new ApplicationStopTestJob();
+    private final OnTestJobAlternativeConfiguration onTestJobAlternativeConfiguration = new OnTestJobAlternativeConfiguration();
 
     @Test
     public void testThatJobsAreExecuted() throws Exception {
@@ -103,8 +92,8 @@ public class JobManagerTest {
         JobDetail jobDetail = jobManager.scheduler.getJobDetail(JobKey.jobKey(jobName));
         Trigger trigger = jobManager.scheduler.getTriggersOfJob(JobKey.jobKey(jobName)).get(0);
 
-        assertEquals(false, jobDetail.requestsRecovery());
-        assertEquals(false, jobDetail.isDurable());
+        assertFalse(jobDetail.requestsRecovery());
+        assertFalse(jobDetail.isDurable());
         assertEquals(Trigger.DEFAULT_PRIORITY, trigger.getPriority());
         assertEquals(Trigger.MISFIRE_INSTRUCTION_SMART_POLICY, trigger.getMisfireInstruction());
 
@@ -112,8 +101,8 @@ public class JobManagerTest {
         jobDetail = jobManager.scheduler.getJobDetail(JobKey.jobKey(jobName));
         trigger = jobManager.scheduler.getTriggersOfJob(JobKey.jobKey(jobName)).get(0);
 
-        assertEquals(false, jobDetail.requestsRecovery());
-        assertEquals(false, jobDetail.isDurable());
+        assertFalse(jobDetail.requestsRecovery());
+        assertFalse(jobDetail.isDurable());
         assertEquals(Trigger.DEFAULT_PRIORITY, trigger.getPriority());
         assertEquals(Trigger.MISFIRE_INSTRUCTION_SMART_POLICY, trigger.getMisfireInstruction());
 
@@ -123,10 +112,10 @@ public class JobManagerTest {
     @Test
     public void testJobsWithMultipleInstances() throws Exception {
         jobManager = new JobManager(
-            new TestConfig(),
-            new OnTestJobWithVariableGroupName("group_one"),
-            new OnTestJobWithVariableGroupName("group_two"),
-            new EveryTestJobWithDefaultConfiguration()
+                new TestConfig(),
+                new OnTestJobWithVariableGroupName("group_one"),
+                new OnTestJobWithVariableGroupName("group_two"),
+                new EveryTestJobWithDefaultConfiguration()
         );
 
         jobManager.start();
@@ -147,9 +136,9 @@ public class JobManagerTest {
     @Test
     public void testJobsWithoutGroupShouldOnlyHaveOneInstance() throws Exception {
         jobManager = new JobManager(
-            new TestConfig(),
-            new EveryTestJobWithDefaultConfiguration(),
-            new EveryTestJobWithDefaultConfiguration()
+                new TestConfig(),
+                new EveryTestJobWithDefaultConfiguration(),
+                new EveryTestJobWithDefaultConfiguration()
         );
 
         jobManager.start();
@@ -168,7 +157,7 @@ public class JobManagerTest {
     @Test
     public void testJobsWithTimeZoneInOnAnnotation() throws Exception {
         jobManager = new JobManager(new TestConfig(), new OnTestJobWithTimeZoneConfiguration(),
-            new OnTestJobWithDefaultConfiguration());
+                new OnTestJobWithDefaultConfiguration());
         jobManager.start();
 
         String jobName = OnTestJobWithTimeZoneConfiguration.class.getCanonicalName();
@@ -190,8 +179,8 @@ public class JobManagerTest {
         JobDetail jobDetail = jobManager.scheduler.getJobDetail(JobKey.jobKey(jobName));
         Trigger trigger = jobManager.scheduler.getTriggersOfJob(JobKey.jobKey(jobName)).get(0);
 
-        assertEquals(true, jobDetail.requestsRecovery());
-        assertEquals(true, jobDetail.isDurable());
+        assertTrue(jobDetail.requestsRecovery());
+        assertTrue(jobDetail.isDurable());
         assertEquals(20, trigger.getPriority());
         assertEquals(Trigger.MISFIRE_INSTRUCTION_IGNORE_MISFIRE_POLICY, trigger.getMisfireInstruction());
 
@@ -199,8 +188,8 @@ public class JobManagerTest {
         jobDetail = jobManager.scheduler.getJobDetail(JobKey.jobKey(jobName));
         trigger = jobManager.scheduler.getTriggersOfJob(JobKey.jobKey(jobName)).get(0);
 
-        assertEquals(true, jobDetail.requestsRecovery());
-        assertEquals(true, jobDetail.isDurable());
+        assertTrue(jobDetail.requestsRecovery());
+        assertTrue(jobDetail.isDurable());
         assertEquals(20, trigger.getPriority());
         assertEquals(Trigger.MISFIRE_INSTRUCTION_IGNORE_MISFIRE_POLICY, trigger.getMisfireInstruction());
 
@@ -249,30 +238,31 @@ public class JobManagerTest {
     public void allowTimezoneConfiguration() {
         TestConfig config = new TestConfig();
         config.getQuartzConfiguration().put("de.spinscale.dropwizard.jobs.timezone", "Europe/London");
+        CronExpressionParser cronExpressionParser = new CronExpressionParser(config);
 
         jobManager = new JobManager(config, startTestJob, onTestJob, onTestJobWithJobName, everyTestJob,
                 everyTestJobWithJobName);
 
         // by default, crons should use the configuration setting's timezone
-        CronTriggerImpl trigger1 = (CronTriggerImpl)(jobManager.createCronScheduleBuilder("0 15 10 ? * *").build());
+        CronTriggerImpl trigger1 = (CronTriggerImpl) (cronExpressionParser.parse("0 15 10 ? * *").build());
         assertEquals(TimeZone.getTimeZone("Europe/London"), trigger1.getTimeZone());
         assertEquals("0 15 10 ? * *", trigger1.getCronExpression());
 
         // can use [timezone] syntax to set a specific cron to a specific timezone
-        CronTriggerImpl trigger2 = (CronTriggerImpl)(jobManager.createCronScheduleBuilder("0 15 10 ? * * [America/Los_Angeles]").build());
+        CronTriggerImpl trigger2 = (CronTriggerImpl) (cronExpressionParser.parse("0 15 10 ? * * [America/Los_Angeles]").build());
         assertEquals(TimeZone.getTimeZone("America/Los_Angeles"), trigger2.getTimeZone());
         assertEquals("0 15 10 ? * *", trigger2.getCronExpression());
     }
 
     private static class TestConfig extends JobConfiguration {
-        private Map<String, String> quartzConfiguration;
+        private final Map<String, String> quartzConfiguration;
 
         @SuppressWarnings("unchecked")
         private TestConfig() {
             quartzConfiguration = (Map<String, String>) ((HashMap<String, String>) DefaultQuartzConfiguration.get()).clone();
         }
 
-        private Map<String, String> jobs = new HashMap<>();
+        private final Map<String, String> jobs = new HashMap<>();
 
         public Map<String, String> getJobs() {
             return jobs;
@@ -284,42 +274,42 @@ public class JobManagerTest {
     }
 
     @Every("10ms")
-    class EveryTestJobWithDefaultConfiguration extends AbstractJob {
+    static class EveryTestJobWithDefaultConfiguration extends AbstractJob {
         public EveryTestJobWithDefaultConfiguration() {
             super(1);
         }
     }
 
     @On("0/1 * * * * ?")
-    class OnTestJobWithDefaultConfiguration extends AbstractJob {
+    static class OnTestJobWithDefaultConfiguration extends AbstractJob {
         public OnTestJobWithDefaultConfiguration() {
             super(1);
         }
     }
 
     @On("0/1 * * * * ?")
-    class OnTestJobWithVariableGroupName extends AbstractJob {
+    static class OnTestJobWithVariableGroupName extends AbstractJob {
         public OnTestJobWithVariableGroupName(String groupName) {
             super(1, groupName);
         }
     }
 
     @On(value = "0 0 13 ? * MON", timeZone = "Europe/Stockholm")
-    class OnTestJobWithTimeZoneConfiguration extends AbstractJob {
+    static class OnTestJobWithTimeZoneConfiguration extends AbstractJob {
         public OnTestJobWithTimeZoneConfiguration() {
             super(1);
         }
     }
 
     @Every(value = "10ms", requestRecovery = true, storeDurably = true, priority = 20, misfirePolicy = Every.MisfirePolicy.IGNORE_MISFIRES)
-    class EveryTestJobWithNonDefaultConfiguration extends AbstractJob {
+    static class EveryTestJobWithNonDefaultConfiguration extends AbstractJob {
         public EveryTestJobWithNonDefaultConfiguration() {
             super(1);
         }
     }
 
     @On(value = "0/1 * * * * ?", requestRecovery = true, storeDurably = true, priority = 20, misfirePolicy = On.MisfirePolicy.IGNORE_MISFIRES)
-    class OnTestJobWithNonDefaultConfiguration extends AbstractJob {
+    static class OnTestJobWithNonDefaultConfiguration extends AbstractJob {
         public OnTestJobWithNonDefaultConfiguration() {
             super(1);
         }
