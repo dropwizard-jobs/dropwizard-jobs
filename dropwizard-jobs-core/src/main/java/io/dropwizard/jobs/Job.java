@@ -38,7 +38,7 @@ public abstract class Job implements org.quartz.Job {
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
-        try (Context timerContext = timer.time()) {
+        try (Context ignored = timer.time()) {
             doJob(context);
         }
     }
