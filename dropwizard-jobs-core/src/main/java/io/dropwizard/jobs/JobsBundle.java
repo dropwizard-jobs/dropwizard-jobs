@@ -6,12 +6,14 @@ import io.dropwizard.core.setup.Bootstrap;
 import io.dropwizard.core.setup.Environment;
 import org.quartz.Scheduler;
 
+import java.util.List;
+
 public class JobsBundle implements ConfiguredBundle<JobConfiguration> {
 
-    private final Job[] jobs;
+    private final List<Job> jobs;
     protected JobManager jobManager;
 
-    public JobsBundle(Job... jobs) {
+    public JobsBundle(List<Job> jobs) {
         this.jobs = jobs;
     }
 

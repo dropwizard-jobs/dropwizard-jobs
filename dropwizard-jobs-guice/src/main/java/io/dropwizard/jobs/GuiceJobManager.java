@@ -19,7 +19,7 @@ public class GuiceJobManager extends JobManager {
         jobFactory = new GuiceJobFactory(injector);
     }
 
-    static Job[] getJobs(Injector injector) {
+    static List<Job> getJobs(Injector injector) {
         List<Job> jobs = new ArrayList<>();
         Map<Key<?>, Binding<?>> bindings = injector.getBindings();
         for (Key<?> key : bindings.keySet()) {
@@ -29,7 +29,7 @@ public class GuiceJobManager extends JobManager {
                 jobs.add((Job) injector.getInstance(clazz));
             }
         }
-        return jobs.toArray(new Job[]{});
+        return jobs;
     }
 
 

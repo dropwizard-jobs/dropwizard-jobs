@@ -17,6 +17,7 @@ import java.util.Date;
 import java.util.stream.Stream;
 
 import static io.dropwizard.jobs.scheduler.AnnotationReader.readDurationFromConfig;
+import static org.apache.commons.lang3.StringUtils.isEmpty;
 
 public class EveryScheduler extends JobScheduler {
     public EveryScheduler(JobMediator mediator) {
@@ -71,7 +72,8 @@ public class EveryScheduler extends JobScheduler {
     protected String durationOrPlainExpression(String expression, Class<? extends Job> clazz) {
         if (expression.isEmpty() || expression.matches("\\$\\{.*\\}")) {
             JobConfiguration configuration = mediator.getConfiguration();
-            expression = readDurationFromConfig(expression, clazz, configuration);
+            String fromConfig = readDurationFromConfig(expression, clazz, configuration);
+            expression = !isEmpty(fromConfig) ? fromConfig : expression;
             log.info(clazz + " is configured in the config file to run every " + expression);
         }
         return expression;

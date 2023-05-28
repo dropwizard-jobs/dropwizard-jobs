@@ -3,12 +3,14 @@ package io.dropwizard.jobs;
 import org.quartz.spi.JobFactory;
 import org.springframework.context.ApplicationContext;
 
+import java.util.ArrayList;
+
 public class SpringJobManager extends JobManager {
 
     protected SpringJobFactory jobFactory;
 
     public SpringJobManager(JobConfiguration config, ApplicationContext context) {
-        super(config, context.getBeansOfType(Job.class).values().toArray(new Job[] {}));
+        super(config, new ArrayList<>(context.getBeansOfType(Job.class).values()));
         jobFactory = new SpringJobFactory(context);
     }
 
