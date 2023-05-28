@@ -5,7 +5,7 @@ import org.springframework.context.ApplicationContext;
 
 public class SpringJobsBundle extends JobsBundle {
 
-    private ApplicationContext context;
+    private final ApplicationContext context;
 
     public SpringJobsBundle(ApplicationContext context) {
         this.context = context;

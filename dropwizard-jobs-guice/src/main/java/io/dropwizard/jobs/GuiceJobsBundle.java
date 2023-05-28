@@ -5,7 +5,7 @@ import io.dropwizard.core.setup.Environment;
 
 public class GuiceJobsBundle extends JobsBundle {
     
-    private Injector injector;
+    private final Injector injector;
 
     public GuiceJobsBundle(Injector injector) {
         this.injector = injector;
