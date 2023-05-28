@@ -12,7 +12,7 @@ import com.google.inject.Injector;
 
 public class GuiceJobFactory implements JobFactory {
 
-    private Injector injector;
+    private final Injector injector;
 
     @Inject
     public GuiceJobFactory(Injector injector) {
