@@ -1,23 +1,19 @@
 package io.dropwizard.jobs;
 
-import static io.dropwizard.jobs.Job.DROPWIZARD_JOBS_KEY;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasItem;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-
 import com.codahale.metrics.SharedMetricRegistries;
-
 import io.dropwizard.core.Application;
 import io.dropwizard.core.setup.Bootstrap;
 import io.dropwizard.core.setup.Environment;
 import io.dropwizard.lifecycle.setup.LifecycleEnvironment;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+
+import java.util.ArrayList;
+
+import static io.dropwizard.jobs.Job.DROPWIZARD_JOBS_KEY;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
+import static org.mockito.Mockito.*;
 
 public class JobsBundleTest {
 
@@ -27,7 +23,7 @@ public class JobsBundleTest {
     @Test
     public void assertJobsBundleIsWorking() throws Exception {
         when(environment.lifecycle()).thenReturn(applicationContext);
-        final JobsBundle jobsBundle = new JobsBundle();
+        final JobsBundle jobsBundle = new JobsBundle(new ArrayList<>());
         jobsBundle.run(new MyConfiguration(), environment);
 
         final ArgumentCaptor<JobManager> captor = ArgumentCaptor.forClass(JobManager.class);
@@ -39,10 +35,10 @@ public class JobsBundleTest {
     }
 
     @Test
-    public void should_add_dropwizard_jobs_to_metrics_registry() throws Exception {
-        new JobsBundle().initialize(new Bootstrap<>(new Application<MyConfiguration>() {
+    public void shouldAddDropwizardJobsToMetricsRegistry() {
+        new JobsBundle(new ArrayList<>()).initialize(new Bootstrap<>(new Application<MyConfiguration>() {
             @Override
-            public void run(MyConfiguration myConfiguration, Environment environment) throws Exception {
+            public void run(MyConfiguration myConfiguration, Environment environment) {
 
             }
         }));

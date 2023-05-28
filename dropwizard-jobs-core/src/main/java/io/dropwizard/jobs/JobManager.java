@@ -28,8 +28,7 @@ public class JobManager implements Managed, JobMediator {
 
     protected Scheduler scheduler;
 
-
-    public JobManager(JobConfiguration configuration, Job... jobs) {
+    public JobManager(JobConfiguration configuration, List<Job> jobs) {
         this.configuration = configuration;
         this.jobs = new JobFilters(jobs);
 

@@ -10,6 +10,7 @@ import org.quartz.spi.JobFactory;
 
 import io.dropwizard.core.setup.Environment;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -66,6 +67,7 @@ public class Hk2JobsBundle extends JobsBundle {
      *            searchCriteria.matches returns true). Should not be null.
      */
     public Hk2JobsBundle(final Filter searchCriteria) {
+        super(new ArrayList<>());
         Objects.requireNonNull(searchCriteria);
         this.searchCriteria = searchCriteria;
     }
@@ -80,7 +82,7 @@ public class Hk2JobsBundle extends JobsBundle {
                 // TODO: Avoid useless Job instantiation. Note: Same as GuiceJobManager and SpringJobManager.
                 @SuppressWarnings("unchecked")
                 final List<Job> jobs = (List<Job>) locator.getAllServices(searchCriteria);
-                jobManager = new JobManager(configuration, jobs.toArray(new Job[jobs.size()])) {
+                jobManager = new JobManager(configuration, jobs) {
                     @Override
                     protected JobFactory getJobFactory() {
                         return (bundle,

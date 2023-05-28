@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class JobManagerTest {
 
-    private JobManager jobManager = new JobManager(new TestConfig());
+    private JobManager jobManager = new JobManager(new TestConfig(), new ArrayList<>());
     private final ApplicationStartTestJob startTestJob = new ApplicationStartTestJob();
     private final OnTestJob onTestJob = new OnTestJob();
     private final OnTestJobWithJobName onTestJobWithJobName = new OnTestJobWithJobName();
@@ -37,9 +37,9 @@ public class JobManagerTest {
         config.getJobs().put("everyTestJobDefaultConfiguration", "50ms");
         config.getJobs().put("testJob", "50ms");
         config.getJobs().put("onTestJob", "0/1 * * * * ?");
-        jobManager = new JobManager(config, startTestJob, onTestJob, onTestJobWithJobName, everyTestJob,
+        jobManager = new JobManager(config, List.of(startTestJob, onTestJob, onTestJobWithJobName, everyTestJob,
                 everyTestJobWithJobName, everyTestJobWithDelay, everyTestJobAlternativeConfiguration,
-                applicationStopTestJob, onTestJobAlternativeConfiguration);
+                applicationStopTestJob, onTestJobAlternativeConfiguration));
         jobManager.start();
 
         // a job with an @Every annotation that doesn't specify a job name should be assigned the canonical class name
@@ -83,8 +83,8 @@ public class JobManagerTest {
 
     @Test
     public void testJobsWithDefaultConfiguration() throws Exception {
-        jobManager = new JobManager(new TestConfig(), new EveryTestJobWithDefaultConfiguration(),
-                new OnTestJobWithDefaultConfiguration());
+        jobManager = new JobManager(new TestConfig(), List.of(new EveryTestJobWithDefaultConfiguration(),
+                new OnTestJobWithDefaultConfiguration()));
 
         jobManager.start();
 
@@ -111,12 +111,8 @@ public class JobManagerTest {
 
     @Test
     public void testJobsWithMultipleInstances() throws Exception {
-        jobManager = new JobManager(
-                new TestConfig(),
-                new OnTestJobWithVariableGroupName("group_one"),
-                new OnTestJobWithVariableGroupName("group_two"),
-                new EveryTestJobWithDefaultConfiguration()
-        );
+        jobManager = new JobManager(new TestConfig(), List.of(new OnTestJobWithVariableGroupName("group_one"),
+                new OnTestJobWithVariableGroupName("group_two"), new EveryTestJobWithDefaultConfiguration()));
 
         jobManager.start();
         List<String> jobGroupNames = jobManager.scheduler.getJobGroupNames();
@@ -135,11 +131,8 @@ public class JobManagerTest {
 
     @Test
     public void testJobsWithoutGroupShouldOnlyHaveOneInstance() throws Exception {
-        jobManager = new JobManager(
-                new TestConfig(),
-                new EveryTestJobWithDefaultConfiguration(),
-                new EveryTestJobWithDefaultConfiguration()
-        );
+        jobManager = new JobManager(new TestConfig(), List.of(new EveryTestJobWithDefaultConfiguration(),
+                new EveryTestJobWithDefaultConfiguration()));
 
         jobManager.start();
 
@@ -156,8 +149,8 @@ public class JobManagerTest {
 
     @Test
     public void testJobsWithTimeZoneInOnAnnotation() throws Exception {
-        jobManager = new JobManager(new TestConfig(), new OnTestJobWithTimeZoneConfiguration(),
-                new OnTestJobWithDefaultConfiguration());
+        jobManager = new JobManager(new TestConfig(), List.of(new OnTestJobWithTimeZoneConfiguration(),
+                new OnTestJobWithDefaultConfiguration()));
         jobManager.start();
 
         String jobName = OnTestJobWithTimeZoneConfiguration.class.getCanonicalName();
@@ -170,8 +163,8 @@ public class JobManagerTest {
 
     @Test
     public void testJobsWithNonDefaultConfiguration() throws Exception {
-        jobManager = new JobManager(new TestConfig(), new EveryTestJobWithNonDefaultConfiguration(),
-                new OnTestJobWithNonDefaultConfiguration());
+        jobManager = new JobManager(new TestConfig(), List.of(new EveryTestJobWithNonDefaultConfiguration(),
+                new OnTestJobWithNonDefaultConfiguration()));
 
         jobManager.start();
 
@@ -201,8 +194,8 @@ public class JobManagerTest {
         TestConfig config = new TestConfig();
         config.getQuartzConfiguration().clear();
 
-        jobManager = new JobManager(config, startTestJob, onTestJob, onTestJobWithJobName, everyTestJob,
-                everyTestJobWithJobName);
+        jobManager = new JobManager(config, List.of(startTestJob, onTestJob, onTestJobWithJobName, everyTestJob,
+                everyTestJobWithJobName));
         jobManager.start();
 
         assertThat(jobManager.getScheduler().getMetaData().getThreadPoolSize(), Matchers.is(10));
@@ -216,8 +209,8 @@ public class JobManagerTest {
             config.getQuartzConfiguration().clear();
             config.getQuartzConfiguration().put("some", "property");
 
-            jobManager = new JobManager(config, startTestJob, onTestJob, onTestJobWithJobName, everyTestJob,
-                    everyTestJobWithJobName);
+            jobManager = new JobManager(config, List.of(startTestJob, onTestJob, onTestJobWithJobName, everyTestJob,
+                    everyTestJobWithJobName));
             jobManager.start();
         });
     }
@@ -227,8 +220,8 @@ public class JobManagerTest {
         TestConfig config = new TestConfig();
         // change configuration
         config.getQuartzConfiguration().put("org.quartz.threadPool.threadCount", "15");
-        jobManager = new JobManager(config, startTestJob, onTestJob, onTestJobWithJobName, everyTestJob,
-                everyTestJobWithJobName);
+        jobManager = new JobManager(config, List.of(startTestJob, onTestJob, onTestJobWithJobName, everyTestJob,
+                everyTestJobWithJobName));
         jobManager.start();
         assertThat(jobManager.getScheduler().getMetaData().getThreadPoolSize(), Matchers.is(15));
         jobManager.stop();
@@ -240,8 +233,8 @@ public class JobManagerTest {
         config.getQuartzConfiguration().put("de.spinscale.dropwizard.jobs.timezone", "Europe/London");
         CronExpressionParser cronExpressionParser = new CronExpressionParser(config);
 
-        jobManager = new JobManager(config, startTestJob, onTestJob, onTestJobWithJobName, everyTestJob,
-                everyTestJobWithJobName);
+        jobManager = new JobManager(config, List.of(startTestJob, onTestJob, onTestJobWithJobName, everyTestJob,
+                everyTestJobWithJobName));
 
         // by default, crons should use the configuration setting's timezone
         CronTriggerImpl trigger1 = (CronTriggerImpl) (cronExpressionParser.parse("0 15 10 ? * *").build());
@@ -259,7 +252,8 @@ public class JobManagerTest {
 
         @SuppressWarnings("unchecked")
         private TestConfig() {
-            quartzConfiguration = (Map<String, String>) ((HashMap<String, String>) DefaultQuartzConfiguration.get()).clone();
+            quartzConfiguration = (Map<String, String>) ((HashMap<String, String>) DefaultQuartzConfiguration.get())
+                    .clone();
         }
 
         private final Map<String, String> jobs = new HashMap<>();
@@ -301,14 +295,16 @@ public class JobManagerTest {
         }
     }
 
-    @Every(value = "10ms", requestRecovery = true, storeDurably = true, priority = 20, misfirePolicy = Every.MisfirePolicy.IGNORE_MISFIRES)
+    @Every(value = "10ms", requestRecovery = true, storeDurably = true, priority = 20,
+            misfirePolicy = Every.MisfirePolicy.IGNORE_MISFIRES)
     static class EveryTestJobWithNonDefaultConfiguration extends AbstractJob {
         public EveryTestJobWithNonDefaultConfiguration() {
             super(1);
         }
     }
 
-    @On(value = "0/1 * * * * ?", requestRecovery = true, storeDurably = true, priority = 20, misfirePolicy = On.MisfirePolicy.IGNORE_MISFIRES)
+    @On(value = "0/1 * * * * ?", requestRecovery = true, storeDurably = true, priority = 20,
+            misfirePolicy = On.MisfirePolicy.IGNORE_MISFIRES)
     static class OnTestJobWithNonDefaultConfiguration extends AbstractJob {
         public OnTestJobWithNonDefaultConfiguration() {
             super(1);
