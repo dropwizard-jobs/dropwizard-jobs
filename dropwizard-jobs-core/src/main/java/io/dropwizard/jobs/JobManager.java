@@ -1,7 +1,9 @@
 package io.dropwizard.jobs;
 
-import io.dropwizard.jobs.annotations.*;
+import io.dropwizard.jobs.annotations.DelayStart;
+import io.dropwizard.jobs.annotations.Every;
 import io.dropwizard.jobs.annotations.Every.MisfirePolicy;
+import io.dropwizard.jobs.annotations.On;
 import io.dropwizard.jobs.parser.TimeParserUtil;
 import io.dropwizard.lifecycle.Managed;
 import org.apache.commons.lang3.StringUtils;
@@ -22,16 +24,15 @@ import static io.dropwizard.jobs.AnnotationReader.readDurationFromConfig;
 public class JobManager implements Managed {
 
     protected static final Logger log = LoggerFactory.getLogger(JobManager.class);
+    protected final JobConfiguration configuration;
+    protected final JobFilters jobs;
 
-    protected Job[] jobs;
     protected Scheduler scheduler;
-    protected JobConfiguration configuration;
-
     protected TimeZone defaultTimezone;
 
     public JobManager(JobConfiguration configuration, Job... jobs) {
         this.configuration = configuration;
-        this.jobs = jobs;
+        this.jobs = new JobFilters(jobs);
         if (configuration != null && configuration.getQuartzConfiguration().containsKey("de.spinscale.dropwizard.jobs.timezone")) {
             defaultTimezone = TimeZone.getTimeZone(configuration.getQuartzConfiguration().get("de.spinscale.dropwizard.jobs.timezone"));
         } else {
@@ -106,8 +107,7 @@ public class JobManager implements Managed {
     }
 
     protected void scheduleAllJobsOnApplicationStop() throws SchedulerException {
-        List<JobDetail> jobDetails = Arrays.stream(jobs)
-                .filter(job -> job.getClass().isAnnotationPresent(OnApplicationStop.class))
+        List<JobDetail> jobDetails = jobs.allOnApplicationStop()
                 .map(JobManager::build)
                 .collect(Collectors.toList());
         for (JobDetail jobDetail : jobDetails) {
@@ -138,8 +138,7 @@ public class JobManager implements Managed {
     }
 
     protected Stream<ScheduledJob> allJobsWithOnAnnotation() {
-        return Arrays.stream(this.jobs)
-                .filter(job -> job.getClass().isAnnotationPresent(On.class))
+        return jobs.allOnCron()
                 .map(job -> {
 
                     Class<? extends Job> clazz = job.getClass();
@@ -198,8 +197,7 @@ public class JobManager implements Managed {
     }
 
     protected Stream<ScheduledJob> allJobsWithEveryAnnotation() {
-        return Arrays.stream(this.jobs)
-                .filter(job -> job.getClass().isAnnotationPresent(Every.class))
+        return jobs.allEvery()
                 .map(job -> {
                     Class<? extends Job> clazz = job.getClass();
                     Every everyAnnotation = clazz.getAnnotation(Every.class);
@@ -294,8 +292,7 @@ public class JobManager implements Managed {
     }
 
     protected void scheduleAllJobsOnApplicationStart() throws SchedulerException {
-        List<JobDetail> jobDetails = Arrays.stream(this.jobs)
-                .filter(job -> job.getClass().isAnnotationPresent(OnApplicationStart.class))
+        List<JobDetail> jobDetails = jobs.allOnApplicationStart()
                 .map(JobManager::build)
                 .collect(Collectors.toList());
 
@@ -322,8 +319,7 @@ public class JobManager implements Managed {
     private void logAllOnApplicationStopJobs() {
         log.info("Jobs to run on application stop:");
 
-        Arrays.stream(this.jobs)
-                .filter(job -> job.getClass().isAnnotationPresent(OnApplicationStop.class))
+        jobs.allOnApplicationStop()
                 .map(Job::getClass)
                 .forEach(clazz -> log.info("   " + clazz.getCanonicalName()));
     }
