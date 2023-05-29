@@ -80,7 +80,7 @@ public class ApplicationConfiguration extends JobConfiguration {
 
 ## Activating the bundle: Initialization
 
-In your application's `initialize` method, call `bootstrap.addBundle(new JobsBundle(<list of jobs>))`:
+In your application's `initialize` method, call `bootstrap.addBundle(new JobsBundle(<List of jobs>))`:
 
 ```java
 @Override
@@ -89,7 +89,7 @@ public void initialize(Bootstrap<MyConfiguration> bootstrap) {
   Job startJob = new StartupJob();
   Job stopJob = new StopJob();
   Job everyJob = new EveryTestJob(dependency);
-  bootstrap.addBundle(new JobsBundle(startJob, stopJob, everyJob));
+  bootstrap.addBundle(new JobsBundle(new ArrayList<>(startJob, stopJob, everyJob)));
 }
 ```
 
