@@ -17,6 +17,7 @@
 * Bump maven-source-plugin from 3.2.1 to 3.3.0 #178
 * Bump nexus-staging-maven-plugin from 1.6.8 to 1.6.13 #181
 * Test and build on multiple java versions #182
+* Use https urls instead of http #183
 
 ## 5.0.1
 
