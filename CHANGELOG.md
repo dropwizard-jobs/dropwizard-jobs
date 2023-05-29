@@ -4,9 +4,19 @@
 
 * Update maven and maven wrapper #163
 * Guice 7 update #164
-* update mockito to v5.3.1 #165
-* update jaxb-runtime to v4.0.2 #166
-
+* Update mockito to v5.3.1 #165
+* Update jaxb-runtime to v4.0.2 #166
+* Update README to prevent confusion #169
+* Dependency cleanup #170
+* Codeql GH action #171
+* dependency-review GH Action #172
+* Update snakeyaml to v2.0+ #174
+* Update jackson to v2.15.1 #175
+* Intoduced dependabot.yml config #176
+* Bump actions/dependency-review-action from 2 to 3 #177
+* Bump maven-source-plugin from 3.2.1 to 3.3.0 #178
+* Bump nexus-staging-maven-plugin from 1.6.8 to 1.6.13 #181
+* Test and build on multiple java versions #182
 
 ## 5.0.1
 
