@@ -19,6 +19,7 @@
         <closeTestReports>true</closeTestReports>
         <dropwizard.version>3.0.0</dropwizard.version>
         <guice.version>7.0.0</guice.version>
+        <jackson.version>2.15.1</jackson.version>
         <jacoco-maven-plugin.version>0.8.10</jacoco-maven-plugin.version>
         <junit.jupiter.version>5.10.0-M1</junit.jupiter.version>
         <maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
@@ -111,6 +112,11 @@
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
             <version>${snakeyaml.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>${jackson.version}</version>
         </dependency>
         <dependency>
             <groupId>org.junit.vintage</groupId>
