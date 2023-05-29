@@ -17,7 +17,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <closeTestReports>true</closeTestReports>
-        <dropwizard.version>3.0.0</dropwizard.version>
+        <dropwizard.version>4.0.0</dropwizard.version>
         <guice.version>7.0.0</guice.version>
         <jackson.version>2.15.1</jackson.version>
         <jacoco-maven-plugin.version>0.8.10</jacoco-maven-plugin.version>
