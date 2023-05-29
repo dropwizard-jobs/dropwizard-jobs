@@ -1,5 +1,10 @@
 # Changelog
 
+## 6.0.0 (upcoming)
+
+* Major refactoring and clean up by @hakandilek in #121
+  BREAKING: `JobsBundle()` constructir receives a `List` instead of `Varargs`
+
 # 5.1.4
 
 * Bump guava from 32.0.1-jre to 32.1.1-jre by @dependabot in https://github.com/dropwizard-jobs/dropwizard-jobs/pull/190
