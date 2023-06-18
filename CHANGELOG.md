@@ -3,6 +3,7 @@
 ## 5.1.2 (planned)
 
 * Bump mockito to v5.4.0 by @hakandilek in https://github.com/dropwizard-jobs/dropwizard-jobs/pull/187
+* Bump jackson-datatype-guava:jar to v2.15.2 due to security vulnerabilities by @hakandilek
 
 ## 5.1.1
 
