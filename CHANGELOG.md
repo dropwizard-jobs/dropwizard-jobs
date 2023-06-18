@@ -1,5 +1,10 @@
 # Changelog
 
+## 5.1.1
+
+* Bump jackson-core from 2.15.1 to 2.15.2 by @dependabot in https://github.com/dropwizard-jobs/dropwizard-jobs/pull/184
+* Bump maven-surefire-plugin.version from 3.1.0 to 3.1.2 by @dependabot in https://github.com/dropwizard-jobs/dropwizard-jobs/pull/185
+
 ## 5.1.0
 
 * Update maven and maven wrapper #163
