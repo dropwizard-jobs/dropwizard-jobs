@@ -4,7 +4,7 @@
     <parent>
         <groupId>io.github.dropwizard-jobs</groupId>
         <artifactId>dropwizard-jobs</artifactId>
-        <version>5.1.1</version>
+        <version>5.1.2</version>
     </parent>
 
     <artifactId>dropwizard-jobs-core</artifactId>
