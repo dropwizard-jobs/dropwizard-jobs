@@ -1,9 +1,11 @@
 # Changelog
 
-## 5.1.2 (planned)
+## 5.1.2
 
-* Bump mockito to v5.4.0 by @hakandilek in https://github.com/dropwizard-jobs/dropwizard-jobs/pull/187
-* Bump jackson-datatype-guava:jar to v2.15.2 due to security vulnerabilities by @hakandilek
+* Bump jackson-core from 2.15.1 to 2.15.2 by @dependabot in https://github.com/dropwizard-jobs/dropwizard-jobs/pull/184
+* Bump maven-surefire-plugin.version from 3.1.0 to 3.1.2 by @dependabot in https://github.com/dropwizard-jobs/dropwizard-jobs/pull/185
+* update mockito to v5.4.0 by @hakandilek in https://github.com/dropwizard-jobs/dropwizard-jobs/pull/187
+* update guava to v32.0.1-jre by @hakandilek in https://github.com/dropwizard-jobs/dropwizard-jobs/pull/189
 
 ## 5.1.1
 
