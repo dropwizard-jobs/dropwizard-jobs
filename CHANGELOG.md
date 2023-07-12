@@ -1,5 +1,10 @@
 # Changelog
 
+# 5.1.3
+
+* Bump junit-vintage-engine from 5.10.0-M1 to 5.10.0-RC1 by @dependabot in https://github.com/dropwizard-jobs/dropwizard-jobs/pull/191
+* Update instructions about JobConfiguration in README by @hakandilek in https://github.com/dropwizard-jobs/dropwizard-jobs/pull/193
+
 ## 5.1.2
 
 * Bump jackson-core from 2.15.1 to 2.15.2 by @dependabot in https://github.com/dropwizard-jobs/dropwizard-jobs/pull/184
