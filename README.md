@@ -67,31 +67,15 @@ After installing the plugin locally you can include it in your pom.xml
 
 ## Activating the bundle: Configuration
 
-Your Dropwizard application configuration class must implement `JobConfiguration`:
+Your Dropwizard application configuration class must extend `JobConfiguration`:
 
 ```java
-public class ApplicationConfiguration extends Configuration implements JobConfiguration {
+public class ApplicationConfiguration extends JobConfiguration {
 
 ...
 
 }
 
-```
-
-By default, `JobConfiguration` will return an empty configuration. If you want to allow configuring Quartz from your Dropwizard YML config file (recommended), then implement the `getQuartzConfiguration` method:
-
-```java
-public class ApplicationConfiguration extends Configuration implements JobConfiguration {
-
-...
-    @JsonProperty("quartz")
-    public Map<String,String> quartz;
-
-    @Override
-    public Map<String,String> getQuartzConfiguration() {
-        return quartz;
-    }
-}
 ```
 
 ## Activating the bundle: Initialization
