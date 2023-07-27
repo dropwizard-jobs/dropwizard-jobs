@@ -145,7 +145,7 @@ public class EveryTestJobWithDelayedStart extends Job {
 }
 ```
 
-The <code>@On</code> annotation allows one to use cron-like expressions for complex time settings. You can read more about possible cron expressions at https://quartz-scheduler.org/documentation/quartz-2.1.x/tutorials/tutorial-lesson-06
+The <code>@On</code> annotation allows one to use cron-like expressions for complex time settings. You can read more about possible cron expressions at https://www.quartz-scheduler.org/documentation/quartz-2.3.0/tutorials/tutorial-lesson-06.html
 
 This expression would run on Mondays at 1pm, Los Angeles time. If the optional parameter `timeZone` is not set system default will be used. 
 
