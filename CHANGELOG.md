@@ -1,9 +1,9 @@
 # Changelog
 
-## 6.0.0 (upcoming)
+## 6.0.0
 
 * Major refactoring and clean up by @hakandilek in #121
-  BREAKING: `JobsBundle()` constructir receives a `List` instead of `Varargs`
+  BREAKING: `JobsBundle()` constructor receives a `List` instead of `Varargs`
 
 # 5.1.4
 
