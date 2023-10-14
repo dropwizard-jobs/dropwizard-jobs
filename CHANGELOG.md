@@ -1,5 +1,19 @@
 # Changelog
 
+# 5.1.4
+
+* Bump guava from 32.0.1-jre to 32.1.1-jre by @dependabot in https://github.com/dropwizard-jobs/dropwizard-jobs/pull/190
+* Bump org.junit.vintage:junit-vintage-engine from 5.10.0-RC1 to 5.10.0 by @dependabot in https://github.com/dropwizard-jobs/dropwizard-jobs/pull/197
+* Update Docu link in README.md by @aceArt-GmbH in https://github.com/dropwizard-jobs/dropwizard-jobs/pull/198
+* Bump com.google.guava:guava from 32.1.1-jre to 32.1.2-jre by @dependabot in https://github.com/dropwizard-jobs/dropwizard-jobs/pull/199
+* Bump org.mockito:mockito-core from 5.4.0 to 5.5.0 by @dependabot in https://github.com/dropwizard-jobs/dropwizard-jobs/pull/200
+* Bump org.apache.maven.plugins:maven-javadoc-plugin from 3.5.0 to 3.6.0 by @dependabot in https://github.com/dropwizard-jobs/dropwizard-jobs/pull/202
+* Bump actions/checkout from 3 to 4 by @dependabot in https://github.com/dropwizard-jobs/dropwizard-jobs/pull/204
+* Bump org.mockito:mockito-core from 5.5.0 to 5.6.0 by @dependabot in https://github.com/dropwizard-jobs/dropwizard-jobs/pull/205
+* Bump jackson.version from 2.15.2 to 2.15.3 by @dependabot in https://github.com/dropwizard-jobs/dropwizard-jobs/pull/208
+* Bump com.google.guava:guava from 32.1.2-jre to 32.1.3-jre by @dependabot in https://github.com/dropwizard-jobs/dropwizard-jobs/pull/206
+* update dropwizard to v3.0.2 by @hakandilek in https://github.com/dropwizard-jobs/dropwizard-jobs/pull/209
+
 # 5.1.3
 
 * Bump junit-vintage-engine from 5.10.0-M1 to 5.10.0-RC1 by @dependabot in https://github.com/dropwizard-jobs/dropwizard-jobs/pull/191
