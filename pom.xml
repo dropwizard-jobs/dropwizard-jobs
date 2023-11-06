@@ -22,7 +22,7 @@
         <guice.version>7.0.0</guice.version>
         <jackson.version>2.15.3</jackson.version>
         <jacoco-maven-plugin.version>0.8.11</jacoco-maven-plugin.version>
-        <junit.jupiter.version>5.10.0</junit.jupiter.version>
+        <junit.jupiter.version>5.10.1</junit.jupiter.version>
         <maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
         <maven-gpg-plugin.version>3.1.0</maven-gpg-plugin.version>
         <maven-javadoc-plugin.version>3.6.0</maven-javadoc-plugin.version>
