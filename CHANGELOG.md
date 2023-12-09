@@ -1,9 +1,14 @@
 # Changelog
 
+**Only BREAKING changes are listed here. Please check [release logs](https://github.com/dropwizard-jobs/dropwizard-jobs/releases) for a list of full changes**
+
 ## 6.0.0
 
 * Major refactoring and clean up by @hakandilek in #121
   BREAKING: `JobsBundle()` constructor receives a `List` instead of `Varargs`
+* BREAKING: Drop Java 11 Support by @ElardoR in #226
+* BREAKING: Bump Dropwizard to v4.0.4 by @ElardoR in #222
+* BREAKING: Bump spring.version from 5.3.27 to 6.1.1 #220
 
 # 5.1.4
 
