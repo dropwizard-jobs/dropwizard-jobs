@@ -25,28 +25,6 @@ Add to your pom:
 </dependency>
 ```
 
-## API changes from 3.x
-The 3.x release has breaking API changes that would need to be addressed if upgrading from an older version. The
-signature of the <code>doJob()</code> method has changed and now takes a <code>JobExecutionContext</code> as an
-argument and also throws a <code>JobExecutionException</code>.
-
-##### 3.x
-```java
-  @Override
-  public void doJob(JobExecutionContext context) throws JobExecutionException {
-    ...
-  }
-```
-
-##### < 3.x
-```java
-  @Override
-  public void doJob() {
-    ...
-  }
-```
-
-
 ## Installing the bundle from source code
 
 ```
