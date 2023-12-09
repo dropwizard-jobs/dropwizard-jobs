@@ -1,4 +1,4 @@
-[![Sonatype Lift Badge](https://lift.sonatype.com/api/badge/github.com/dropwizard-jobs/dropwizard-jobs)](https://lift.sonatype.com/results/github.com/dropwizard-jobs/dropwizard-jobs)
+
 [![CodeFactor](https://www.codefactor.io/repository/github/dropwizard-jobs/dropwizard-jobs/badge)](https://www.codefactor.io/repository/github/dropwizard-jobs/dropwizard-jobs)
 [![Maintainability](https://api.codeclimate.com/v1/badges/71ea62844095d88b2264/maintainability)](https://codeclimate.com/github/dropwizard-jobs/dropwizard-jobs/maintainability)
 
