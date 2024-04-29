@@ -128,7 +128,7 @@ The <code>@On</code> annotation allows one to use cron-like expressions for comp
 This expression would run on Mondays at 1pm, Los Angeles time. If the optional parameter `timeZone` is not set system default will be used. 
 
 ```java
-@On("0 0 13 ? * MON", timeZone = "America/Los_Angeles")
+@On(value = "0 0 13 ? * MON", timeZone = "America/Los_Angeles")
 public class OnTestJob extends Job {
   @Override
   public void doJob(JobExecutionContext context) throws JobExecutionException {
