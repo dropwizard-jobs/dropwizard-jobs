@@ -12,7 +12,15 @@ abstract class AnnotationReader {
         }
         String property = WordUtils.uncapitalize(clazz.getSimpleName());
         if (!value.isEmpty()) {
+            if (!value.startsWith("${") || !value.endsWith("}")) {
+                throw new IllegalArgumentException(
+                    "Invalid placeholder format '" + value + "'. Expected format: ${propertyName}");
+            }
             property = value.substring(2, value.length() - 1);
+            if (property.isEmpty()) {
+                throw new IllegalArgumentException(
+                    "Empty placeholder key in '" + value + "'. Property name cannot be empty.");
+            }
         }
         return configuration.getJobs().getOrDefault(property, null);
     }
