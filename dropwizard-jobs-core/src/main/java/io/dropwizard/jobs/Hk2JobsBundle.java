@@ -79,7 +79,25 @@ public class Hk2JobsBundle extends JobsBundle {
             public void onStartup(Container container) {
                 final InjectionManager im = container.getApplicationHandler().getInjectionManager();
                 final ServiceLocator locator = im.getInstance(ServiceLocator.class);
-                // TODO: Avoid useless Job instantiation. Note: Same as GuiceJobManager and SpringJobManager.
+                /*
+                 * Eagerly resolve all Job instances from the HK2 container to discover available job classes.
+                 * <p>
+                 * This is a necessary trade-off: the DI container is the source of truth for which jobs
+                 * exist, and there is no API to enumerate job classes without instantiating them. The
+                 * instances created here are used for:
+                 * <ul>
+                 *   <li>Reading class-level annotations (@Every, @On, etc.) to determine scheduling</li>
+                 *   <li>Accessing instance-specific configuration (e.g., groupName)</li>
+                 *   <li>Registering jobs with the Quartz scheduler</li>
+                 * </ul>
+                 * <p>
+                 * The actual job execution uses NEW instances created by the JobFactory below, which
+                 * properly respects DI scopes (e.g., @Singleton, @PerLookup). The instances created
+                 * here are discarded after job registration.
+                 *
+                 * @see GuiceJobManager#getJobs(com.google.inject.Injector)
+                 * @see SpringJobManager#SpringJobManager(JobConfiguration, org.springframework.context.ApplicationContext)
+                 */
                 @SuppressWarnings("unchecked")
                 final List<Job> jobs = (List<Job>) locator.getAllServices(searchCriteria);
                 jobManager = new JobManager(configuration, jobs) {
