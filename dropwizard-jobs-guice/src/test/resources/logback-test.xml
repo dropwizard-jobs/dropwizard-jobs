@@ -1,4 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+    NOTE: This file is intentionally duplicated across all modules:
+    - dropwizard-jobs-core/src/test/resources/logback-test.xml
+    - dropwizard-jobs-guice/src/test/resources/logback-test.xml
+    - dropwizard-jobs-spring/src/test/resources/logback-test.xml
+    
+    All three files should be kept in sync. Changes to one should be applied to all.
+    Creating a shared test-jar for a single resource file would be over-engineering.
+-->
 <configuration debug="false">
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
