@@ -32,14 +32,28 @@ import java.util.Set;
  *   <li>{@code @On} - Jobs that run based on cron expressions</li>
  * </ul>
  * <p>
+ * <strong>Extension for Dependency Injection:</strong>
+ * </p>
+ * <p>
  * For dependency injection frameworks (Guice, Spring, HK2), extend this class and
  * override {@link #getJobFactory()} to provide a custom job factory that supports
- * dependency injection.
+ * dependency injection. See {@code GuiceJobManager} and {@code SpringJobManager} for examples.
  * </p>
+ * <p>
+ * <strong>Architecture Notes:</strong>
+ * </p>
+ * <ul>
+ *   <li>This class follows the Mediator pattern via {@link JobMediator} to coordinate with
+ *       scheduler strategy classes in the {@code scheduler/} sub-package</li>
+ *   <li>Each scheduler type ({@link EveryScheduler}, {@link OnCronScheduler}, etc.) handles
+ *       one annotation type following the Strategy pattern</li>
+ *   <li>The class is organized into sections: Lifecycle, Configuration, Scheduling, and Utilities</li>
+ * </ul>
  *
  * @see JobsBundle
  * @see JobConfiguration
  * @see Job
+ * @see io.dropwizard.jobs.scheduler.JobScheduler
  */
 public class JobManager implements Managed, JobMediator {
 
@@ -52,6 +66,10 @@ public class JobManager implements Managed, JobMediator {
      */
     private static final long SHUTDOWN_GRACE_PERIOD_MS = 100;
 
+    // ========================================================================
+    // FIELDS
+    // ========================================================================
+
     protected final JobConfiguration configuration;
     protected final JobFilters jobs;
 
@@ -61,6 +79,10 @@ public class JobManager implements Managed, JobMediator {
     private final OnCronScheduler onCronScheduler;
 
     protected Scheduler scheduler;
+
+    // ========================================================================
+    // CONSTRUCTION
+    // ========================================================================
 
     /**
      * Creates a new JobManager with the specified configuration and jobs.
@@ -76,17 +98,12 @@ public class JobManager implements Managed, JobMediator {
         this.onApplicationStopScheduler = new OnApplicationStopScheduler(this);
         this.everyScheduler = new EveryScheduler(this);
         this.onCronScheduler = new OnCronScheduler(this);
-
     }
 
-    private static JobDetail build(ScheduledJob job) {
-        JobKey jobKey = job.getJobKey();
-        return JobBuilder.newJob(job.getClazz())
-                .withIdentity(jobKey)
-                .requestRecovery(job.isRequestsRecovery())
-                .storeDurably(job.isStoreDurably())
-                .build();
-    }
+    // ========================================================================
+    // LIFECYCLE MANAGEMENT
+    // Handles the Dropwizard Managed interface: start() and stop()
+    // ========================================================================
 
     /**
      * Starts the Quartz scheduler and schedules all configured jobs.
@@ -116,16 +133,6 @@ public class JobManager implements Managed, JobMediator {
         logAllOnApplicationStopJobs();
     }
 
-    private Scheduler createScheduler() throws SchedulerException {
-        if (configuration.getQuartzConfiguration().isEmpty()) {
-            return StdSchedulerFactory.getDefaultScheduler();
-        }
-
-        StdSchedulerFactory factory = new StdSchedulerFactory();
-        factory.initialize(createProperties());
-        return factory.getScheduler();
-    }
-
     /**
      * Stops the Quartz scheduler after running all {@code @OnApplicationStop} jobs.
      * <p>
@@ -150,65 +157,60 @@ public class JobManager implements Managed, JobMediator {
         scheduler.shutdown(true);
     }
 
-    /**
-     * Returns the Quartz scheduler managed by this job manager.
-     * <p>
-     * This provides direct access to the underlying scheduler for advanced operations.
-     * </p>
-     *
-     * @return the Quartz scheduler
-     */
-    public Scheduler getScheduler() {
-        return scheduler;
-    }
-
-    @Override
-    public JobFilters getJobs() {
-        return jobs;
-    }
-
-    @Override
-    public JobConfiguration getConfiguration() {
-        return configuration;
-    }
-
-    protected JobFactory getJobFactory() {
-        return new DropwizardJobFactory(jobs);
-    }
+    // ========================================================================
+    // CONFIGURATION
+    // Scheduler creation, properties, and job factory
+    // ========================================================================
 
     /**
-     * Schedules a job to run immediately.
+     * Creates and configures the Quartz scheduler.
      * <p>
-     * This method creates a trigger that fires immediately and schedules the job
-     * with the Quartz scheduler. If the job already exists, it will be replaced.
+     * If custom Quartz configuration is provided via {@link JobConfiguration#getQuartzConfiguration()},
+     * it will be used to initialize the scheduler. Otherwise, the default scheduler configuration
+     * (RAMJobStore) is used.
      * </p>
      *
-     * @param jobDetail the job detail describing the job to schedule
-     * @throws SchedulerException if the job cannot be scheduled
+     * @return a configured Quartz scheduler
+     * @throws SchedulerException if the scheduler cannot be created
      */
-    public void scheduleNow(JobDetail jobDetail) throws SchedulerException {
-        Trigger nowTrigger = nowTrigger();
-        scheduler.scheduleJob(jobDetail, Set.of(nowTrigger), true);
+    private Scheduler createScheduler() throws SchedulerException {
+        if (configuration.getQuartzConfiguration().isEmpty()) {
+            return StdSchedulerFactory.getDefaultScheduler();
+        }
+
+        StdSchedulerFactory factory = new StdSchedulerFactory();
+        factory.initialize(createProperties());
+        return factory.getScheduler();
     }
 
-    protected Trigger nowTrigger() {
-        return TriggerBuilder.newTrigger().startNow().build();
-    }
-
-
+    /**
+     * Creates Properties from the Quartz configuration map.
+     *
+     * @return Properties containing all Quartz configuration entries
+     */
     private Properties createProperties() {
         Properties properties = new Properties();
         properties.putAll(configuration.getQuartzConfiguration());
         return properties;
     }
 
-    private void logAllOnApplicationStopJobs() {
-        log.info("Jobs to run on application stop:");
-
-        jobs.allOnApplicationStop()
-                .map(Job::getClass)
-                .forEach(clazz -> log.info("   {}", clazz.getCanonicalName()));
+    /**
+     * Returns the job factory to use for creating job instances.
+     * <p>
+     * Subclasses should override this method to provide a custom job factory
+     * that supports dependency injection.
+     * </p>
+     *
+     * @return the job factory for creating job instances
+     */
+    protected JobFactory getJobFactory() {
+        return new DropwizardJobFactory(jobs);
     }
+
+    // ========================================================================
+    // SCHEDULING OPERATIONS
+    // Core scheduling methods used by scheduler strategy classes
+    // ========================================================================
 
     /**
      * Schedules or reschedules a job with Quartz. This method handles three scenarios:
@@ -225,6 +227,7 @@ public class JobManager implements Managed, JobMediator {
      *
      * @param job the scheduled job to schedule or reschedule
      */
+    @Override
     public void scheduleOrRescheduleJob(ScheduledJob job) {
         JobKey jobKey = job.getJobKey();
         Trigger trigger = job.getTrigger();
@@ -288,5 +291,92 @@ public class JobManager implements Managed, JobMediator {
     private void createNewJob(JobDetail jobDetail, Trigger trigger, String message) throws SchedulerException {
         scheduler.scheduleJob(jobDetail, trigger);
         log.info("Scheduled job: {}", message);
+    }
+
+    /**
+
+     * Schedules a job to run immediately.
+     * <p>
+     * This method creates a trigger that fires immediately and schedules the job
+     * with the Quartz scheduler. If the job already exists, it will be replaced.
+     * </p>
+     *
+     * @param jobDetail the job detail describing the job to schedule
+     * @throws SchedulerException if the job cannot be scheduled
+     */
+    public void scheduleNow(JobDetail jobDetail) throws SchedulerException {
+        Trigger nowTrigger = nowTrigger();
+        scheduler.scheduleJob(jobDetail, Set.of(nowTrigger), true);
+    }
+
+    /**
+     * Creates a trigger that fires immediately.
+     *
+     * @return a trigger that starts now
+     */
+    protected Trigger nowTrigger() {
+        return TriggerBuilder.newTrigger().startNow().build();
+    }
+
+    // ========================================================================
+    // ACCESSORS
+    // Getters for scheduler state and configuration
+    // ========================================================================
+
+    /**
+     * Returns the Quartz scheduler managed by this job manager.
+     * <p>
+     * This provides direct access to the underlying scheduler for advanced operations.
+     * </p>
+     *
+     * @return the Quartz scheduler
+     */
+    public Scheduler getScheduler() {
+        return scheduler;
+    }
+
+    @Override
+    public JobFilters getJobs() {
+        return jobs;
+    }
+
+    @Override
+    public JobConfiguration getConfiguration() {
+        return configuration;
+    }
+
+    // ========================================================================
+    // UTILITY METHODS
+    // Private helpers for job building and logging
+    // ========================================================================
+
+    /**
+     * Builds a Quartz JobDetail from a ScheduledJob.
+     *
+     * @param job the scheduled job containing job metadata
+     * @return a configured JobDetail ready for scheduling
+     */
+    private static JobDetail build(ScheduledJob job) {
+        JobKey jobKey = job.getJobKey();
+        return JobBuilder.newJob(job.getClazz())
+                .withIdentity(jobKey)
+                .requestRecovery(job.isRequestsRecovery())
+                .storeDurably(job.isStoreDurably())
+                .build();
+    }
+
+    /**
+     * Logs all jobs annotated with {@code @OnApplicationStop}.
+     * <p>
+     * This is called during startup to provide visibility into which jobs
+     * will run when the application shuts down.
+     * </p>
+     */
+    private void logAllOnApplicationStopJobs() {
+        log.info("Jobs to run on application stop:");
+
+        jobs.allOnApplicationStop()
+                .map(Job::getClass)
+                .forEach(clazz -> log.info("   {}", clazz.getCanonicalName()));
     }
 }
