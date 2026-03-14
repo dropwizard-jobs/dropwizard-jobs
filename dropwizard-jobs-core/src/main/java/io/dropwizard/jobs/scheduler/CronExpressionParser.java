@@ -16,8 +16,8 @@ public class CronExpressionParser {
     }
 
     private TimeZone readDefaultTimezoneFromConfiguration(JobConfiguration configuration) {
-        if (configuration != null && configuration.getQuartzConfiguration().containsKey("de.spinscale.dropwizard.jobs.timezone")) {
-            String timezoneId = configuration.getQuartzConfiguration().get("de.spinscale.dropwizard.jobs.timezone");
+        if (configuration != null && configuration.getQuartzConfiguration().containsKey("io.github.dropwizard-jobs.timezone")) {
+            String timezoneId = configuration.getQuartzConfiguration().get("io.github.dropwizard-jobs.timezone");
             return validateAndGetTimeZone(timezoneId);
         } else {
             return TimeZone.getDefault();
