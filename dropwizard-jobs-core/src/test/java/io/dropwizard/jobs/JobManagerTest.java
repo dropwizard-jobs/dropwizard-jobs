@@ -164,6 +164,45 @@ public class JobManagerTest {
     }
 
     @Test
+    public void testInvalidTimezoneInCronExpressionThrowsException() {
+        TestConfig config = new TestConfig();
+        CronExpressionParser cronExpressionParser = new CronExpressionParser(config);
+
+        String invalidTimezone = "Invalid/Timezone";
+        IllegalArgumentException exception = assertThrows(
+            IllegalArgumentException.class,
+            () -> cronExpressionParser.parse("0 15 10 ? * * [" + invalidTimezone + "]")
+        );
+
+        assertTrue(exception.getMessage().contains("Invalid timezone ID: '" + invalidTimezone + "'"));
+    }
+
+    @Test
+    public void testInvalidTimezoneInConfigurationThrowsException() {
+        TestConfig config = new TestConfig();
+        config.getQuartzConfiguration().put("de.spinscale.dropwizard.jobs.timezone", "Foo/Bar");
+
+        IllegalArgumentException exception = assertThrows(
+            IllegalArgumentException.class,
+            () -> new CronExpressionParser(config)
+        );
+
+        assertTrue(exception.getMessage().contains("Invalid timezone ID: 'Foo/Bar'"));
+    }
+
+    @Test
+    public void testInvalidTimezoneInOnAnnotationThrowsException() {
+        jobManager = new JobManager(new TestConfig(), List.of(new OnTestJobWithInvalidTimeZone()));
+
+        IllegalArgumentException exception = assertThrows(
+            IllegalArgumentException.class,
+            () -> jobManager.start()
+        );
+
+        assertTrue(exception.getMessage().contains("Invalid timezone ID: 'Invalid/Timezone'"));
+    }
+
+    @Test
     public void testJobsWithNonDefaultConfiguration() throws Exception {
         jobManager = new JobManager(new TestConfig(), List.of(new EveryTestJobWithNonDefaultConfiguration(),
                 new OnTestJobWithNonDefaultConfiguration()));
@@ -220,7 +259,8 @@ public class JobManagerTest {
     @Test
     public void shouldSetDropwizardPropertiesOnSchedulerFactory() throws Exception {
         TestConfig config = new TestConfig();
-        // change configuration
+        // change configuration - use unique instance name to avoid conflicts with parallel tests
+        config.getQuartzConfiguration().put("org.quartz.scheduler.instanceName", "testScheduler-" + UUID.randomUUID());
         config.getQuartzConfiguration().put("org.quartz.threadPool.threadCount", "15");
         jobManager = new JobManager(config, List.of(startTestJob, onTestJob, onTestJobWithJobName, everyTestJob,
                 everyTestJobWithJobName));
@@ -335,6 +375,13 @@ public class JobManagerTest {
             misfirePolicy = On.MisfirePolicy.IGNORE_MISFIRES)
     static class OnTestJobWithNonDefaultConfiguration extends AbstractJob {
         public OnTestJobWithNonDefaultConfiguration() {
+            super(1);
+        }
+    }
+
+    @On(value = "0/1 * * * * ?", timeZone = "Invalid/Timezone")
+    static class OnTestJobWithInvalidTimeZone extends AbstractJob {
+        public OnTestJobWithInvalidTimeZone() {
             super(1);
         }
     }
