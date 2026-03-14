@@ -72,4 +72,30 @@ public class JobConfiguration extends Configuration {
     public Map<String, String> getQuartzConfiguration() {
         return Collections.emptyMap();
     }
+
+    /**
+     * Checks if any job schedule overrides are defined.
+     * <p>
+     * Returns {@code true} if {@link #getJobs()} returns a non-empty map,
+     * indicating that one or more job schedules may be overridden at runtime.
+     * </p>
+     *
+     * @return {@code true} if job schedule overrides are configured, {@code false} otherwise
+     */
+    public boolean hasJobs() {
+        return !getJobs().isEmpty();
+    }
+
+    /**
+     * Checks if any Quartz configuration is defined.
+     * <p>
+     * Returns {@code true} if {@link #getQuartzConfiguration()} returns a non-empty map,
+     * indicating that custom Quartz scheduler settings are provided.
+     * </p>
+     *
+     * @return {@code true} if Quartz configuration is provided, {@code false} otherwise
+     */
+    public boolean hasQuartzConfiguration() {
+        return !getQuartzConfiguration().isEmpty();
+    }
 }
