@@ -112,6 +112,16 @@ public class Hk2JobsBundle extends JobsBundle {
         });
     }
 
+    /**
+     * Returns the Quartz {@link Scheduler} managed by this bundle.
+     * <p>
+     * This method returns {@code null} if the bundle has not been started yet, which can happen
+     * if called before the Jersey container has completed startup (i.e., before
+     * {@code onStartup} has been invoked).
+     * </p>
+     *
+     * @return the scheduler, or {@code null} if the bundle has not been started
+     */
     @Override
     public Scheduler getScheduler() {
         return (jobManager != null) ? super.getScheduler() : null;
