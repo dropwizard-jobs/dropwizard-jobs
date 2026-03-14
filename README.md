@@ -21,7 +21,7 @@ Add to your pom:
 <dependency>
   <groupId>io.github.dropwizard-jobs</groupId>
   <artifactId>dropwizard-jobs-core</artifactId>
-  <version>6.0.0</version>
+  <version>6.1.0-SNAPSHOT</version> <!-- Replace with the latest version -->
 </dependency>
 ```
 

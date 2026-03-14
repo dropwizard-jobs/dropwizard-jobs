@@ -13,7 +13,7 @@ Add to your pom:
 <dependency>
   <groupId>io.github.dropwizard-jobs</groupId>
   <artifactId>dropwizard-jobs-guice</artifactId>
-  <version>4.0.0</version>
+  <version>7.0.0</version> <!-- Replace with the latest version -->
 </dependency>
 ```
 
@@ -33,7 +33,7 @@ After installing the plugin locally, include the following dependencies only:
 <dependency>
   <groupId>io.github.dropwizard-jobs</groupId>
   <artifactId>dropwizard-jobs-guice</artifactId>
-  <version><current version></version>
+  <version>7.0.0</version> <!-- Replace with the latest version -->
 </dependency>
 <dependency>
   <groupId>com.hubspot.dropwizard</groupId>
