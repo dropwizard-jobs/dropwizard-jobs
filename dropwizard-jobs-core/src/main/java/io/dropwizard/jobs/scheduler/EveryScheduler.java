@@ -74,7 +74,7 @@ public class EveryScheduler extends JobScheduler {
             JobConfiguration configuration = mediator.getConfiguration();
             String fromConfig = readDurationFromConfig(expression, clazz, configuration);
             expression = !isEmpty(fromConfig) ? fromConfig : expression;
-            log.info(clazz + " is configured in the config file to run every " + expression);
+            log.info("{} is configured in the config file to run every {}", clazz.getSimpleName(), expression);
         }
         return expression;
     }

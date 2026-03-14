@@ -18,6 +18,14 @@ import java.util.Set;
 public class JobManager implements Managed, JobMediator {
 
     protected static final Logger log = LoggerFactory.getLogger(JobManager.class);
+
+    /**
+     * Grace period in milliseconds to allow in-flight job executions to begin completion
+     * before initiating scheduler shutdown. This delay ensures that stop jobs scheduled
+     * via {@code @OnApplicationStop} have time to be queued for execution.
+     */
+    private static final long SHUTDOWN_GRACE_PERIOD_MS = 100;
+
     protected final JobConfiguration configuration;
     protected final JobFilters jobs;
 
@@ -75,9 +83,9 @@ public class JobManager implements Managed, JobMediator {
     public void stop() throws Exception {
         onApplicationStopScheduler.schedule();
 
-        // this is enough to put the job into the queue, otherwise the jobs wont
-        // be executed, anyone got a better solution?
-        Thread.sleep(100);
+        // Allow a brief grace period for @OnApplicationStop jobs to be queued before shutdown.
+        // Without this delay, the scheduler may shut down before the jobs are executed.
+        Thread.sleep(SHUTDOWN_GRACE_PERIOD_MS);
 
         scheduler.shutdown(true);
     }
@@ -121,9 +129,24 @@ public class JobManager implements Managed, JobMediator {
 
         jobs.allOnApplicationStop()
                 .map(Job::getClass)
-                .forEach(clazz -> log.info("   " + clazz.getCanonicalName()));
+                .forEach(clazz -> log.info("   {}", clazz.getCanonicalName()));
     }
 
+    /**
+     * Schedules or reschedules a job with Quartz. This method handles three scenarios:
+     * <ul>
+     *   <li>Job exists with one trigger: reschedules the existing trigger</li>
+     *   <li>Job exists with multiple triggers: deletes and recreates the job (enforces 1:1 job-to-trigger relationship)</li>
+     *   <li>Job doesn't exist: creates a new job with its trigger</li>
+     * </ul>
+     * <p>
+     * <strong>Note:</strong> {@link SchedulerException} is caught and logged at WARN level but not rethrown.
+     * This is intentional for cluster resilience — if this node fails to schedule the job, another node
+     * in the cluster may succeed. This prevents a single scheduling failure from cascading into a
+     * broader application failure.
+     *
+     * @param job the scheduled job to schedule or reschedule
+     */
     public void scheduleOrRescheduleJob(ScheduledJob job) {
         JobKey jobKey = job.getJobKey();
         Trigger trigger = job.getTrigger();
@@ -136,23 +159,22 @@ public class JobManager implements Managed, JobMediator {
                 List<? extends Trigger> triggers = scheduler.getTriggersOfJob(jobKey);
                 if (triggers.size() == 1) {
                     scheduler.rescheduleJob(triggers.get(0).getKey(), trigger);
-                    log.info(job.getMessage());
+                    log.info("Rescheduled job: {}", job.getMessage());
                 } else {
                     // if for some reason the job has multiple triggers, it's easiest to just delete and re-create the job,
                     // since we want to enforce a one-to-one relationship between jobs and triggers
                     scheduler.deleteJob(jobKey);
                     scheduler.scheduleJob(jobDetail, trigger);
-                    log.info(job.getMessage());
+                    log.info("Scheduled job: {}", job.getMessage());
                 }
             } else {
                 // if the job doesn't already exist, we can create it, along with its trigger. this prevents us
                 // from creating multiple instances of the same job when running in a clustered environment
                 scheduler.scheduleJob(jobDetail, trigger);
-                log.info("scheduled job with key {}", jobKey.toString());
-                log.info(job.getMessage());
+                log.info("Scheduled job: {}", job.getMessage());
             }
         } catch (SchedulerException e) {
-            log.error(String.format("error occurred scheduling the job %s", jobKey), e);
+            log.warn("Failed to schedule job with key '{}': {}", jobKey, e.getMessage(), e);
         }
 
     }
