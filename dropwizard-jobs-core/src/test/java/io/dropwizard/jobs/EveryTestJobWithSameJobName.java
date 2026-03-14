@@ -16,6 +16,14 @@ public class EveryTestJobWithSameJobName extends Job {
 
     public static List<String> results = Lists.newArrayList();
 
+    /**
+     * Resets the static results list to prevent state leakage between test executions.
+     * Should be called in @BeforeEach or @BeforeAll setup methods if results are used.
+     */
+    public static void reset() {
+        results.clear();
+    }
+
     @Override
     public void doJob(JobExecutionContext context) throws JobExecutionException {
         results.add(new Date().toString());
