@@ -2,6 +2,7 @@ package io.dropwizard.jobs.scheduler;
 
 import io.dropwizard.jobs.Job;
 import io.dropwizard.jobs.JobMediator;
+import io.dropwizard.jobs.JobMetadata;
 import org.apache.commons.lang3.StringUtils;
 import org.quartz.JobBuilder;
 import org.quartz.JobDetail;
@@ -22,8 +23,8 @@ public abstract class JobScheduler {
 
     public abstract void schedule() throws SchedulerException;
 
-    protected JobDetail build(Job job) {
-        Class<? extends Job> jobClass = job.getClass();
+    protected JobDetail build(JobMetadata job) {
+        Class<? extends Job> jobClass = job.getJobClass();
         String jobClassName = jobClass.getName();
         String jobGroupName = job.getGroupName();
         return JobBuilder
@@ -33,8 +34,8 @@ public abstract class JobScheduler {
     }
 
 
-    protected JobKey createJobKey(final String jobName, final Job job) {
-        String key = StringUtils.isNotBlank(jobName) ? jobName : job.getClass().getCanonicalName();
+    protected JobKey createJobKey(final String jobName, final JobMetadata job) {
+        String key = StringUtils.isNotBlank(jobName) ? jobName : job.getJobClass().getCanonicalName();
         return JobKey.jobKey(key, job.getGroupName());
     }
 

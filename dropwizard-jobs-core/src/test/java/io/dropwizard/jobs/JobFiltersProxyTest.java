@@ -3,8 +3,6 @@ package io.dropwizard.jobs;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
@@ -22,67 +20,73 @@ class JobFiltersProxyTest {
     void allEveryFiltersSubclasses() {
         // Create a simulated proxy subclass of EveryTestJob
         EveryTestJob proxyJob = new EveryTestJob() {};
-        JobFilters filters = new JobFilters(List.of(proxyJob));
+        JobMetadata metadata = new JobMetadata(proxyJob.getClass(), proxyJob.getGroupName());
+        JobFilters filters = new JobFilters(List.of(metadata));
 
-        List<Job> everyJobs = filters.allEvery().toList();
+        List<JobMetadata> everyJobs = filters.allEvery().toList();
         assertThat(everyJobs, hasSize(1));
-        assertSame(proxyJob, everyJobs.get(0));
+        assertEquals(proxyJob.getClass(), everyJobs.get(0).getJobClass());
     }
 
     @Test
     void allOnCronFiltersSubclasses() {
         // Create a simulated proxy subclass of OnTestJob
         OnTestJob proxyJob = new OnTestJob() {};
-        JobFilters filters = new JobFilters(List.of(proxyJob));
+        JobMetadata metadata = new JobMetadata(proxyJob.getClass(), proxyJob.getGroupName());
+        JobFilters filters = new JobFilters(List.of(metadata));
 
-        List<Job> onJobs = filters.allOnCron().toList();
+        List<JobMetadata> onJobs = filters.allOnCron().toList();
         assertThat(onJobs, hasSize(1));
-        assertSame(proxyJob, onJobs.get(0));
+        assertEquals(proxyJob.getClass(), onJobs.get(0).getJobClass());
     }
 
     @Test
     void allOnApplicationStartFiltersSubclasses() {
         // Create a simulated proxy subclass of ApplicationStartTestJob
         ApplicationStartTestJob proxyJob = new ApplicationStartTestJob() {};
-        JobFilters filters = new JobFilters(List.of(proxyJob));
+        JobMetadata metadata = new JobMetadata(proxyJob.getClass(), proxyJob.getGroupName());
+        JobFilters filters = new JobFilters(List.of(metadata));
 
-        List<Job> startJobs = filters.allOnApplicationStart().toList();
+        List<JobMetadata> startJobs = filters.allOnApplicationStart().toList();
         assertThat(startJobs, hasSize(1));
-        assertSame(proxyJob, startJobs.get(0));
+        assertEquals(proxyJob.getClass(), startJobs.get(0).getJobClass());
     }
 
     @Test
     void allOnApplicationStopFiltersSubclasses() {
         // Create a simulated proxy subclass of ApplicationStopTestJob
         ApplicationStopTestJob proxyJob = new ApplicationStopTestJob() {};
-        JobFilters filters = new JobFilters(List.of(proxyJob));
+        JobMetadata metadata = new JobMetadata(proxyJob.getClass(), proxyJob.getGroupName());
+        JobFilters filters = new JobFilters(List.of(metadata));
 
-        List<Job> stopJobs = filters.allOnApplicationStop().toList();
+        List<JobMetadata> stopJobs = filters.allOnApplicationStop().toList();
         assertThat(stopJobs, hasSize(1));
-        assertSame(proxyJob, stopJobs.get(0));
+        assertEquals(proxyJob.getClass(), stopJobs.get(0).getJobClass());
     }
 
     @Test
     void findWithMatchesSubclassToSuperclass() {
         EveryTestJob originalJob = new EveryTestJob();
-        JobFilters filters = new JobFilters(List.of(originalJob));
+        JobMetadata metadata = new JobMetadata(originalJob.getClass(), originalJob.getGroupName());
+        JobFilters filters = new JobFilters(List.of(metadata));
 
         // The original class should still be found
-        Optional<Job> found = filters.findWith(EveryTestJob.class, null);
+        Optional<JobMetadata> found = filters.findWith(EveryTestJob.class, null);
         assertTrue(found.isPresent());
-        assertSame(originalJob, found.get());
+        assertEquals(originalJob.getClass(), found.get().getJobClass());
     }
 
     @Test
     void findWithMatchesProxySubclassToSuperclass() {
         // Create a simulated proxy subclass
         EveryTestJob proxyJob = new EveryTestJob() {};
-        JobFilters filters = new JobFilters(List.of(proxyJob));
+        JobMetadata metadata = new JobMetadata(proxyJob.getClass(), proxyJob.getGroupName());
+        JobFilters filters = new JobFilters(List.of(metadata));
 
         // Should find the proxy when searching by the parent class
-        Optional<Job> found = filters.findWith(EveryTestJob.class, null);
+        Optional<JobMetadata> found = filters.findWith(EveryTestJob.class, null);
         assertTrue(found.isPresent());
-        assertSame(proxyJob, found.get());
+        assertEquals(proxyJob.getClass(), found.get().getJobClass());
     }
 
     @Test
@@ -90,11 +94,12 @@ class JobFiltersProxyTest {
         // Create a simulated proxy subclass
         EveryTestJob proxyJob = new EveryTestJob() {};
         Class<? extends EveryTestJob> proxyClass = proxyJob.getClass();
-        JobFilters filters = new JobFilters(List.of(proxyJob));
+        JobMetadata metadata = new JobMetadata(proxyJob.getClass(), proxyJob.getGroupName());
+        JobFilters filters = new JobFilters(List.of(metadata));
 
         // Should find the proxy when searching by the proxy class
-        Optional<Job> found = filters.findWith(proxyClass, null);
+        Optional<JobMetadata> found = filters.findWith(proxyClass, null);
         assertTrue(found.isPresent());
-        assertSame(proxyJob, found.get());
+        assertEquals(proxyJob.getClass(), found.get().getJobClass());
     }
 }

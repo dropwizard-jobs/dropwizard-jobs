@@ -88,27 +88,27 @@ public class JobManager implements Managed, JobMediator {
     // ========================================================================
 
     /**
-     * Creates a new JobManager with the specified configuration and jobs.
+     * Creates a new JobManager with the specified configuration and job metadata.
      * <p>
      * This constructor is equivalent to calling
      * {@link #JobManager(JobConfiguration, List, List)} with an empty list of job listeners.
      * </p>
      *
      * @param configuration the application configuration containing job and Quartz settings
-     * @param jobs the list of jobs to be scheduled
+     * @param jobs the list of job metadata to be scheduled
      */
-    public JobManager(JobConfiguration configuration, List<Job> jobs) {
+    public JobManager(JobConfiguration configuration, List<JobMetadata> jobs) {
         this(configuration, jobs, Collections.emptyList());
     }
 
     /**
-     * Creates a new JobManager with the specified configuration, jobs, and job listeners.
+     * Creates a new JobManager with the specified configuration, job metadata, and job listeners.
      *
      * @param configuration the application configuration containing job and Quartz settings
-     * @param jobs the list of jobs to be scheduled
+     * @param jobs the list of job metadata to be scheduled
      * @param jobListeners the list of job listeners to register with the scheduler
      */
-    public JobManager(JobConfiguration configuration, List<Job> jobs, List<JobListener> jobListeners) {
+    public JobManager(JobConfiguration configuration, List<JobMetadata> jobs, List<JobListener> jobListeners) {
         this.configuration = configuration;
         this.jobs = new JobFilters(jobs);
         this.jobListeners = List.copyOf(jobListeners);
@@ -430,7 +430,49 @@ public class JobManager implements Managed, JobMediator {
         log.info("Jobs to run on application stop:");
 
         jobs.allOnApplicationStop()
-                .map(Job::getClass)
+                .map(JobMetadata::getJobClass)
                 .forEach(clazz -> log.info("   {}", clazz.getCanonicalName()));
+    }
+
+    // ========================================================================
+    // STATIC FACTORY METHODS
+    // Convenience methods for creating JobManager from Job instances
+    // ========================================================================
+
+    /**
+     * Creates a new JobManager with the specified configuration and job instances.
+     * <p>
+     * This is a convenience factory method that converts {@link Job} instances to
+     * {@link JobMetadata} and delegates to the primary constructor. Use this method
+     * when you have pre-instantiated Job objects.
+     * </p>
+     *
+     * @param configuration the application configuration containing job and Quartz settings
+     * @param jobs the list of job instances to be scheduled
+     * @return a new JobManager instance
+     */
+    public static JobManager fromJobs(JobConfiguration configuration, List<Job> jobs) {
+        return new JobManager(configuration, jobs.stream()
+                .map(JobMetadata::new)
+                .toList(), Collections.emptyList());
+    }
+
+    /**
+     * Creates a new JobManager with the specified configuration, job instances, and job listeners.
+     * <p>
+     * This is a convenience factory method that converts {@link Job} instances to
+     * {@link JobMetadata} and delegates to the primary constructor. Use this method
+     * when you have pre-instantiated Job objects.
+     * </p>
+     *
+     * @param configuration the application configuration containing job and Quartz settings
+     * @param jobs the list of job instances to be scheduled
+     * @param jobListeners the list of job listeners to register with the scheduler
+     * @return a new JobManager instance
+     */
+    public static JobManager fromJobs(JobConfiguration configuration, List<Job> jobs, List<JobListener> jobListeners) {
+        return new JobManager(configuration, jobs.stream()
+                .map(JobMetadata::new)
+                .toList(), jobListeners);
     }
 }

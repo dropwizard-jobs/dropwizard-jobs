@@ -45,9 +45,21 @@ public class SpringJobManager extends JobManager {
      * @see GuiceJobManager#getJobs(com.google.inject.Injector)
      */
     public SpringJobManager(JobConfiguration config, ApplicationContext context) {
-        super(config, new ArrayList<>(context.getBeansOfType(Job.class).values()),
+        super(config, toJobMetadata(new ArrayList<>(context.getBeansOfType(Job.class).values())),
               getJobListeners(context));
         jobFactory = new SpringJobFactory(context);
+    }
+
+    /**
+     * Converts Job instances to JobMetadata.
+     *
+     * @param jobs the list of job instances
+     * @return a list of job metadata
+     */
+    private static List<JobMetadata> toJobMetadata(List<Job> jobs) {
+        return jobs.stream()
+                .map(JobMetadata::new)
+                .toList();
     }
 
     /**

@@ -18,9 +18,10 @@ public class DropwizardJobFactoryTest {
 
     @Test
     public void testNewJobReturnsPreRegisteredInstanceWhenClassAndGroupMatch() throws SchedulerException {
-        // Setup: create a pre-registered job
+        // Setup: create a pre-registered job metadata
         EveryTestJob preRegisteredJob = new EveryTestJob();
-        JobFilters jobFilters = new JobFilters(Collections.singletonList(preRegisteredJob));
+        JobMetadata metadata = new JobMetadata(preRegisteredJob.getClass(), preRegisteredJob.getGroupName());
+        JobFilters jobFilters = new JobFilters(Collections.singletonList(metadata));
         DropwizardJobFactory factory = new DropwizardJobFactory(jobFilters);
 
         // Mock the bundle with matching job class and default group
@@ -37,9 +38,9 @@ public class DropwizardJobFactoryTest {
         // Execute
         Job result = factory.newJob(bundle, scheduler);
 
-        // Verify: should return the pre-registered instance
+        // Verify: should return a new instance of the pre-registered job class
         assertThat(result, is(notNullValue()));
-        assertThat(result, is(sameInstance(preRegisteredJob)));
+        assertThat(result, is(instanceOf(EveryTestJob.class)));
     }
 
     @Test
@@ -71,9 +72,10 @@ public class DropwizardJobFactoryTest {
     @Test
     public void testNewJobCreatesNewInstanceViaReflectionWhenJobClassExistsButWithDifferentGroupName()
             throws SchedulerException {
-        // Setup: create a pre-registered job with default group
+        // Setup: create a pre-registered job metadata with default group
         EveryTestJob preRegisteredJob = new EveryTestJob();
-        JobFilters jobFilters = new JobFilters(Collections.singletonList(preRegisteredJob));
+        JobMetadata metadata = new JobMetadata(preRegisteredJob.getClass(), preRegisteredJob.getGroupName());
+        JobFilters jobFilters = new JobFilters(Collections.singletonList(metadata));
         DropwizardJobFactory factory = new DropwizardJobFactory(jobFilters);
 
         // Mock the bundle with same job class but different group name
@@ -90,10 +92,9 @@ public class DropwizardJobFactoryTest {
         // Execute
         Job result = factory.newJob(bundle, scheduler);
 
-        // Verify: should create a new instance via reflection (not the pre-registered one)
+        // Verify: should create a new instance via reflection
         assertThat(result, is(notNullValue()));
         assertThat(result, is(instanceOf(EveryTestJob.class)));
-        assertThat(result, is(not(sameInstance(preRegisteredJob))));
     }
 
     @Test

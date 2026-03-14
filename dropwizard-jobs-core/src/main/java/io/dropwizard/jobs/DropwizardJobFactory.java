@@ -24,10 +24,16 @@ class DropwizardJobFactory implements JobFactory {
         JobKey jobKey = jobDetail.getKey();
         String groupName = jobKey.getGroup();
 
-        // First try to find the job in the pre-registered list (existing behavior)
-        Job job = jobs.findWith(jobClass, groupName).orElse(null);
-        if (job != null) {
-            return job;
+        // First try to find the job metadata in the pre-registered list
+        JobMetadata metadata = jobs.findWith(jobClass, groupName).orElse(null);
+        if (metadata != null) {
+            // If a pre-instantiated job instance is available, use it
+            Job jobInstance = metadata.getJobInstance();
+            if (jobInstance != null) {
+                return jobInstance;
+            }
+            // Otherwise create a new instance via reflection for the registered job class
+            return createJobViaReflection(metadata.getJobClass());
         }
 
         // Resolve the actual job class if jobClass is an AOP proxy
