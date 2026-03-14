@@ -48,26 +48,44 @@ dropwizard-jobs-core and other dependencies will be resolved automaticlaly.
 
 ## Activating the Guice and GuiceJobs bundle
 
-IMPORTANT: You must add the GuiceBundle first before you instantiate the GuiceJobsBundle.
-Otherwise you will get a NULL injector.
+[`GuiceJobsBundle`](src/main/java/io/dropwizard/jobs/GuiceJobsBundle.java) supports two modes of operation depending on when the Guice Injector becomes available.
+
+### Eager Mode (Traditional)
+
+Use this when you create the Guice Injector yourself during the initialization phase:
 
 ```java
 @Override
-public void initialize( Bootstrap<SomeConfig> bootstrap )
-{
-  GuiceBundle guiceBundle = GuiceBundle.<YourConfiguration>newBuilder()
-    .addModule( new YourModule() )
-    .enableAutoConfig( getClass().getPackage().getName() )
-    .setConfigClass( YourConfiguration.class )
-    .build();
-  bootstrap.addBundle( guiceBundle );
-
-  GuiceJobsBundle guiceJobsBundle = new GuiceJobsBundle(
-    "com.youpackage.url",
-    guiceBundle.getInjector() );
-  bootstrap.addBundle( guiceJobsBundle );
+public void initialize(Bootstrap<YourConfiguration> bootstrap) {
+  Injector injector = Guice.createInjector(new YourModule());
+  bootstrap.addBundle(new GuiceJobsBundle(injector));
 }
 ```
+
+### Deferred Mode (For dropwizard-guicey Compatibility)
+
+Use this when working with [dropwizard-guicey](https://github.com/xvik/dropwizard-guicey) or other frameworks where the Injector is not available until the run phase. Pass a `Supplier<Injector>` that will be called during the managed lifecycle start:
+
+```java
+@Override
+public void initialize(Bootstrap<YourConfiguration> bootstrap) {
+  GuiceBundle guiceBundle = GuiceBundle.<YourConfiguration>newBuilder()
+    .addModule(new YourModule())
+    .enableAutoConfig(getClass().getPackage().getName())
+    .setConfigClass(YourConfiguration.class)
+    .build();
+  bootstrap.addBundle(guiceBundle);
+
+  // Use a Supplier to defer injector resolution until Managed.start()
+  bootstrap.addBundle(new GuiceJobsBundle(() -> guiceBundle.getInjector()));
+}
+```
+
+**Why use deferred mode?**
+
+Some Guice integration libraries (like dropwizard-guicey) don't create the Injector until the `run()` phase, after all bundles have been initialized. The deferred constructor allows [`GuiceJobsBundle`](src/main/java/io/dropwizard/jobs/GuiceJobsBundle.java) to work with these frameworks by deferring injector resolution until `Managed.start()`, when the injector is guaranteed to be available.
+
+**Note:** In deferred mode, `getScheduler()` returns `null` until the bundle has started (i.e., until the Dropwizard lifecycle has completed startup).
 
 ## Job Injection
 

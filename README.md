@@ -235,6 +235,8 @@ public class MyModule extends AbstractModule {
 }
 ```
 
+**Note:** When using [`GuiceJobsBundle`](dropwizard-jobs-guice/src/main/java/io/dropwizard/jobs/GuiceJobsBundle.java) with frameworks like [dropwizard-guicey](https://github.com/xvik/dropwizard-guicey), you may need to use the deferred constructor that accepts a `Supplier<Injector>`. See the [Guice module documentation](dropwizard-jobs-guice/README.md) for details.
+
 **Spring:**
 
 Register listeners as beans in your Spring configuration. The [`SpringJobsBundle`](dropwizard-jobs-spring/src/main/java/io/dropwizard/jobs/SpringJobsBundle.java) will auto-discover all `JobListener` implementations annotated with `@ListeningFor`:
