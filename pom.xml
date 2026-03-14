@@ -36,6 +36,7 @@
         <quartz.version>2.5.2</quartz.version>
         <snakeyaml.version>2.6</snakeyaml.version>
         <spring.version>7.0.6</spring.version>
+        <awaitility.version>4.2.0</awaitility.version>
     </properties>
 
     <developers>
@@ -161,6 +162,12 @@
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
             <version>${mockito.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.awaitility</groupId>
+            <artifactId>awaitility</artifactId>
+            <version>${awaitility.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
