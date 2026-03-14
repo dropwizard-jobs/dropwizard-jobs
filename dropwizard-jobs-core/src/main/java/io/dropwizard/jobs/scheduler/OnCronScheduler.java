@@ -37,7 +37,7 @@ public class OnCronScheduler extends JobScheduler {
                 .allOnCron()
                 .map(job -> {
 
-                    Class<? extends Job> clazz = job.getClass();
+                    Class<? extends Job> clazz = job.getJobClass();
                     On onAnnotation = clazz.getAnnotation(On.class);
                     String value = onAnnotation.value();
                     String cronExpression = resolveDurationExpression(value, clazz, mediator.getConfiguration());

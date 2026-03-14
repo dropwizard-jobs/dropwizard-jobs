@@ -22,7 +22,7 @@ import static org.mockito.Mockito.*;
 
 public class JobManagerTest {
 
-    private JobManager jobManager = new JobManager(new TestConfig(), new ArrayList<>());
+    private JobManager jobManager = JobManager.fromJobs(new TestConfig(), new ArrayList<>());
     private final ApplicationStartTestJob startTestJob = new ApplicationStartTestJob();
     private final OnTestJob onTestJob = new OnTestJob();
     private final OnTestJobWithJobName onTestJobWithJobName = new OnTestJobWithJobName();
@@ -39,7 +39,7 @@ public class JobManagerTest {
         config.getJobs().put("everyTestJobDefaultConfiguration", "50ms");
         config.getJobs().put("testJob", "50ms");
         config.getJobs().put("onTestJob", "0/1 * * * * ?");
-        jobManager = new JobManager(config, List.of(startTestJob, onTestJob, onTestJobWithJobName, everyTestJob,
+        jobManager = JobManager.fromJobs(config, List.of(startTestJob, onTestJob, onTestJobWithJobName, everyTestJob,
                 everyTestJobWithJobName, everyTestJobWithDelay, everyTestJobAlternativeConfiguration,
                 applicationStopTestJob, onTestJobAlternativeConfiguration));
         jobManager.start();
@@ -86,7 +86,7 @@ public class JobManagerTest {
 
     @Test
     public void testJobsWithDefaultConfiguration() throws Exception {
-        jobManager = new JobManager(new TestConfig(), List.of(new EveryTestJobWithDefaultConfiguration(),
+        jobManager = JobManager.fromJobs(new TestConfig(), List.of(new EveryTestJobWithDefaultConfiguration(),
                 new OnTestJobWithDefaultConfiguration()));
 
         jobManager.start();
@@ -114,7 +114,7 @@ public class JobManagerTest {
 
     @Test
     public void testJobsWithMultipleInstances() throws Exception {
-        jobManager = new JobManager(new TestConfig(), List.of(new OnTestJobWithVariableGroupName("group_one"),
+        jobManager = JobManager.fromJobs(new TestConfig(), List.of(new OnTestJobWithVariableGroupName("group_one"),
                 new OnTestJobWithVariableGroupName("group_two"), new EveryTestJobWithDefaultConfiguration()));
 
         jobManager.start();
@@ -134,7 +134,7 @@ public class JobManagerTest {
 
     @Test
     public void testJobsWithoutGroupShouldOnlyHaveOneInstance() throws Exception {
-        jobManager = new JobManager(new TestConfig(), List.of(new EveryTestJobWithDefaultConfiguration(),
+        jobManager = JobManager.fromJobs(new TestConfig(), List.of(new EveryTestJobWithDefaultConfiguration(),
                 new EveryTestJobWithDefaultConfiguration()));
 
         jobManager.start();
@@ -152,7 +152,7 @@ public class JobManagerTest {
 
     @Test
     public void testJobsWithTimeZoneInOnAnnotation() throws Exception {
-        jobManager = new JobManager(new TestConfig(), List.of(new OnTestJobWithTimeZoneConfiguration(),
+        jobManager = JobManager.fromJobs(new TestConfig(), List.of(new OnTestJobWithTimeZoneConfiguration(),
                 new OnTestJobWithDefaultConfiguration()));
         jobManager.start();
 
@@ -193,7 +193,7 @@ public class JobManagerTest {
 
     @Test
     public void testInvalidTimezoneInOnAnnotationThrowsException() {
-        jobManager = new JobManager(new TestConfig(), List.of(new OnTestJobWithInvalidTimeZone()));
+        jobManager = JobManager.fromJobs(new TestConfig(), List.of(new OnTestJobWithInvalidTimeZone()));
 
         IllegalArgumentException exception = assertThrows(
             IllegalArgumentException.class,
@@ -205,7 +205,7 @@ public class JobManagerTest {
 
     @Test
     public void testJobsWithNonDefaultConfiguration() throws Exception {
-        jobManager = new JobManager(new TestConfig(), List.of(new EveryTestJobWithNonDefaultConfiguration(),
+        jobManager = JobManager.fromJobs(new TestConfig(), List.of(new EveryTestJobWithNonDefaultConfiguration(),
                 new OnTestJobWithNonDefaultConfiguration()));
 
         jobManager.start();
@@ -236,7 +236,7 @@ public class JobManagerTest {
         TestConfig config = new TestConfig();
         config.getQuartzConfiguration().clear();
 
-        jobManager = new JobManager(config, List.of(startTestJob, onTestJob, onTestJobWithJobName, everyTestJob,
+        jobManager = JobManager.fromJobs(config, List.of(startTestJob, onTestJob, onTestJobWithJobName, everyTestJob,
                 everyTestJobWithJobName));
         jobManager.start();
 
@@ -251,7 +251,7 @@ public class JobManagerTest {
             config.getQuartzConfiguration().clear();
             config.getQuartzConfiguration().put("some", "property");
 
-            jobManager = new JobManager(config, List.of(startTestJob, onTestJob, onTestJobWithJobName, everyTestJob,
+            jobManager = JobManager.fromJobs(config, List.of(startTestJob, onTestJob, onTestJobWithJobName, everyTestJob,
                     everyTestJobWithJobName));
             jobManager.start();
         });
@@ -263,7 +263,7 @@ public class JobManagerTest {
         // change configuration - use unique instance name to avoid conflicts with parallel tests
         config.getQuartzConfiguration().put("org.quartz.scheduler.instanceName", "testScheduler-" + UUID.randomUUID());
         config.getQuartzConfiguration().put("org.quartz.threadPool.threadCount", "15");
-        jobManager = new JobManager(config, List.of(startTestJob, onTestJob, onTestJobWithJobName, everyTestJob,
+        jobManager = JobManager.fromJobs(config, List.of(startTestJob, onTestJob, onTestJobWithJobName, everyTestJob,
                 everyTestJobWithJobName));
         jobManager.start();
         assertThat(jobManager.getScheduler().getMetaData().getThreadPoolSize(), Matchers.is(15));
@@ -276,7 +276,7 @@ public class JobManagerTest {
         config.getQuartzConfiguration().put("io.github.dropwizard-jobs.timezone", "Europe/London");
         CronExpressionParser cronExpressionParser = new CronExpressionParser(config);
 
-        jobManager = new JobManager(config, List.of(startTestJob, onTestJob, onTestJobWithJobName, everyTestJob,
+        jobManager = JobManager.fromJobs(config, List.of(startTestJob, onTestJob, onTestJobWithJobName, everyTestJob,
                 everyTestJobWithJobName));
 
         // by default, crons should use the configuration setting's timezone
@@ -298,7 +298,7 @@ public class JobManagerTest {
         when(mockScheduler.checkExists(any(JobKey.class))).thenThrow(testException);
 
         // Create a JobManager and inject the mock scheduler
-        jobManager = new JobManager(new TestConfig(), List.of(new EveryTestJobWithDefaultConfiguration()));
+        jobManager = JobManager.fromJobs(new TestConfig(), List.of(new EveryTestJobWithDefaultConfiguration()));
         jobManager.scheduler = mockScheduler;
 
         // Create a scheduled job to use for testing
@@ -323,7 +323,7 @@ public class JobManagerTest {
         // Create a counting listener that tracks job executions
         CountingTestJobListener countingListener = new CountingTestJobListener("CountingTestJobListener");
 
-        jobManager = new JobManager(new TestConfig(),
+        jobManager = JobManager.fromJobs(new TestConfig(),
                 List.of(new EveryTestJobWithDefaultConfiguration()),
                 List.of(countingListener));
 
@@ -347,7 +347,7 @@ public class JobManagerTest {
         CountingTestJobListener listener1 = new CountingTestJobListener("Listener1");
         CountingTestJobListener listener2 = new CountingTestJobListener("Listener2");
 
-        jobManager = new JobManager(new TestConfig(),
+        jobManager = JobManager.fromJobs(new TestConfig(),
                 List.of(new EveryTestJobWithDefaultConfiguration()),
                 List.of(listener1, listener2));
 

@@ -5,17 +5,11 @@ import org.glassfish.hk2.api.ServiceLocator;
 import org.glassfish.jersey.internal.inject.InjectionManager;
 import org.glassfish.jersey.server.spi.AbstractContainerLifecycleListener;
 import org.glassfish.jersey.server.spi.Container;
-import org.quartz.JobListener;
 import org.quartz.Scheduler;
-import org.quartz.spi.JobFactory;
 
 import io.dropwizard.core.setup.Environment;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * A {@link JobsBundle} implementation that uses HK2 to instantiate a {@link Job}.
@@ -95,7 +89,7 @@ public class Hk2JobsBundle extends JobsBundle {
      *            May be null if no listeners should be discovered.
      */
     public Hk2JobsBundle(final Filter searchCriteria, final Filter listenerSearchCriteria) {
-        super(new ArrayList<>());
+        super();
         Objects.requireNonNull(searchCriteria);
         this.searchCriteria = searchCriteria;
         this.listenerSearchCriteria = listenerSearchCriteria;
@@ -108,53 +102,8 @@ public class Hk2JobsBundle extends JobsBundle {
             public void onStartup(Container container) {
                 final InjectionManager im = container.getApplicationHandler().getInjectionManager();
                 final ServiceLocator locator = im.getInstance(ServiceLocator.class);
-                /*
-                 * Eagerly resolve all Job instances from the HK2 container to discover available job classes.
-                 * <p>
-                 * This is a necessary trade-off: the DI container is the source of truth for which jobs
-                 * exist, and there is no API to enumerate job classes without instantiating them. The
-                 * instances created here are used for:
-                 * <ul>
-                 *   <li>Reading class-level annotations (@Every, @On, etc.) to determine scheduling</li>
-                 *   <li>Accessing instance-specific configuration (e.g., groupName)</li>
-                 *   <li>Registering jobs with the Quartz scheduler</li>
-                 * </ul>
-                 * <p>
-                 * The actual job execution uses NEW instances created by the JobFactory below, which
-                 * properly respects DI scopes (e.g., @Singleton, @PerLookup). The instances created
-                 * here are discarded after job registration.
-                 *
-                 * @see GuiceJobManager#getJobs(com.google.inject.Injector)
-                 * @see SpringJobManager#SpringJobManager(JobConfiguration, org.springframework.context.ApplicationContext)
-                 */
-                @SuppressWarnings("unchecked")
-                final List<Job> jobs = (List<Job>) locator.getAllServices(searchCriteria);
 
-                // Discover listeners if filter provided
-                final List<JobListener> listeners;
-                if (listenerSearchCriteria != null) {
-                    @SuppressWarnings("unchecked")
-                    List<JobListener> discovered = (List<JobListener>) locator.getAllServices(listenerSearchCriteria);
-                    listeners = discovered;
-                } else {
-                    listeners = Collections.emptyList();
-                }
-
-                // Convert Job instances to JobMetadata for the constructor
-                List<JobMetadata> jobMetadata = jobs.stream()
-                        .map(job -> new JobMetadata(job.getClass(), job.getGroupName()))
-                        .toList();
-
-                jobManager = new JobManager(configuration, jobMetadata, listeners) {
-                    @Override
-                    protected JobFactory getJobFactory() {
-                        return (bundle,
-                                scheduler) -> (org.quartz.Job) locator.getAllServiceHandles(searchCriteria).stream()
-                                        .filter(sh -> sh.getActiveDescriptor().getImplementationClass()
-                                                .equals(bundle.getJobDetail().getJobClass()))
-                                        .findFirst().orElseThrow(IllegalStateException::new).getService();
-                    }
-                };
+                jobManager = new Hk2JobManager(configuration, locator, searchCriteria, listenerSearchCriteria);
                 try {
                     jobManager.start();
                 } catch (Exception ex) {

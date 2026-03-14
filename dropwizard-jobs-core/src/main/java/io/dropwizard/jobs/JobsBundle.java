@@ -79,6 +79,18 @@ public class JobsBundle implements ConfiguredBundle<JobConfiguration> {
     }
 
     /**
+     * Creates a new JobsBundle with no pre-registered jobs.
+     * <p>
+     * This constructor is for subclasses that discover jobs via dependency injection
+     * (e.g., {@link Hk2JobsBundle}).
+     * </p>
+     */
+    protected JobsBundle() {
+        this.jobs = Collections.emptyList();
+        this.jobListeners = Collections.emptyList();
+    }
+
+    /**
      * Starts the job manager and registers it with the Dropwizard lifecycle.
      * <p>
      * This method is called by Dropwizard during application startup. It creates
@@ -92,7 +104,7 @@ public class JobsBundle implements ConfiguredBundle<JobConfiguration> {
      */
     @Override
     public void run(JobConfiguration configuration, Environment environment) throws Exception {
-        jobManager = new JobManager(configuration, jobs, jobListeners);
+        jobManager = JobManager.fromJobs(configuration, jobs, jobListeners);
         environment.lifecycle().manage(jobManager);
     }
 

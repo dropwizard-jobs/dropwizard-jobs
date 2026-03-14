@@ -1,14 +1,26 @@
-# Dropwizard quartz integration with HK2
+# Dropwizard Jobs Core
 
-This is an extension for [dropwizard-jobs](https://github.com/dropwizard-jobs/dropwizard-jobs) to use
-[HK2](https://javaee.github.io/hk2/) to provide Dependency Injection. HK2 is built into Dropwizard's
-core through Jersey, so no extra dependency is needed beyond `dropwizard-jobs-core`. This is especially
-handy when you need to inject arguments into Jobs.
+This is the core scheduling library for Dropwizard applications, providing seamless integration
+with the [Quartz Scheduler](https://quartz-scheduler.org/).
+
+It includes:
+
+- Base [`Job`](src/main/java/io/dropwizard/jobs/Job.java) class for background job implementation
+- Scheduling annotations:
+    - [`@Every`](src/main/java/io/dropwizard/jobs/annotations/Every.java),
+    - [`@On`](src/main/java/io/dropwizard/jobs/annotations/On.java),
+    - [`@OnApplicationStart`](src/main/java/io/dropwizard/jobs/annotations/OnApplicationStart.java),
+    - [`@OnApplicationStop`](src/main/java/io/dropwizard/jobs/annotations/OnApplicationStop.java),
+    - [`@DelayStart`](src/main/java/io/dropwizard/jobs/annotations/DelayStart.java)
+- [`JobManager`](src/main/java/io/dropwizard/jobs/JobManager.java) for lifecycle management
+- [`JobsBundle`](src/main/java/io/dropwizard/jobs/JobsBundle.java) for Dropwizard integration
+- [`JobMetadata`](src/main/java/io/dropwizard/jobs/JobMetadata.java) for separating job discovery
+    from instantiation (used by DI modules)
+- Quartz scheduler configuration and management
 
 ## Using maven central repository
 
-dropwizard jobs can be used with maven.
-It is located in Central Repository [https://search.maven.org/](https://search.maven.org/)
+dropwizard-jobs-core can be used with Maven. It is located in Central Repository: <https://search.maven.org/>
 
 Add to your pom:
 
@@ -20,15 +32,15 @@ Add to your pom:
 </dependency>
 ```
 
-## Installing the bundle from source
+## Installing from source
 
 ```bash
 git clone https://github.com/dropwizard-jobs/dropwizard-jobs
 cd dropwizard-jobs
-mvn install
+./mvnw install
 ```
 
-After installing the plugin locally, include the following dependency:
+After installing locally, include the dependency:
 
 ```xml
 <dependency>
@@ -38,125 +50,42 @@ After installing the plugin locally, include the following dependency:
 </dependency>
 ```
 
-## Activating the HK2 bundle
+## Dependency Injection Extensions
 
-The `Hk2JobsBundle` uses HK2's `Filter` to discover jobs. The most common approach is to use
-`BuilderHelper.createContractFilter(Job.class.getName())` to find all jobs bound to the `Job` contract.
+The core module provides a foundation for dependency injection integrations. For applications requiring
+DI, use one of these extension modules:
 
-```java
-import org.glassfish.hk2.utilities.BuilderHelper;
-import io.dropwizard.jobs.Hk2JobsBundle;
-import io.dropwizard.jobs.Job;
+- **[HK2 Integration](../dropwizard-jobs-hk2/README.md)** (`dropwizard-jobs-hk2`) - Uses Dropwizard's
+    built-in HK2 container via Jersey. Leverages `JobMetadata` to avoid useless job instantiation
+    during discovery.
+- **[Guice Integration](../dropwizard-jobs-guice/README.md)** (`dropwizard-jobs-guice`) - Integrates
+    with Google Guice for dependency injection.
+- **Spring Integration** (`dropwizard-jobs-spring`) - Integrates with Spring Framework for dependency
+    injection.
 
-@Override
-public void initialize(Bootstrap<MyConfiguration> bootstrap) {
-    bootstrap.addBundle(new Hk2JobsBundle(
-        BuilderHelper.createContractFilter(Job.class.getName())
-    ));
-}
+These modules follow the Factory/Manager/Bundle triple pattern, extending
+[`JobManager`](src/main/java/io/dropwizard/jobs/JobManager.java) to support runtime dependency injection.
 
-@Override
-public void run(MyConfiguration configuration, Environment environment) {
-    environment.jersey().register(new AbstractBinder() {
-        @Override
-        protected void configure() {
-            // Register your jobs here
-            bind(MyJob.class).to(Job.class).in(Singleton.class);
-        }
-    });
-}
-```
+## JobMetadata
 
-## Job registration via AbstractBinder
+The [`JobMetadata`](src/main/java/io/dropwizard/jobs/JobMetadata.java) class separates job discovery
+from instantiation, allowing DI modules to:
 
-Jobs are registered with HK2 using an `AbstractBinder`. You can control the scope of your jobs:
+1. Discover job classes without instantiating them
+2. Use DI containers to create job instances only when needed
+3. Avoid unnecessary object creation during application startup
 
-```java
-import org.glassfish.hk2.utilities.binding.AbstractBinder;
-import jakarta.inject.Singleton;
-import org.glassfish.hk2.api.PerLookup;
+This is particularly useful for HK2, Guice, and Spring integrations where jobs may have complex dependency graphs.
 
-environment.jersey().register(new AbstractBinder() {
-    @Override
-    protected void configure() {
-        // Per-lookup scope (new instance each time)
-        bind(MyPerLookupJob.class).to(Job.class);
+## Usage Documentation
 
-        // Singleton scope (single instance shared)
-        bind(MySingletonJob.class).to(Job.class).in(Singleton.class);
+For comprehensive usage documentation, including:
 
-        // Per-thread scope
-        bind(MyPerThreadJob.class).to(Job.class).in(PerThread.class);
-    }
-});
-```
+- Job types and annotations
+- Configuration options
+- Quartz integration
+- Clustered environments
+- Job listeners
+- Programmatic configuration
 
-## Job Injection
-
-Once the `Hk2JobsBundle` has been added and your jobs are registered, you can inject dependencies
-into your Jobs. A common usage is to inject constructor arguments:
-
-```java
-import io.dropwizard.jobs.Job;
-import io.dropwizard.jobs.annotations.Every;
-import jakarta.inject.Inject;
-
-@Every("1s")
-public class InjectedJob extends Job {
-
-    private final MyDependency dependency;
-
-    @Inject
-    public InjectedJob(MyDependency dependency) {
-        this.dependency = dependency;
-    }
-
-    @Override
-    public void doJob(JobExecutionContext context) {
-        // use dependency
-    }
-}
-```
-
-## Job Listener support
-
-The `Hk2JobsBundle` supports optional `JobListener` discovery via a second filter parameter:
-
-```java
-import org.glassfish.hk2.utilities.BuilderHelper;
-import org.quartz.JobListener;
-
-bootstrap.addBundle(new Hk2JobsBundle(
-    BuilderHelper.createContractFilter(Job.class.getName()),
-    BuilderHelper.createContractFilter(JobListener.class.getName())
-));
-```
-
-Register your listeners in the same `AbstractBinder`:
-
-```java
-environment.jersey().register(new AbstractBinder() {
-    @Override
-    protected void configure() {
-        bind(MyJob.class).to(Job.class).in(Singleton.class);
-        bind(MyJobListener.class).to(JobListener.class).in(Singleton.class);
-    }
-});
-```
-
-## Key behavior note
-
-Jobs are discovered at **Jersey container startup**, not at bootstrap time. This is a deliberate
-design choice that solves the dependency timing problem: the HK2 `ServiceLocator` is only available
-after the Jersey container starts, so job discovery is deferred until `onStartup()` is called.
-
-This means:
-
-- `getScheduler()` returns `null` before the container has started
-- Jobs are not scheduled until the application is fully initialized
-- Dependencies injected into jobs will be fully available at job instantiation time
-
-The bundle registers a `AbstractContainerLifecycleListener` internally to handle this lifecycle:
-
-- On container startup: discovers jobs via `locator.getAllServices(searchCriteria)` and starts the `JobManager`
-- On container shutdown: stops the `JobManager`
+Please refer to the [root README](../README.md).

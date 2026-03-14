@@ -8,6 +8,7 @@ import org.quartz.JobListener;
 import org.quartz.spi.JobFactory;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -33,8 +34,20 @@ public class GuiceJobManager extends JobManager {
      * @param injector the Guice injector used to discover and instantiate jobs and job listeners
      */
     public GuiceJobManager(JobConfiguration config, Injector injector) {
-        super(config, getJobs(injector), getJobListeners(injector));
+        super(config, toJobMetadata(getJobs(injector)), getJobListeners(injector));
         jobFactory = new GuiceJobFactory(injector);
+    }
+
+    /**
+     * Converts Job instances to JobMetadata.
+     *
+     * @param jobs the list of job instances
+     * @return a list of job metadata
+     */
+    private static List<JobMetadata> toJobMetadata(List<Job> jobs) {
+        return jobs.stream()
+                .map(JobMetadata::new)
+                .toList();
     }
 
     /**

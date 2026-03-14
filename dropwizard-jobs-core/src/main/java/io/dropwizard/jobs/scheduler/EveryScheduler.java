@@ -70,7 +70,7 @@ public class EveryScheduler extends JobScheduler {
         return mediator.getJobs()
                 .allEvery()
                 .map(job -> {
-                    Class<? extends Job> clazz = job.getClass();
+                    Class<? extends Job> clazz = job.getJobClass();
                     Every everyAnnotation = clazz.getAnnotation(Every.class);
 
                     long interval = getInterval(everyAnnotation, clazz);
