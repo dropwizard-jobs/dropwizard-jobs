@@ -55,19 +55,21 @@ public abstract class Job implements org.quartz.Job {
     public static final String DROPWIZARD_JOBS_KEY = "dropwizard-jobs";
     private final String groupName;
 
-    private final Timer timer;
-    private final MetricRegistry metricRegistry;
+    private volatile Timer timer;
+    private volatile MetricRegistry metricRegistry;
+    private final boolean lazyMetrics;
 
     /**
      * Creates a new job with the default metrics registry and no group name.
      * <p>
-     * The metrics registry is obtained from the shared registries using
-     * {@link #DROPWIZARD_JOBS_KEY}.
+     * The metrics registry is obtained lazily from the shared registries using
+     * {@link #DROPWIZARD_JOBS_KEY} on first execution. This ensures that the
+     * correct Dropwizard-managed registry is used even if the job is instantiated
+     * before {@link JobsBundle#initialize(io.dropwizard.core.setup.Bootstrap)} is called.
      * </p>
      */
     public Job() {
-        // get the metrics registry which was shared during bundle instantiation
-        this(SharedMetricRegistries.getOrCreate(DROPWIZARD_JOBS_KEY), null);
+        this((String) null);
     }
 
     /**
@@ -77,15 +79,27 @@ public abstract class Job implements org.quartz.Job {
      * independently. Each instance with a different group name will have its own
      * schedule.
      * </p>
+     * <p>
+     * The metrics registry is obtained lazily from the shared registries using
+     * {@link #DROPWIZARD_JOBS_KEY} on first execution. This ensures that the
+     * correct Dropwizard-managed registry is used even if the job is instantiated
+     * before {@link JobsBundle#initialize(io.dropwizard.core.setup.Bootstrap)} is called.
+     * </p>
      *
      * @param groupName the group name for this job instance
      */
     public Job(String groupName) {
-        this(SharedMetricRegistries.getOrCreate(DROPWIZARD_JOBS_KEY), groupName);
+        this.groupName = groupName;
+        this.lazyMetrics = true;
+        // timer and metricRegistry will be initialized lazily
     }
 
     /**
      * Creates a new job with the specified metrics registry.
+     * <p>
+     * The metrics registry is eagerly initialized at construction time since
+     * the caller has explicitly provided a registry.
+     * </p>
      *
      * @param metricRegistry the metrics registry to use for timing job executions
      */
@@ -95,14 +109,42 @@ public abstract class Job implements org.quartz.Job {
 
     /**
      * Creates a new job with the specified metrics registry and group name.
+     * <p>
+     * The metrics registry is eagerly initialized at construction time since
+     * the caller has explicitly provided a registry.
+     * </p>
      *
      * @param metricRegistry the metrics registry to use for timing job executions
      * @param groupName the group name for this job instance, or null for no grouping
      */
     public Job(MetricRegistry metricRegistry, String groupName) {
-        this.timer = metricRegistry.timer(name(getClass()));
         this.metricRegistry = metricRegistry;
+        this.timer = metricRegistry.timer(name(getClass()));
         this.groupName = groupName;
+        this.lazyMetrics = false;
+    }
+
+    /**
+     * Ensures the metrics registry and timer are initialized.
+     * <p>
+     * For jobs using lazy metrics resolution (default constructors), this method
+     * obtains the shared metrics registry on first call, by which time
+     * {@link JobsBundle#initialize(io.dropwizard.core.setup.Bootstrap)} has already
+     * registered the correct Dropwizard-managed registry.
+     * </p>
+     * <p>
+     * This method uses double-checked locking for thread-safety.
+     * </p>
+     */
+    private void ensureMetricsInitialized() {
+        if (lazyMetrics && timer == null) {
+            synchronized (this) {
+                if (timer == null) {
+                    metricRegistry = SharedMetricRegistries.getOrCreate(DROPWIZARD_JOBS_KEY);
+                    timer = metricRegistry.timer(name(getClass()));
+                }
+            }
+        }
     }
 
     /**
@@ -117,6 +159,7 @@ public abstract class Job implements org.quartz.Job {
      */
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
+        ensureMetricsInitialized();
         try (Context ignored = timer.time()) {
             doJob(context);
         }
@@ -140,10 +183,15 @@ public abstract class Job implements org.quartz.Job {
 
     /**
      * Returns the metrics registry used by this job.
+     * <p>
+     * For jobs using lazy metrics resolution, this will trigger initialization
+     * if the registry has not yet been obtained.
+     * </p>
      *
      * @return the metrics registry
      */
     protected MetricRegistry getMetricRegistry() {
+        ensureMetricsInitialized();
         return metricRegistry;
     }
 

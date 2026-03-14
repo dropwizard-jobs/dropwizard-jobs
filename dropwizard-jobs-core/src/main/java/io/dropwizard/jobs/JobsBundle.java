@@ -78,17 +78,22 @@ public class JobsBundle implements ConfiguredBundle<JobConfiguration> {
      * This registry is used by jobs to record execution timing metrics.
      * The metrics can be accessed via the "dropwizard-jobs" key.
      * </p>
+     * <p>
+     * This method removes any registry that may have been eagerly created by Job constructors
+     * before registering the bootstrap's MetricRegistry. This ensures all jobs use the
+     * correct Dropwizard-managed registry, fixing a race condition where jobs instantiated
+     * before this method runs would otherwise use a disconnected registry.
+     * </p>
      *
      * @param bootstrap the Dropwizard bootstrap object
      */
     @Override
     public void initialize(Bootstrap<?> bootstrap) {
-        // add shared metrics registry to be used by Jobs, since defaultRegistry
-        // has been removed. Use idempotent registration pattern to avoid exceptions
-        // when the key is already registered (e.g., in test environments).
-        if (!SharedMetricRegistries.names().contains(Job.DROPWIZARD_JOBS_KEY)) {
-            SharedMetricRegistries.add(Job.DROPWIZARD_JOBS_KEY, bootstrap.getMetricRegistry());
-        }
+        // Remove any registry that may have been eagerly created by Job constructors,
+        // then register the bootstrap's MetricRegistry to ensure all jobs use the
+        // correct Dropwizard-managed registry.
+        SharedMetricRegistries.remove(Job.DROPWIZARD_JOBS_KEY);
+        SharedMetricRegistries.add(Job.DROPWIZARD_JOBS_KEY, bootstrap.getMetricRegistry());
     }
 
     /**
