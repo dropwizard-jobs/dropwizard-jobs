@@ -171,7 +171,8 @@ quartz:
   org.quartz.dataSource.myDS.driver: "com.mysql.cj.jdbc.Driver"
   org.quartz.dataSource.myDS.URL: "jdbc:mysql://localhost:3306/quartz"
   org.quartz.dataSource.myDS.user: "fami"
-  org.quartz.dataSource.myDS.password: "ageClXl5mrSg"
+  # NOTE: Use environment variables or a secrets manager for sensitive values
+  org.quartz.dataSource.myDS.password: "<YOUR_PASSWORD>"
   org.quartz.dataSource.myDS.maxConnections: "5"
   org.quartz.dataSource.myDS.validationQuery: "select 1"
 ```
