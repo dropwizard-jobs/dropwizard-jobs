@@ -40,8 +40,23 @@ public class JobFilters {
 
     public Optional<Job> findWith(Class<? extends org.quartz.Job> jobClass, String groupName) {
         return jobs.stream()
-                .filter(job -> job.getClass().equals(jobClass) && equalGroupName(job, groupName))
+                .filter(job -> isJobClassMatch(job.getClass(), jobClass) && equalGroupName(job, groupName))
                 .findFirst();
+    }
+
+    /**
+     * Checks if the job class matches, accounting for AOP proxy classes.
+     * AOP frameworks create proxy subclasses, so we need to check both directions:
+     * - jobClass.isAssignableFrom(job.getClass()) - when jobClass is the original and job is a proxy
+     * - job.getClass().isAssignableFrom(jobClass) - when job is the original and jobClass is a proxy
+     *
+     * @param jobClass the job class from the JobDetail (may be a proxy class)
+     * @param actualJobClass the actual job's class (may be a proxy class)
+     * @return true if the classes match or are in the same inheritance hierarchy
+     */
+    private boolean isJobClassMatch(Class<? extends org.quartz.Job> actualJobClass,
+            Class<? extends org.quartz.Job> jobClass) {
+        return jobClass.isAssignableFrom(actualJobClass) || actualJobClass.isAssignableFrom(jobClass);
     }
 
     private boolean equalGroupName(final Job job, final String groupName) {
