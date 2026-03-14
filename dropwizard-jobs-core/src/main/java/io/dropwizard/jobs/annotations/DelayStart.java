@@ -1,6 +1,7 @@
 package io.dropwizard.jobs.annotations;
 
 import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
@@ -8,12 +9,13 @@ import java.lang.annotation.Target;
 /**
  * Delay the start of a job which has the {@link Every @Every} annotation. Without a delay the job will
  * start immediately.
- * 
+ *
  * @author Martin Charlesworth
  *
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
+@Inherited
 public @interface DelayStart {
     String value();
 }
