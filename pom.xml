@@ -184,7 +184,9 @@
                 <configuration>
                     <parallel>classes</parallel>
                     <useUnlimitedThreads>true</useUnlimitedThreads>
-                    <disableXmlReport>${closeTestReports}</disableXmlReport>
+                    <statelessTestsetReporter implementation="org.apache.maven.plugin.surefire.extensions.junit5.JUnit5Xml30StatelessReporter">
+                        <disable>${closeTestReports}</disable>
+                    </statelessTestsetReporter>
                 </configuration>
             </plugin>
             <plugin>
