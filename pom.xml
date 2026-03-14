@@ -33,7 +33,7 @@
         <maven-surefire-plugin.version>3.5.2</maven-surefire-plugin.version>
         <mockito.version>5.20.0</mockito.version>
         <nexus-staging-maven-plugin.version>1.7.0</nexus-staging-maven-plugin.version>
-        <quartz.version>2.3.2</quartz.version>
+        <quartz.version>2.5.2</quartz.version>
         <snakeyaml.version>[2.0,)</snakeyaml.version>
         <spring.version>6.1.14</spring.version>
     </properties>
