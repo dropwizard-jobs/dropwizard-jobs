@@ -14,5 +14,12 @@ Following versions will be supported with the security updates.
 
 ## Reporting a Vulnerability
 
-Even though we try to keep an eye on the security vulnerabiliries of the dependencies, we might not know about all of them.
-If you come across with a security vulnerability in `dropwizard-jobs` or in one of the dependencies, please report it as an issue.
+Even though we try to keep an eye on the security vulnerabilities of the dependencies, we might not know about all of them.
+
+If you discover a security vulnerability in `dropwizard-jobs` or in one of the dependencies, please report it privately using GitHub's Security Advisories feature:
+
+1. Go to the [Security tab](https://github.com/dropwizard-jobs/dropwizard-jobs/security) of this repository
+2. Click "Report a vulnerability"
+3. Fill in the details of the vulnerability
+
+Please do not report security vulnerabilities through public GitHub issues.
