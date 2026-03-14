@@ -1,3 +1,4 @@
+# dropwizard-jobs
 
 [![CodeFactor](https://www.codefactor.io/repository/github/dropwizard-jobs/dropwizard-jobs/badge)](https://www.codefactor.io/repository/github/dropwizard-jobs/dropwizard-jobs)
 [![Maintainability](https://api.codeclimate.com/v1/badges/71ea62844095d88b2264/maintainability)](https://codeclimate.com/github/dropwizard-jobs/dropwizard-jobs/maintainability)
@@ -13,21 +14,23 @@ There are four different types of jobs:
 * Jobs which need to run at a specific time, via a cron-like expression
 
 ## Using maven central repository
+
 dropwizard jobs can be used with maven.
-It is located in Central Repository. https://search.maven.org/
+It is located in Central Repository. <https://search.maven.org/>
 
 Add to your pom:
+
 ```xml
 <dependency>
   <groupId>io.github.dropwizard-jobs</groupId>
   <artifactId>dropwizard-jobs-core</artifactId>
-  <version>6.1.0-SNAPSHOT</version> <!-- Replace with the latest version -->
+  <version>7.0.0</version> <!-- Replace with the latest version -->
 </dependency>
 ```
 
 ## Installing the bundle from source code
 
-```
+```bash
 git clone https://github.com/dropwizard-jobs/dropwizard-jobs
 cd dropwizard-jobs
 ./mvn install
@@ -73,7 +76,7 @@ public void initialize(Bootstrap<MyConfiguration> bootstrap) {
 
 ## Available job types
 
-The <code>@OnApplicationStart</code> annotation triggers a job after the quartz scheduler is started
+The `@OnApplicationStart` annotation triggers a job after the quartz scheduler is started
 
 ```java
 @OnApplicationStart
@@ -85,7 +88,7 @@ public class StartupJob extends Job {
 }
 ```
 
-The <code>@OnApplicationStop</code> annotation triggers a job when the application is stopped. Be aware that it is not guaranteed that this job is executed, in case the application is killed.
+The `@OnApplicationStop` annotation triggers a job when the application is stopped. Be aware that it is not guaranteed that this job is executed, in case the application is killed.
 
 ```java
 @OnApplicationStop
@@ -97,8 +100,8 @@ public class StopJob extends Job {
 }
 ```
 
-The <code>@Every</code> annotation first triggers a job after the quartz scheduler is started and then every n times, as it is configured. You can use a number and a time unit, which can be one of "s" for seconds, "m" or "mn" or "min" for minutes, "h" for hours, "d" for days and "ms" for milliseconds.
-Use in conjunction with <code>@DelayStart</code> to delay the first invocation of this job.
+The `@Every` annotation first triggers a job after the quartz scheduler is started and then every n times, as it is configured. You can use a number and a time unit, which can be one of "s" for seconds, "m" or "mn" or "min" for minutes, "h" for hours, "d" for days and "ms" for milliseconds.
+Use in conjunction with `@DelayStart` to delay the first invocation of this job.
 
 ```java
 @Every("1s")
@@ -110,7 +113,7 @@ public class EveryTestJob extends Job {
 }
 ```
 
-The <code>@DelayStart</code> annotation can be used in conjunction with @Every to delay the start of the job. Without this, all the @Every jobs start up at the same time when the scheduler starts.
+The `@DelayStart` annotation can be used in conjunction with @Every to delay the start of the job. Without this, all the @Every jobs start up at the same time when the scheduler starts.
 
 ```java
 @DelayStart("5s")
@@ -123,9 +126,9 @@ public class EveryTestJobWithDelayedStart extends Job {
 }
 ```
 
-The <code>@On</code> annotation allows one to use cron-like expressions for complex time settings. You can read more about possible cron expressions at https://www.quartz-scheduler.org/documentation/quartz-2.3.0/tutorials/tutorial-lesson-06.html
+The `@On` annotation allows one to use cron-like expressions for complex time settings. You can read more about possible cron expressions at <https://www.quartz-scheduler.org/documentation/quartz-2.3.0/tutorials/tutorial-lesson-06.html>
 
-This expression would run on Mondays at 1pm, Los Angeles time. If the optional parameter `timeZone` is not set system default will be used. 
+This expression would run on Mondays at 1pm, Los Angeles time. If the optional parameter `timeZone` is not set system default will be used.
 
 ```java
 @On(value = "0 0 13 ? * MON", timeZone = "America/Los_Angeles")
@@ -138,6 +141,7 @@ public class OnTestJob extends Job {
 ```
 
 By default a class can only be scheduled once in the jobs bundle, this can be overridden by setting a unique `groupName` to the instance.
+
 ```java
 @Every("15m")
 public class GroupNameJob extends Job {
@@ -151,7 +155,8 @@ public class GroupNameJob extends Job {
 
 By default, dropwizard-jobs is designed to be used with an in-memory Quartz scheduler. If you wish to deploy it in a clustered environment that consists of more than one node, you'll need to use a scheduler that has some sort of persistence. You can either add a file called `quartz.properties` to your classpath or you can provide the quartz configuration in your Dropwizard configuration file. The content of the `quartz` element is passed to the Quartz scheduler directly (so you can take the properties from the official docs). If you'd like to add the config to your Dropwizard configuration file, you need to override the `getQuartzConfiguration()` method in your application's configuration. You can set the map to `DefaultQuartzConfiguration.get()`.
 
-See the full Quartz configuration reference at https://www.quartz-scheduler.org/documentation/quartz-2.x/configuration/
+See the full Quartz configuration reference at <https://www.quartz-scheduler.org/documentation/quartz-2.x/configuration/>
+
 ```yaml
 [...]
 quartz:
@@ -181,7 +186,7 @@ When you do this, dropwizard-jobs will ensure that only one instance of each job
 
 If you wish to override the default name that dropwizard-jobs assigns to your job, you can do so by setting the `jobName` property in the `@Every` or `@On` annotation like so:
 
-```Java
+```java
 package com.my.awesome.web.app
 
 /**
@@ -195,13 +200,14 @@ public class MyJob extends Job {
   }
 }
 ```
+
 This property is not supported in the `@OnApplicationStart` or `@ApplicationStop` annotations, as they are designed for jobs that will fire reliably when Dropwizard starts or stops your web application. As such, jobs annotated with `@OnApplicationStart` or `@OnApplicationStop` will be given unique names, and will be fired according to schedule on every node in your cluster.
 
 ## Configuring jobs in the Dropwizard Config File
 
 The period for `@Every` and `@On` jobs can be read from the dropwizard config file instead of being hard-coded. The YAML looks like this:
 
-```
+```yaml
 jobs:
   myJob: 10s
   myOtherJob: 20s
@@ -212,7 +218,7 @@ For `@On` jobs, the cron expression can have an optional timezone specified in s
 If no timezone is given, the `de.spinscale.dropwizard.jobs.timezone` system property will be used,
 otherwise your server's default timezone will apply.
 
-Where MyJob and MyOtherJob are the names of Job classes in the application. In the <code>Configuration</code> class add the corresponding property:
+Where MyJob and MyOtherJob are the names of Job classes in the application. In the `Configuration` class add the corresponding property:
 
 ```java
 @JsonProperty("jobs")
@@ -227,7 +233,7 @@ public void setJobs(Map<String, String> jobs) {
 }
 ```
 
-Then the <code>@Every</code> annotation can be used without a value, its value is set from the configuration:
+Then the `@Every` annotation can be used without a value, its value is set from the configuration:
 
 ```java
 @Every
@@ -244,7 +250,8 @@ public class MyJob extends Job {
     ...
 }
 ```
-The same can be done with the <code>@On</code> annotation as well, as second option to cron-base jobs configuration
+
+The same can be done with the `@On` annotation as well, as second option to cron-base jobs configuration
 An alternative label to the class name can also be specified:
 
 ```java
@@ -256,22 +263,24 @@ public class MyJob extends Job {
 
 So long as there is a matching property in the YAML:
 
-```
+```yaml
 jobs:
   foobar: 10s
 ```
 
-# Limitations
+## Limitations
+
 * Configuration mechanism is still in early stages. Might be enhanced in the future.
 
-# Thanks
+## Thanks
 
 * The playframework 1.x for the idea of simple annotations at Job classes
 
-# Contributors
- * [Alexander Reelsen](https://github.com/spinscale)
- * [Hakan Dilek](https://github.com/hakandilek)
- * [Yun Zhi Lin](https://github.com/yunspace)
- * [Eyal Golan](https://github.com/eyalgo)
- * [Jonathan Fritz](https://github.com/MusikPolice)
- * [Ahsan Rabbani](https://github.com/xargsgrep)
+## Contributors
+
+* [Alexander Reelsen](https://github.com/spinscale)
+* [Hakan Dilek](https://github.com/hakandilek)
+* [Yun Zhi Lin](https://github.com/yunspace)
+* [Eyal Golan](https://github.com/eyalgo)
+* [Jonathan Fritz](https://github.com/MusikPolice)
+* [Ahsan Rabbani](https://github.com/xargsgrep)
