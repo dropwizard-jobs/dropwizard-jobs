@@ -8,10 +8,10 @@ Quartz creates a threadpool on application startup and uses it for background jo
 
 There are four different types of jobs:
 
-* Jobs run on application start for initial setup (could also be done via a managed instance in dropwizard)
-* Jobs run at application stop before the application is closed (could also be done via managed instance in dropwizard)
-* Jobs which are repeated after a certain time interval
-* Jobs which need to run at a specific time, via a cron-like expression
+- Jobs run on application start for initial setup (could also be done via a managed instance in dropwizard)
+- Jobs run at application stop before the application is closed (could also be done via managed instance in dropwizard)
+- Jobs which are repeated after a certain time interval
+- Jobs which need to run at a specific time, via a cron-like expression
 
 ## Using maven central repository
 
@@ -201,7 +201,80 @@ public class MyJob extends Job {
 }
 ```
 
-This property is not supported in the `@OnApplicationStart` or `@ApplicationStop` annotations, as they are designed for jobs that will fire reliably when Dropwizard starts or stops your web application. As such, jobs annotated with `@OnApplicationStart` or `@OnApplicationStop` will be given unique names, and will be fired according to schedule on every node in your cluster.
+This property is not supported in the `@OnApplicationStart` or `@ApplicationStop` annotations, as they
+are designed for jobs that will fire reliably when Dropwizard starts or stops your web application.
+As such, jobs annotated with `@OnApplicationStart` or `@OnApplicationStop` will be given unique names,
+and will be fired according to schedule on every node in your cluster.
+
+## Programmatic Quartz Configuration
+
+In some cases, such as when writing integration tests with dynamic infrastructure (e.g. Testcontainers),
+you may need to configure Quartz properties programmatically using values that are only known at runtime.
+However, Dropwizard's `ConfigOverride.config()` method interprets periods as hierarchical separators,
+which breaks Quartz property keys like `org.quartz.dataSource.myDS.URL` that must remain as flat string keys.
+
+The [`MutableJobConfiguration`](dropwizard-jobs-core/src/main/java/io/dropwizard/jobs/MutableJobConfiguration.java)
+class solves this problem by providing a fluent API for programmatic configuration. It extends
+[`JobConfiguration`](dropwizard-jobs-core/src/main/java/io/dropwizard/jobs/JobConfiguration.java) and allows
+you to build the configuration map directly without going through Dropwizard's config override mechanism.
+
+### The Problem
+
+This doesn't work because Dropwizard treats the periods as nested properties:
+
+```java
+// ❌ This DOESN'T WORK - Dropwizard interprets periods as hierarchy
+ConfigOverride.config("org.quartz.dataSource.myDS.URL", postgresContainer.getJdbcUrl())
+```
+
+### The Solution
+
+Use `MutableJobConfiguration` to build the configuration programmatically:
+
+```java
+PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15");
+postgres.start();
+
+MutableJobConfiguration config = new MutableJobConfiguration()
+    .withQuartzProperty("org.quartz.jobStore.class", "org.quartz.impl.jdbcjobstore.JobStoreTX")
+    .withQuartzProperty("org.quartz.jobStore.driverDelegateClass", "org.quartz.impl.jdbcjobstore.PostgreSQLDelegate")
+    .withQuartzProperty("org.quartz.jobStore.dataSource", "myDS")
+    .withQuartzProperty("org.quartz.dataSource.myDS.driver", postgres.getDriverClassName())
+    .withQuartzProperty("org.quartz.dataSource.myDS.URL", postgres.getJdbcUrl())
+    .withQuartzProperty("org.quartz.dataSource.myDS.user", postgres.getUsername())
+    .withQuartzProperty("org.quartz.dataSource.myDS.password", postgres.getPassword())
+    .withQuartzProperty("org.quartz.dataSource.myDS.maxConnections", "5");
+
+JobManager jobManager = new JobManager(config, jobs);
+jobManager.start();
+```
+
+### Copying from Existing Configuration
+
+You can also create a `MutableJobConfiguration` from an existing configuration and overlay
+additional properties:
+
+```java
+// Start with configuration loaded from YAML
+JobConfiguration yamlConfig = applicationConfiguration;
+
+// Create a mutable copy and add dynamic properties
+MutableJobConfiguration config = new MutableJobConfiguration(yamlConfig)
+    .withQuartzProperty("org.quartz.dataSource.myDS.URL", dynamicJdbcUrl)
+    .withJob("MyCustomJob", "30s");  // Override job schedule
+```
+
+### Available Methods
+
+- **`withQuartzProperty(String key, String value)`** - Add a single Quartz property
+- **`withQuartzProperties(Map<String, String> properties)`** - Add multiple Quartz properties
+- **`withJob(String jobName, String schedule)`** - Add a job schedule override
+- **`setQuartzConfiguration(Map<String, String> config)`** - Replace the entire Quartz configuration
+- **`setJobs(Map<String, String> jobs)`** - Replace the entire jobs map
+- **`clearQuartzConfiguration()`** - Clear all Quartz properties
+- **`clearJobs()`** - Clear all job overrides
+
+All methods (except `clear*`) return `this` for fluent method chaining.
 
 ## Configuring jobs in the Dropwizard Config File
 
@@ -268,19 +341,15 @@ jobs:
   foobar: 10s
 ```
 
-## Limitations
-
-* Configuration mechanism is still in early stages. Might be enhanced in the future.
-
 ## Thanks
 
-* The playframework 1.x for the idea of simple annotations at Job classes
+- The playframework 1.x for the idea of simple annotations at Job classes
 
 ## Contributors
 
-* [Alexander Reelsen](https://github.com/spinscale)
-* [Hakan Dilek](https://github.com/hakandilek)
-* [Yun Zhi Lin](https://github.com/yunspace)
-* [Eyal Golan](https://github.com/eyalgo)
-* [Jonathan Fritz](https://github.com/MusikPolice)
-* [Ahsan Rabbani](https://github.com/xargsgrep)
+- [Alexander Reelsen](https://github.com/spinscale)
+- [Hakan Dilek](https://github.com/hakandilek)
+- [Yun Zhi Lin](https://github.com/yunspace)
+- [Eyal Golan](https://github.com/eyalgo)
+- [Jonathan Fritz](https://github.com/MusikPolice)
+- [Ahsan Rabbani](https://github.com/xargsgrep)
