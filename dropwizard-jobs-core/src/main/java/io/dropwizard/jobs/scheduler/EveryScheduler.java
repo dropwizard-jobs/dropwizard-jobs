@@ -1,7 +1,6 @@
 package io.dropwizard.jobs.scheduler;
 
 import io.dropwizard.jobs.Job;
-import io.dropwizard.jobs.JobConfiguration;
 import io.dropwizard.jobs.JobMediator;
 import io.dropwizard.jobs.ScheduledJob;
 import io.dropwizard.jobs.annotations.DelayStart;
@@ -16,8 +15,7 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.stream.Stream;
 
-import static io.dropwizard.jobs.scheduler.AnnotationReader.readDurationFromConfig;
-import static org.apache.commons.lang3.StringUtils.isEmpty;
+import static io.dropwizard.jobs.scheduler.AnnotationReader.resolveDurationExpression;
 
 public class EveryScheduler extends JobScheduler {
     public EveryScheduler(JobMediator mediator) {
@@ -65,18 +63,8 @@ public class EveryScheduler extends JobScheduler {
 
     private long getInterval(Every everyAnnotation, Class<? extends Job> clazz) {
         String value = everyAnnotation.value();
-        String expression = durationOrPlainExpression(value, clazz);
+        String expression = resolveDurationExpression(value, clazz, mediator.getConfiguration());
         return TimeParserUtil.parseDuration(expression);
-    }
-
-    protected String durationOrPlainExpression(String expression, Class<? extends Job> clazz) {
-        if (expression.isEmpty() || expression.matches("\\$\\{.*\\}")) {
-            JobConfiguration configuration = mediator.getConfiguration();
-            String fromConfig = readDurationFromConfig(expression, clazz, configuration);
-            expression = !isEmpty(fromConfig) ? fromConfig : expression;
-            log.info("{} is configured in the config file to run every {}", clazz.getSimpleName(), expression);
-        }
-        return expression;
     }
 
     private void applyRepeatCount(int repeatCount, SimpleScheduleBuilder scheduleBuilder) {
