@@ -5,10 +5,42 @@ import org.springframework.context.ApplicationContext;
 
 import java.util.ArrayList;
 
+/**
+ * A {@link JobManager} implementation that integrates with Spring for dependency injection.
+ * <p>
+ * This class enables jobs to have dependencies injected by Spring. Jobs are discovered by
+ * scanning the Spring application context for beans that extend {@link Job}.
+ * </p>
+ *
+ * @see SpringJobFactory
+ * @see SpringJobsBundle
+ */
 public class SpringJobManager extends JobManager {
 
     protected SpringJobFactory jobFactory;
 
+    /**
+     * Creates a new SpringJobManager with the specified configuration and application context.
+     * <p>
+     * This constructor eagerly retrieves all Job beans from the Spring application context.
+     * This is a necessary trade-off for job discovery:
+     * </p>
+     * <ul>
+     *   <li>The Spring context is the source of truth for which jobs exist</li>
+     *   <li>{@code context.getBeansOfType(Job.class)} requires instantiating the beans</li>
+     *   <li>The instances are used to read class-level annotations and instance configuration</li>
+     * </ul>
+     * <p>
+     * The actual job execution uses NEW instances created by {@link SpringJobFactory}, which
+     * properly respects Spring bean scopes (e.g., {@code @Singleton}, {@code @Prototype}).
+     * The instances created here are used only for job registration and then discarded.
+     * </p>
+     *
+     * @param config the application configuration containing job and Quartz settings
+     * @param context the Spring application context used to discover and instantiate jobs
+     * @see Hk2JobsBundle#run(JobConfiguration, io.dropwizard.core.setup.Environment)
+     * @see GuiceJobManager#getJobs(com.google.inject.Injector)
+     */
     public SpringJobManager(JobConfiguration config, ApplicationContext context) {
         super(config, new ArrayList<>(context.getBeansOfType(Job.class).values()));
         jobFactory = new SpringJobFactory(context);
