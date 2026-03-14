@@ -17,7 +17,35 @@ import java.util.stream.Stream;
 
 import static io.dropwizard.jobs.scheduler.AnnotationReader.resolveDurationExpression;
 
+/**
+ * Scheduler strategy for jobs annotated with {@link Every @Every}.
+ * <p>
+ * This scheduler handles jobs that need to run repeatedly at fixed intervals.
+ * It creates Quartz triggers with simple schedules based on the annotation values.
+ * </p>
+ * <p>
+ * <strong>Features supported:</strong>
+ * </p>
+ * <ul>
+ *   <li>Configurable interval via annotation value or configuration override</li>
+ *   <li>Optional start delay via {@link DelayStart @DelayStart}</li>
+ *   <li>Configurable repeat count (default: repeat forever)</li>
+ *   <li>Configurable misfire policy</li>
+ *   <li>Job priority</li>
+ *   <li>Job recovery and durability settings</li>
+ * </ul>
+ *
+ * @see Every
+ * @see DelayStart
+ * @see JobScheduler
+ */
 public class EveryScheduler extends JobScheduler {
+
+    /**
+     * Creates a new EveryScheduler.
+     *
+     * @param mediator the job mediator providing access to configuration and scheduling operations
+     */
     public EveryScheduler(JobMediator mediator) {
         super(mediator);
     }
@@ -28,6 +56,16 @@ public class EveryScheduler extends JobScheduler {
                 .forEach(mediator::scheduleOrRescheduleJob);
     }
 
+    // ========================================================================
+    // JOB STREAM CREATION
+    // Converts @Every jobs to ScheduledJob instances with triggers
+    // ========================================================================
+
+    /**
+     * Creates a stream of scheduled jobs from all jobs annotated with {@code @Every}.
+     *
+     * @return stream of scheduled jobs ready for Quartz scheduling
+     */
     protected Stream<ScheduledJob> scheduledJobs() {
         return mediator.getJobs()
                 .allEvery()
@@ -61,12 +99,39 @@ public class EveryScheduler extends JobScheduler {
                 });
     }
 
+    // ========================================================================
+    // INTERVAL RESOLUTION
+    // Parses interval from annotation or configuration
+    // ========================================================================
+
+    /**
+     * Determines the interval in milliseconds from the annotation value.
+     * <p>
+     * If the value is empty or a placeholder expression, it will be resolved
+     * from the configuration.
+     * </p>
+     *
+     * @param everyAnnotation the annotation containing the interval value
+     * @param clazz the job class (for configuration lookup)
+     * @return the interval in milliseconds
+     */
     private long getInterval(Every everyAnnotation, Class<? extends Job> clazz) {
         String value = everyAnnotation.value();
         String expression = resolveDurationExpression(value, clazz, mediator.getConfiguration());
         return TimeParserUtil.parseDuration(expression);
     }
 
+    // ========================================================================
+    // SCHEDULE CONFIGURATION
+    // Applies repeat count and misfire policy to schedule builder
+    // ========================================================================
+
+    /**
+     * Applies the repeat count to the schedule builder.
+     *
+     * @param repeatCount the number of times to repeat (-1 for forever)
+     * @param scheduleBuilder the schedule builder to configure
+     */
     private void applyRepeatCount(int repeatCount, SimpleScheduleBuilder scheduleBuilder) {
         if (repeatCount > -1)
             scheduleBuilder.withRepeatCount(repeatCount);
@@ -74,6 +139,12 @@ public class EveryScheduler extends JobScheduler {
             scheduleBuilder.repeatForever();
     }
 
+    /**
+     * Applies the misfire policy to the schedule builder.
+     *
+     * @param misfirePolicy the misfire policy from the annotation
+     * @param scheduleBuilder the schedule builder to configure
+     */
     private void applyMisfirePolicy(Every.MisfirePolicy misfirePolicy, SimpleScheduleBuilder scheduleBuilder) {
         switch (misfirePolicy) {
             case IGNORE_MISFIRES:
@@ -100,17 +171,17 @@ public class EveryScheduler extends JobScheduler {
         }
     }
 
-    private String extractMessage(Class<? extends Job> clazz, JobKey jobKey) {
-        DelayStart delayAnnotation = clazz.getAnnotation(DelayStart.class);
-        Every everyAnnotation = clazz.getAnnotation(Every.class);
-        StringBuilder sb = new StringBuilder();
-        sb.append(String.format("    %-7s %s", everyAnnotation.value(), jobKey.toString()));
-        if (delayAnnotation != null) {
-            sb.append(" (").append(delayAnnotation.value()).append(" delay)");
-        }
-        return sb.toString();
-    }
+    // ========================================================================
+    // TRIGGER CONFIGURATION
+    // Extracts start time and builds log messages
+    // ========================================================================
 
+    /**
+     * Extracts the start time for a job, accounting for any delay.
+     *
+     * @param clazz the job class to check for {@code @DelayStart}
+     * @return the instant when the job should start
+     */
     private Instant extractStart(Class<? extends Job> clazz) {
         Instant start = Instant.now();
         DelayStart delayAnnotation = clazz.getAnnotation(DelayStart.class);
@@ -121,4 +192,21 @@ public class EveryScheduler extends JobScheduler {
         return start;
     }
 
+    /**
+     * Builds a log message for the scheduled job.
+     *
+     * @param clazz the job class
+     * @param jobKey the job key
+     * @return a formatted message for logging
+     */
+    private String extractMessage(Class<? extends Job> clazz, JobKey jobKey) {
+        DelayStart delayAnnotation = clazz.getAnnotation(DelayStart.class);
+        Every everyAnnotation = clazz.getAnnotation(Every.class);
+        StringBuilder sb = new StringBuilder();
+        sb.append(String.format("    %-7s %s", everyAnnotation.value(), jobKey.toString()));
+        if (delayAnnotation != null) {
+            sb.append(" (").append(delayAnnotation.value()).append(" delay)");
+        }
+        return sb.toString();
+    }
 }
