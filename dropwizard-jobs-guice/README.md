@@ -1,14 +1,16 @@
 # Dropwizard quartz integration with Guice
 
 This is a extension for [dropwizard-jobs](https://github.com/dropwizard-jobs/dropwizard-jobs) to use
-[Google Guice] (https://code.google.com/p/google-guice/) to provide Dependency Injection. This is especially handy when you need to inject
+[Google Guice](https://code.google.com/p/google-guice/) to provide Dependency Injection. This is especially handy when you need to inject
 arguments into Jobs.
 
 ## Using maven central repository
+
 dropwizard jobs can be used with maven.
-It is located in Central Repository. https://search.maven.org/
+It is located in Central Repository [https://search.maven.org/](https://search.maven.org/)
 
 Add to your pom:
+
 ```xml
 <dependency>
   <groupId>io.github.dropwizard-jobs</groupId>
@@ -21,7 +23,7 @@ Add to your pom:
 
 ## Installing the bundle from source
 
-```
+```bash
 git clone https://github.com/dropwizard-jobs/dropwizard-jobs
 cd dropwizard-jobs
 mvn install
