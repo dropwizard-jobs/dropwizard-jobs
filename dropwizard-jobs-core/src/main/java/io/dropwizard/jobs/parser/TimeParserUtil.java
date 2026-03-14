@@ -1,5 +1,8 @@
 package io.dropwizard.jobs.parser;
 
+import java.util.AbstractMap.SimpleEntry;
+import java.util.List;
+import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -9,11 +12,15 @@ import java.util.regex.Pattern;
  */
 public class TimeParserUtil {
 
-    private static Pattern days = Pattern.compile("^([0-9]+)d$");
-    private static Pattern hours = Pattern.compile("^([0-9]+)h$");
-    private static Pattern minutes = Pattern.compile("^([0-9]+)mi?n?$");
-    private static Pattern seconds = Pattern.compile("^([0-9]+)s$");
-    private static Pattern milliseconds = Pattern.compile("^([0-9]+)ms$");
+    private static final Pattern DURATION_PATTERN = Pattern.compile("^([0-9]+)([a-z]+)$");
+
+    private static final List<Entry<Pattern, Long>> UNIT_MULTIPLIERS = List.of(
+        new SimpleEntry<>(Pattern.compile("^d$"), 86_400_000L),      // days
+        new SimpleEntry<>(Pattern.compile("^h$"), 3_600_000L),       // hours
+        new SimpleEntry<>(Pattern.compile("^mi?n?$"), 60_000L),      // minutes (m, mn, min)
+        new SimpleEntry<>(Pattern.compile("^s$"), 1_000L),           // seconds
+        new SimpleEntry<>(Pattern.compile("^ms$"), 1L)               // milliseconds
+    );
 
     /**
      * Parse a duration
@@ -26,32 +33,22 @@ public class TimeParserUtil {
         if (duration == null || duration.isEmpty()) {
             throw new IllegalArgumentException("duration may not be null");
         }
-        long toAdd = -1;
-        if (days.matcher(duration).matches()) {
-            Matcher matcher = days.matcher(duration);
-            matcher.matches();
-            toAdd = Long.parseLong(matcher.group(1)) * 60 * 60 * 24 * 1000;
-        } else if (hours.matcher(duration).matches()) {
-            Matcher matcher = hours.matcher(duration);
-            matcher.matches();
-            toAdd = Long.parseLong(matcher.group(1)) * 60 * 60 * 1000;
-        } else if (minutes.matcher(duration).matches()) {
-            Matcher matcher = minutes.matcher(duration);
-            matcher.matches();
-            toAdd = Long.parseLong(matcher.group(1)) * 60 * 1000;
-        } else if (seconds.matcher(duration).matches()) {
-            Matcher matcher = seconds.matcher(duration);
-            matcher.matches();
-            toAdd = Long.parseLong(matcher.group(1)) * 1000;
-        } else if (milliseconds.matcher(duration).matches()) {
-            Matcher matcher = milliseconds.matcher(duration);
-            matcher.matches();
-            toAdd = Long.parseLong(matcher.group(1));
-        }
-        if (toAdd == -1) {
+        
+        Matcher matcher = DURATION_PATTERN.matcher(duration);
+        if (!matcher.matches()) {
             throw new IllegalArgumentException("Invalid duration pattern : " + duration);
         }
-        return toAdd;
+        
+        long value = Long.parseLong(matcher.group(1));
+        String unit = matcher.group(2);
+        
+        for (Entry<Pattern, Long> entry : UNIT_MULTIPLIERS) {
+            if (entry.getKey().matcher(unit).matches()) {
+                return value * entry.getValue();
+            }
+        }
+        
+        throw new IllegalArgumentException("Invalid duration pattern : " + duration);
     }
 
 }
