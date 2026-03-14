@@ -1,4 +1,4 @@
-# This workflow will build a package using Maven and then publish it to GitHub packages when a release is created
+# This workflow will build a package using Maven and then publish it to Maven Central when a release is created
 # For more information see: https://github.com/actions/setup-java/blob/main/docs/advanced-usage.md#apache-maven-with-a-settings-path
 
 name: Maven Publish Release
@@ -8,7 +8,7 @@ on:
     types: [created]
 
 jobs:
-  build:
+  publish:
 
     runs-on: ubuntu-latest
     permissions:
@@ -26,8 +26,11 @@ jobs:
         server-username: MAVEN_USERNAME
         server-password: MAVEN_PASSWORD
 
-    - name: Build with Maven
-      run: mvn -B package --file pom.xml
+    - name: Set release version
+      run: |
+        VERSION=${{ github.event.release.tag_name }}
+        VERSION=${VERSION#v}
+        mvn --batch-mode versions:set -DnewVersion=$VERSION -DgenerateBackupPoms=false
 
     - name: Install GPG secret key
       run: |
@@ -36,8 +39,9 @@ jobs:
         # Verify gpg secret key
         gpg --list-secret-keys --keyid-format LONG
 
-    - name: Publish to Sonatype Nexus
-      run: mvn --batch-mode -Dgpg.passphrase=${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }} --activate-profiles release deploy
+    - name: Publish to Maven Central
+      run: mvn --batch-mode -Drelease deploy
       env:
         MAVEN_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
         MAVEN_PASSWORD: ${{ secrets.SONATYPE_TOKEN }}
+        MAVEN_GPG_PASSPHRASE: ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
