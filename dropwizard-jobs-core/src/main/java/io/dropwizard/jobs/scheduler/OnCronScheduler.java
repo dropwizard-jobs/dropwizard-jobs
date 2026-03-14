@@ -14,7 +14,9 @@ import org.quartz.TriggerBuilder;
 import java.util.TimeZone;
 import java.util.stream.Stream;
 
-public class OnCronScheduler extends EveryScheduler {
+import static io.dropwizard.jobs.scheduler.AnnotationReader.resolveDurationExpression;
+
+public class OnCronScheduler extends JobScheduler {
 
     private final CronExpressionParser cronExpressionParser;
 
@@ -22,6 +24,12 @@ public class OnCronScheduler extends EveryScheduler {
         super(mediator);
         JobConfiguration configuration = mediator.getConfiguration();
         this.cronExpressionParser = new CronExpressionParser(configuration);
+    }
+
+    @Override
+    public void schedule() {
+        this.scheduledJobs()
+                .forEach(mediator::scheduleOrRescheduleJob);
     }
 
     protected Stream<ScheduledJob> scheduledJobs() {
@@ -32,7 +40,7 @@ public class OnCronScheduler extends EveryScheduler {
                     Class<? extends Job> clazz = job.getClass();
                     On onAnnotation = clazz.getAnnotation(On.class);
                     String value = onAnnotation.value();
-                    String cronExpression = durationOrPlainExpression(value, clazz);
+                    String cronExpression = resolveDurationExpression(value, clazz, mediator.getConfiguration());
 
                     boolean requestRecovery = onAnnotation.requestRecovery();
                     boolean storeDurably = onAnnotation.storeDurably();
