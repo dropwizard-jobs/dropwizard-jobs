@@ -6,7 +6,9 @@ import io.dropwizard.core.setup.Bootstrap;
 import io.dropwizard.core.setup.Environment;
 import org.quartz.Scheduler;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class JobsBundle implements ConfiguredBundle<JobConfiguration> {
 
@@ -14,7 +16,8 @@ public class JobsBundle implements ConfiguredBundle<JobConfiguration> {
     protected JobManager jobManager;
 
     public JobsBundle(List<Job> jobs) {
-        this.jobs = jobs;
+        Objects.requireNonNull(jobs, "jobs must not be null");
+        this.jobs = new ArrayList<>(jobs);
     }
 
     @Override
@@ -26,8 +29,11 @@ public class JobsBundle implements ConfiguredBundle<JobConfiguration> {
     @Override
     public void initialize(Bootstrap<?> bootstrap) {
         // add shared metrics registry to be used by Jobs, since defaultRegistry
-        // has been removed
-        SharedMetricRegistries.add(Job.DROPWIZARD_JOBS_KEY, bootstrap.getMetricRegistry());
+        // has been removed. Use idempotent registration pattern to avoid exceptions
+        // when the key is already registered (e.g., in test environments).
+        if (!SharedMetricRegistries.names().contains(Job.DROPWIZARD_JOBS_KEY)) {
+            SharedMetricRegistries.add(Job.DROPWIZARD_JOBS_KEY, bootstrap.getMetricRegistry());
+        }
     }
 
     public Scheduler getScheduler() {
