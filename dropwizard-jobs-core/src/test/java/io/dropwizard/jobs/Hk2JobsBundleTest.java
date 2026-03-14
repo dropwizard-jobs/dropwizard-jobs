@@ -17,8 +17,10 @@ import org.glassfish.jersey.server.spi.Container;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -61,13 +63,16 @@ public class Hk2JobsBundleTest {
 
         // startup container
         applicationHandler.onStartup(container);
-        Thread.sleep(1000);
 
-        // verify at startup
+        // verify at startup - wait for scheduler to start and application start job to complete
         @SuppressWarnings("unchecked")
         final List<AbstractJob> jobs = (List<AbstractJob>) serviceLocator.getAllServices(searchCriteria);
         AbstractJob applicationStartTestJob = getJob(jobs, ApplicationStartTestJob.class);
         AbstractJob applicationStopTestJob = getJob(jobs, ApplicationStopTestJob.class);
+
+        await().atMost(2, TimeUnit.SECONDS).until(() -> jobsBundle.getScheduler() != null && jobsBundle.getScheduler().isStarted());
+        await().atMost(2, TimeUnit.SECONDS).until(() -> applicationStartTestJob.latch().getCount() == 0);
+
         assertEquals(2, jobs.size());
         assertEquals(0, applicationStartTestJob.latch().getCount());
         assertEquals(1, applicationStopTestJob.latch().getCount());
@@ -75,9 +80,11 @@ public class Hk2JobsBundleTest {
 
         // shutdown container
         applicationHandler.onShutdown(container);
-        Thread.sleep(1000);
 
-        // verify at shutdown
+        // verify at shutdown - wait for application stop job to complete
+        await().atMost(2, TimeUnit.SECONDS).until(() -> applicationStopTestJob.latch().getCount() == 0);
+        await().atMost(2, TimeUnit.SECONDS).until(() -> jobsBundle.getScheduler().isShutdown());
+
         assertEquals(0, applicationStopTestJob.latch().getCount());
         assertTrue(jobsBundle.getScheduler().isShutdown());
     }
