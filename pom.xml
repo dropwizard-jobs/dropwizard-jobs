@@ -34,7 +34,7 @@
         <mockito.version>5.23.0</mockito.version>
         <nexus-staging-maven-plugin.version>1.7.0</nexus-staging-maven-plugin.version>
         <quartz.version>2.5.2</quartz.version>
-        <snakeyaml.version>[2.0,)</snakeyaml.version>
+        <snakeyaml.version>2.6</snakeyaml.version>
         <spring.version>6.2.11</spring.version>
     </properties>
 
