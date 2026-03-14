@@ -6,6 +6,7 @@ import io.dropwizard.jobs.scheduler.CronExpressionParser;
 import org.hamcrest.Matchers;
 import org.hamcrest.core.IsEqual;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.quartz.*;
 import org.quartz.impl.matchers.GroupMatcher;
 import org.quartz.impl.triggers.CronTriggerImpl;
@@ -17,6 +18,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 public class JobManagerTest {
 
@@ -245,6 +247,34 @@ public class JobManagerTest {
         CronTriggerImpl trigger2 = (CronTriggerImpl) (cronExpressionParser.parse("0 15 10 ? * * [America/Los_Angeles]").build());
         assertEquals(TimeZone.getTimeZone("America/Los_Angeles"), trigger2.getTimeZone());
         assertEquals("0 15 10 ? * *", trigger2.getCronExpression());
+    }
+
+    @Test
+    public void shouldCatchAndLogSchedulerExceptionWithoutThrowing() throws Exception {
+        // Create a mock scheduler that throws SchedulerException
+        Scheduler mockScheduler = mock(Scheduler.class);
+        SchedulerException testException = new SchedulerException("Test scheduler failure");
+        when(mockScheduler.checkExists(any(JobKey.class))).thenThrow(testException);
+
+        // Create a JobManager and inject the mock scheduler
+        jobManager = new JobManager(new TestConfig(), List.of(new EveryTestJobWithDefaultConfiguration()));
+        jobManager.scheduler = mockScheduler;
+
+        // Create a scheduled job to use for testing
+        JobKey jobKey = JobKey.jobKey("test-job");
+        Trigger trigger = TriggerBuilder.newTrigger()
+                .withIdentity("test-trigger")
+                .startNow()
+                .build();
+        ScheduledJob scheduledJob = new ScheduledJob(jobKey, EveryTestJobWithDefaultConfiguration.class, trigger,
+                false, false, "test message");
+
+        // The method should not throw an exception - it should catch and log it
+        // This verifies the error handling behavior in scheduleOrRescheduleJob()
+        assertDoesNotThrow(() -> jobManager.scheduleOrRescheduleJob(scheduledJob));
+
+        // Verify the scheduler was called (even though it threw an exception)
+        verify(mockScheduler).checkExists(jobKey);
     }
 
     private static class TestConfig extends JobConfiguration {
