@@ -61,7 +61,7 @@ public void initialize( Bootstrap<SomeConfig> bootstrap )
   bootstrap.addBundle( guiceBundle );
 
   GuiceJobsBundle guiceJobsBundle = new GuiceJobsBundle(
-    'com.youpackage.url',
+    "com.youpackage.url",
     guiceBundle.getInjector() );
   bootstrap.addBundle( guiceJobsBundle );
 }
@@ -75,8 +75,8 @@ A common usage is to inject constructor arguments:
 ```java
 @Every("1s")
 public class InjectedJob extends Job {
-  @Injected
-  public InjectedJob ( Object depdency ) {
+  @Inject
+  public InjectedJob(Object dependency) {
     // do some logic with dependency
   }
 
