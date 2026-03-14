@@ -11,7 +11,6 @@ import org.quartz.JobKey;
 import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
 
-import java.time.ZoneId;
 import java.util.TimeZone;
 import java.util.stream.Stream;
 
@@ -62,7 +61,7 @@ public class OnCronScheduler extends EveryScheduler {
 
     private void applyTimezone(String timeZoneStr, CronScheduleBuilder scheduleBuilder) {
         if (StringUtils.isNotBlank(timeZoneStr)) {
-            TimeZone timeZone = TimeZone.getTimeZone(ZoneId.of(timeZoneStr));
+            TimeZone timeZone = CronExpressionParser.validateAndGetTimeZone(timeZoneStr);
             scheduleBuilder.inTimeZone(timeZone);
         }
     }
