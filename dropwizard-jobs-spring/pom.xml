@@ -26,6 +26,13 @@
             <artifactId>spring-context</artifactId>
             <version>${spring.version}</version>
         </dependency>
+        <!--
+            NOTE: This module uses javax.inject (not jakarta.inject) for Spring framework compatibility.
+            Spring Framework 6.x still uses javax.inject annotations. Using jakarta.inject here would
+            cause runtime errors when Spring tries to inject dependencies. This is known architectural
+            debt that should be addressed if/when Spring fully migrates to Jakarta namespace.
+            See AGENTS.md for more details.
+        -->
         <dependency>
             <groupId>javax.inject</groupId>
             <artifactId>javax.inject</artifactId>
