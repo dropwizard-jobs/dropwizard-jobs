@@ -242,7 +242,8 @@ public class JobManager implements Managed, JobMediator {
                 createNewJob(jobDetail, trigger, job.getMessage());
             }
         } catch (SchedulerException e) {
-            log.warn("Failed to schedule job with key '{}': {}", jobKey, e.getMessage(), e);
+            log.warn("Failed to schedule job with key '{}': {}", jobKey, e.getMessage());
+            log.debug("Schedule failure details", e);
         }
     }
 

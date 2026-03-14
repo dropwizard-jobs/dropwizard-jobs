@@ -94,6 +94,8 @@ public class EveryScheduler extends JobScheduler {
             case NEXT_WITH_REMAINING_COUNT:
                 scheduleBuilder.withMisfireHandlingInstructionNextWithRemainingCount();
                 break;
+            case SMART:
+                break;
             default:
                 log.warn("Nothing to do for the misfire policy: {}", misfirePolicy);
                 break;
