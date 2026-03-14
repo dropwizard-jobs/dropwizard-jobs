@@ -317,6 +317,94 @@ public class JobManagerTest {
         verify(mockScheduler).checkExists(jobKey);
     }
 
+    @Test
+    public void testJobListenersAreRegisteredDuringStart() throws Exception {
+        // Create a counting listener that tracks job executions
+        CountingTestJobListener countingListener = new CountingTestJobListener("CountingTestJobListener");
+
+        jobManager = new JobManager(new TestConfig(),
+                List.of(new EveryTestJobWithDefaultConfiguration()),
+                List.of(countingListener));
+
+        jobManager.start();
+
+        // Verify the listener is registered with the scheduler
+        assertThat(jobManager.getJobListeners().size(), is(1));
+        assertThat(jobManager.getJobListeners().get(0), is(countingListener));
+
+        // Wait for the job to execute at least once
+        assertThat(countingListener.latch().await(2, TimeUnit.SECONDS), is(true));
+
+        // Verify the listener received the job execution event
+        assertThat(countingListener.executionCount(), is(1));
+
+        jobManager.stop();
+    }
+
+    @Test
+    public void testMultipleJobListenersReceiveEvents() throws Exception {
+        CountingTestJobListener listener1 = new CountingTestJobListener("Listener1");
+        CountingTestJobListener listener2 = new CountingTestJobListener("Listener2");
+
+        jobManager = new JobManager(new TestConfig(),
+                List.of(new EveryTestJobWithDefaultConfiguration()),
+                List.of(listener1, listener2));
+
+        jobManager.start();
+
+        // Wait for jobs to execute
+        assertThat(listener1.latch().await(2, TimeUnit.SECONDS), is(true));
+        assertThat(listener2.latch().await(2, TimeUnit.SECONDS), is(true));
+
+        // Both listeners should have received the event
+        assertThat(listener1.executionCount(), is(1));
+        assertThat(listener2.executionCount(), is(1));
+
+        jobManager.stop();
+    }
+
+    /**
+     * A test JobListener that counts job executions using a CountDownLatch.
+     */
+    static class CountingTestJobListener implements JobListener {
+        private final String name;
+        private final java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
+        private int executionCount = 0;
+
+        public CountingTestJobListener(String name) {
+            this.name = name;
+        }
+
+        @Override
+        public String getName() {
+            return name;
+        }
+
+        @Override
+        public void jobToBeExecuted(JobExecutionContext context) {
+            // No-op
+        }
+
+        @Override
+        public void jobExecutionVetoed(JobExecutionContext context) {
+            // No-op
+        }
+
+        @Override
+        public void jobWasExecuted(JobExecutionContext context, JobExecutionException jobException) {
+            executionCount++;
+            latch.countDown();
+        }
+
+        public java.util.concurrent.CountDownLatch latch() {
+            return latch;
+        }
+
+        public int executionCount() {
+            return executionCount;
+        }
+    }
+
     private static class TestConfig extends JobConfiguration {
         private final Map<String, String> quartzConfiguration;
 

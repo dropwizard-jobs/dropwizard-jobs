@@ -4,9 +4,11 @@ import com.codahale.metrics.SharedMetricRegistries;
 import io.dropwizard.core.ConfiguredBundle;
 import io.dropwizard.core.setup.Bootstrap;
 import io.dropwizard.core.setup.Environment;
+import org.quartz.JobListener;
 import org.quartz.Scheduler;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -38,6 +40,7 @@ import java.util.Objects;
 public class JobsBundle implements ConfiguredBundle<JobConfiguration> {
 
     private final List<Job> jobs;
+    private final List<JobListener> jobListeners;
     protected JobManager jobManager;
 
     /**
@@ -50,8 +53,29 @@ public class JobsBundle implements ConfiguredBundle<JobConfiguration> {
      * @param jobs the list of jobs to be scheduled and managed by this bundle
      */
     public JobsBundle(List<Job> jobs) {
+        this(jobs, Collections.emptyList());
+    }
+
+    /**
+     * Creates a new JobsBundle with the specified jobs and job listeners.
+     * <p>
+     * Each job in the list should be annotated with one of the scheduling annotations:
+     * {@code @Every}, {@code @On}, {@code @OnApplicationStart}, or {@code @OnApplicationStop}.
+     * </p>
+     * <p>
+     * Job listeners can be annotated with {@link io.dropwizard.jobs.annotations.ListeningFor}
+     * to specify which jobs they should receive events for. Listeners without the annotation
+     * will receive events for all jobs.
+     * </p>
+     *
+     * @param jobs the list of jobs to be scheduled and managed by this bundle
+     * @param jobListeners the list of job listeners to register with the scheduler
+     */
+    public JobsBundle(List<Job> jobs, List<JobListener> jobListeners) {
         Objects.requireNonNull(jobs, "jobs must not be null");
+        Objects.requireNonNull(jobListeners, "jobListeners must not be null");
         this.jobs = new ArrayList<>(jobs);
+        this.jobListeners = new ArrayList<>(jobListeners);
     }
 
     /**
@@ -68,7 +92,7 @@ public class JobsBundle implements ConfiguredBundle<JobConfiguration> {
      */
     @Override
     public void run(JobConfiguration configuration, Environment environment) throws Exception {
-        jobManager = new JobManager(configuration, jobs);
+        jobManager = new JobManager(configuration, jobs, jobListeners);
         environment.lifecycle().manage(jobManager);
     }
 
