@@ -5,12 +5,14 @@ import org.glassfish.hk2.api.ServiceLocator;
 import org.glassfish.jersey.internal.inject.InjectionManager;
 import org.glassfish.jersey.server.spi.AbstractContainerLifecycleListener;
 import org.glassfish.jersey.server.spi.Container;
+import org.quartz.JobListener;
 import org.quartz.Scheduler;
 import org.quartz.spi.JobFactory;
 
 import io.dropwizard.core.setup.Environment;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -22,11 +24,11 @@ import java.util.Objects;
  * </p>
  * 
  * <pre>
- * public class MyDropwizardApplication extends Application&lt;MyConfiguration&gt; {
+ * public class MyDropwizardApplication extends Application<MyConfiguration> {
  *     ...
  * 
  *     &#64;Override
- *     public void initialize(Bootstrap&lt;MyConfiguration&gt; bootstrap) {
+ *     public void initialize(Bootstrap<MyConfiguration> bootstrap) {
  *         bootstrap.addBundle(new Hk2JobsBundle(BuilderHelper.createContractFilter(Job.class.getName())));
  *     }
  * 
@@ -48,6 +50,7 @@ import java.util.Objects;
 public class Hk2JobsBundle extends JobsBundle {
 
     private final Filter searchCriteria;
+    private final Filter listenerSearchCriteria;
 
     /**
      * Create a new instance with given HK2 search criteria.
@@ -67,9 +70,34 @@ public class Hk2JobsBundle extends JobsBundle {
      *            searchCriteria.matches returns true). Should not be null.
      */
     public Hk2JobsBundle(final Filter searchCriteria) {
+        this(searchCriteria, null);
+    }
+
+    /**
+     * Create a new instance with given HK2 search criteria for jobs and listeners.
+     * 
+     * <p>
+     * You can implement your own {@code Filter} or you can use one of the {@code Filter} implementations provided by
+     * {@code BuilderHelper}. The most common case is to use an {@code IndexedFilter} provided by {@code BuilderHelper},
+     * like this:
+     * </p>
+     * 
+     * <pre>
+     * IndexedFilter jobFilter = BuilderHelper.createContractFilter(Job.class.getName());
+     * IndexedFilter listenerFilter = BuilderHelper.createContractFilter(JobListener.class.getName());
+     * bootstrap.addBundle(new Hk2JobsBundle(jobFilter, listenerFilter));
+     * </pre>
+     * 
+     * @param searchCriteria the returned {@link Job} service will match the Filter (in other words,
+     *            searchCriteria.matches returns true). Should not be null.
+     * @param listenerSearchCriteria the returned {@link JobListener} service will match the Filter.
+     *            May be null if no listeners should be discovered.
+     */
+    public Hk2JobsBundle(final Filter searchCriteria, final Filter listenerSearchCriteria) {
         super(new ArrayList<>());
         Objects.requireNonNull(searchCriteria);
         this.searchCriteria = searchCriteria;
+        this.listenerSearchCriteria = listenerSearchCriteria;
     }
 
     @Override
@@ -100,7 +128,18 @@ public class Hk2JobsBundle extends JobsBundle {
                  */
                 @SuppressWarnings("unchecked")
                 final List<Job> jobs = (List<Job>) locator.getAllServices(searchCriteria);
-                jobManager = new JobManager(configuration, jobs) {
+
+                // Discover listeners if filter provided
+                final List<JobListener> listeners;
+                if (listenerSearchCriteria != null) {
+                    @SuppressWarnings("unchecked")
+                    List<JobListener> discovered = (List<JobListener>) locator.getAllServices(listenerSearchCriteria);
+                    listeners = discovered;
+                } else {
+                    listeners = Collections.emptyList();
+                }
+
+                jobManager = new JobManager(configuration, jobs, listeners) {
                     @Override
                     protected JobFactory getJobFactory() {
                         return (bundle,

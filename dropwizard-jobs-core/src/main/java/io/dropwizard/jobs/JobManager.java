@@ -1,6 +1,7 @@
 package io.dropwizard.jobs;
 
 import io.dropwizard.jobs.scheduler.EveryScheduler;
+import io.dropwizard.jobs.scheduler.JobListenerRegistrar;
 import io.dropwizard.jobs.scheduler.OnApplicationStartScheduler;
 import io.dropwizard.jobs.scheduler.OnApplicationStopScheduler;
 import io.dropwizard.jobs.scheduler.OnCronScheduler;
@@ -11,6 +12,7 @@ import org.quartz.spi.JobFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
@@ -72,6 +74,7 @@ public class JobManager implements Managed, JobMediator {
 
     protected final JobConfiguration configuration;
     protected final JobFilters jobs;
+    protected final List<JobListener> jobListeners;
 
     private final OnApplicationStartScheduler onApplicationStartScheduler;
     private final OnApplicationStopScheduler onApplicationStopScheduler;
@@ -86,13 +89,29 @@ public class JobManager implements Managed, JobMediator {
 
     /**
      * Creates a new JobManager with the specified configuration and jobs.
+     * <p>
+     * This constructor is equivalent to calling
+     * {@link #JobManager(JobConfiguration, List, List)} with an empty list of job listeners.
+     * </p>
      *
      * @param configuration the application configuration containing job and Quartz settings
      * @param jobs the list of jobs to be scheduled
      */
     public JobManager(JobConfiguration configuration, List<Job> jobs) {
+        this(configuration, jobs, Collections.emptyList());
+    }
+
+    /**
+     * Creates a new JobManager with the specified configuration, jobs, and job listeners.
+     *
+     * @param configuration the application configuration containing job and Quartz settings
+     * @param jobs the list of jobs to be scheduled
+     * @param jobListeners the list of job listeners to register with the scheduler
+     */
+    public JobManager(JobConfiguration configuration, List<Job> jobs, List<JobListener> jobListeners) {
         this.configuration = configuration;
         this.jobs = new JobFilters(jobs);
+        this.jobListeners = List.copyOf(jobListeners);
 
         this.onApplicationStartScheduler = new OnApplicationStartScheduler(this);
         this.onApplicationStopScheduler = new OnApplicationStopScheduler(this);
@@ -113,6 +132,7 @@ public class JobManager implements Managed, JobMediator {
      * <ol>
      *   <li>Creates and configures the Quartz scheduler</li>
      *   <li>Sets the job factory for dependency injection</li>
+     *   <li>Registers job listeners with the scheduler</li>
      *   <li>Starts the scheduler</li>
      *   <li>Schedules all {@code @OnApplicationStart}, {@code @Every}, and {@code @On} jobs</li>
      *   <li>Logs all registered {@code @OnApplicationStop} jobs</li>
@@ -124,6 +144,11 @@ public class JobManager implements Managed, JobMediator {
     public void start() throws Exception {
         scheduler = createScheduler();
         scheduler.setJobFactory(getJobFactory());
+
+        // Register listeners BEFORE starting scheduler and scheduling jobs
+        // so they are ready to receive events from the very first execution
+        registerJobListeners();
+
         scheduler.start();
 
         onApplicationStartScheduler.schedule();
@@ -131,6 +156,21 @@ public class JobManager implements Managed, JobMediator {
         onCronScheduler.schedule();
 
         logAllOnApplicationStopJobs();
+    }
+
+    /**
+     * Registers all job listeners with the scheduler's ListenerManager.
+     * <p>
+     * Each listener's {@link io.dropwizard.jobs.annotations.ListeningFor} annotation
+     * determines the matcher used. Listeners without the annotation default to ALL_JOBS matching.
+     * </p>
+     *
+     * @throws SchedulerException if listener registration fails
+     */
+    private void registerJobListeners() throws SchedulerException {
+        if (!jobListeners.isEmpty()) {
+            new JobListenerRegistrar(scheduler, jobListeners).register();
+        }
     }
 
     /**
@@ -344,6 +384,19 @@ public class JobManager implements Managed, JobMediator {
     @Override
     public JobConfiguration getConfiguration() {
         return configuration;
+    }
+
+    /**
+     * Returns the list of job listeners registered with this job manager.
+     * <p>
+     * The listeners are registered with the Quartz scheduler during startup,
+     * before any jobs are scheduled.
+     * </p>
+     *
+     * @return the list of job listeners
+     */
+    public List<JobListener> getJobListeners() {
+        return jobListeners;
     }
 
     // ========================================================================

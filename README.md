@@ -151,6 +151,104 @@ public class GroupNameJob extends Job {
 }
 ```
 
+## Job Listeners
+
+You can register Quartz [`JobListener`](https://www.quartz-scheduler.org/api/2.3.0/org/quartz/JobListener.html) implementations to react to job lifecycle events. Job listeners are notified when a job is about to execute, when execution is vetoed, and after a job has executed. This is useful for:
+
+- Clearing thread-local values after job execution
+- Adding reporting or metrics for job failures
+- Implementing cross-cutting concerns for job execution
+
+### Using the `@ListeningFor` Annotation
+
+Create a class that implements `JobListener` and annotate it with `@ListeningFor`:
+
+```java
+@ListeningFor
+public class MyJobListener implements JobListener {
+    @Override
+    public String getName() {
+        return "MyJobListener";
+    }
+
+    @Override
+    public void jobToBeExecuted(JobExecutionContext context) {
+        // Called before job executes
+    }
+
+    @Override
+    public void jobExecutionVetoed(JobExecutionContext context) {
+        // Called if job was vetoed by a trigger listener
+    }
+
+    @Override
+    public void jobWasExecuted(JobExecutionContext context, JobExecutionException jobException) {
+        // Called after job executes — check jobException for failures
+        if (jobException != null) {
+            // Handle failed job
+        }
+    }
+}
+```
+
+### Matcher Types
+
+The `@ListeningFor` annotation supports a `matcher` attribute and a `value` attribute to control which jobs the listener observes:
+
+| Matcher Type | Description | Example |
+|---|---|---|
+| `ALL_JOBS` (default) | Listens to all jobs | `@ListeningFor` |
+| `JOB_NAME_EQUALS` | Match specific job by name | `@ListeningFor(matcher = MatcherType.JOB_NAME_EQUALS, value = "myJob")` |
+| `JOB_GROUP_EQUALS` | Match jobs in a specific group | `@ListeningFor(matcher = MatcherType.JOB_GROUP_EQUALS, value = "myGroup")` |
+| `JOB_NAME_STARTS_WITH` | Match jobs whose name starts with | `@ListeningFor(matcher = MatcherType.JOB_NAME_STARTS_WITH, value = "report")` |
+| `JOB_NAME_ENDS_WITH` | Match jobs whose name ends with | `@ListeningFor(matcher = MatcherType.JOB_NAME_ENDS_WITH, value = "Cleanup")` |
+| `JOB_NAME_CONTAINS` | Match jobs whose name contains | `@ListeningFor(matcher = MatcherType.JOB_NAME_CONTAINS, value = "import")` |
+| `JOB_GROUP_STARTS_WITH` | Match jobs whose group starts with | `@ListeningFor(matcher = MatcherType.JOB_GROUP_STARTS_WITH, value = "batch")` |
+| `JOB_GROUP_ENDS_WITH` | Match jobs whose group ends with | `@ListeningFor(matcher = MatcherType.JOB_GROUP_ENDS_WITH, value = "Jobs")` |
+| `JOB_GROUP_CONTAINS` | Match jobs whose group contains | `@ListeningFor(matcher = MatcherType.JOB_GROUP_CONTAINS, value = "critical")` |
+
+### Registering Job Listeners
+
+**Plain Dropwizard:**
+
+Pass listeners to the [`JobsBundle`](dropwizard-jobs-core/src/main/java/io/dropwizard/jobs/JobsBundle.java) constructor:
+
+```java
+@Override
+public void initialize(Bootstrap<MyConfiguration> bootstrap) {
+    Job myJob = new MyJob();
+    JobListener myListener = new MyJobListener();
+    bootstrap.addBundle(new JobsBundle(List.of(myJob), List.of(myListener)));
+}
+```
+
+**Guice:**
+
+Register listeners as beans in your Guice module. The [`GuiceJobsBundle`](dropwizard-jobs-guice/src/main/java/io/dropwizard/jobs/GuiceJobsBundle.java) will auto-discover all `JobListener` implementations annotated with `@ListeningFor`:
+
+```java
+public class MyModule extends AbstractModule {
+    @Override
+    protected void configure() {
+        bind(MyJobListener.class).asEagerSingleton();
+    }
+}
+```
+
+**Spring:**
+
+Register listeners as beans in your Spring configuration. The [`SpringJobsBundle`](dropwizard-jobs-spring/src/main/java/io/dropwizard/jobs/SpringJobsBundle.java) will auto-discover all `JobListener` implementations annotated with `@ListeningFor`:
+
+```java
+@Configuration
+public class MyConfiguration {
+    @Bean
+    public MyJobListener myJobListener() {
+        return new MyJobListener();
+    }
+}
+```
+
 ## Using dropwizard-jobs in a Clustered Environment
 
 By default, dropwizard-jobs is designed to be used with an in-memory Quartz scheduler. If you wish to deploy it in a clustered environment that consists of more than one node, you'll need to use a scheduler that has some sort of persistence. You can either add a file called `quartz.properties` to your classpath or you can provide the quartz configuration in your Dropwizard configuration file. The content of the `quartz` element is passed to the Quartz scheduler directly (so you can take the properties from the official docs). If you'd like to add the config to your Dropwizard configuration file, you need to override the `getQuartzConfiguration()` method in your application's configuration. You can set the map to `DefaultQuartzConfiguration.get()`.
