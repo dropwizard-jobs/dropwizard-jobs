@@ -71,6 +71,7 @@ public class JobManagerTest {
         assertThat(everyTestJobWithJobName.latch().await(1, TimeUnit.SECONDS), is(true));
         assertThat(everyTestJobAlternativeConfiguration.latch().await(1, TimeUnit.SECONDS), is(true));
         assertThat(everyTestJob.latch().await(1, TimeUnit.SECONDS), is(true));
+        assertThat(startTestJob.latch().await(1, TimeUnit.SECONDS), is(true));
 
         assertThat(everyTestJobWithDelay.latch().await(2, TimeUnit.SECONDS), is(true));
         assertThat(onTestJob.latch().await(2, TimeUnit.SECONDS), is(true));
