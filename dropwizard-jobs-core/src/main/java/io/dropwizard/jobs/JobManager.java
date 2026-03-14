@@ -232,28 +232,61 @@ public class JobManager implements Managed, JobMediator {
 
         try {
             if (scheduler.checkExists(jobKey)) {
-                // if the job has exactly one trigger, we can just reschedule it, which allows us to update the schedule for
-                // that trigger.
                 List<? extends Trigger> triggers = scheduler.getTriggersOfJob(jobKey);
                 if (triggers.size() == 1) {
-                    scheduler.rescheduleJob(triggers.get(0).getKey(), trigger);
-                    log.info("Rescheduled job: {}", job.getMessage());
+                    rescheduleSingleTrigger(triggers.get(0), trigger, job.getMessage());
                 } else {
-                    // if for some reason the job has multiple triggers, it's easiest to just delete and re-create the job,
-                    // since we want to enforce a one-to-one relationship between jobs and triggers
-                    scheduler.deleteJob(jobKey);
-                    scheduler.scheduleJob(jobDetail, trigger);
-                    log.info("Scheduled job: {}", job.getMessage());
+                    replaceMultiTriggerJob(jobKey, jobDetail, trigger, job.getMessage());
                 }
             } else {
-                // if the job doesn't already exist, we can create it, along with its trigger. this prevents us
-                // from creating multiple instances of the same job when running in a clustered environment
-                scheduler.scheduleJob(jobDetail, trigger);
-                log.info("Scheduled job: {}", job.getMessage());
+                createNewJob(jobDetail, trigger, job.getMessage());
             }
         } catch (SchedulerException e) {
             log.warn("Failed to schedule job with key '{}': {}", jobKey, e.getMessage(), e);
         }
+    }
 
+    /**
+     * Reschedules an existing job that has exactly one trigger.
+     *
+     * @param existingTrigger the current trigger to replace
+     * @param newTrigger the new trigger to use
+     * @param message the log message for the job
+     * @throws SchedulerException if rescheduling fails
+     */
+    private void rescheduleSingleTrigger(Trigger existingTrigger, Trigger newTrigger, String message)
+            throws SchedulerException {
+        scheduler.rescheduleJob(existingTrigger.getKey(), newTrigger);
+        log.info("Rescheduled job: {}", message);
+    }
+
+    /**
+     * Replaces a job that has multiple triggers by deleting and recreating it.
+     * This enforces the one-to-one relationship between jobs and triggers.
+     *
+     * @param jobKey the key of the job to replace
+     * @param jobDetail the new job detail
+     * @param trigger the trigger for the new job
+     * @param message the log message for the job
+     * @throws SchedulerException if the operation fails
+     */
+    private void replaceMultiTriggerJob(JobKey jobKey, JobDetail jobDetail, Trigger trigger, String message)
+            throws SchedulerException {
+        scheduler.deleteJob(jobKey);
+        scheduler.scheduleJob(jobDetail, trigger);
+        log.info("Scheduled job: {}", message);
+    }
+
+    /**
+     * Creates a new job with its trigger.
+     *
+     * @param jobDetail the job detail for the new job
+     * @param trigger the trigger for the new job
+     * @param message the log message for the job
+     * @throws SchedulerException if scheduling fails
+     */
+    private void createNewJob(JobDetail jobDetail, Trigger trigger, String message) throws SchedulerException {
+        scheduler.scheduleJob(jobDetail, trigger);
+        log.info("Scheduled job: {}", message);
     }
 }
