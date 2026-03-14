@@ -180,7 +180,7 @@ public class JobManagerTest {
     @Test
     public void testInvalidTimezoneInConfigurationThrowsException() {
         TestConfig config = new TestConfig();
-        config.getQuartzConfiguration().put("de.spinscale.dropwizard.jobs.timezone", "Foo/Bar");
+        config.getQuartzConfiguration().put("io.github.dropwizard-jobs.timezone", "Foo/Bar");
 
         IllegalArgumentException exception = assertThrows(
             IllegalArgumentException.class,
@@ -272,7 +272,7 @@ public class JobManagerTest {
     @Test
     public void allowTimezoneConfiguration() {
         TestConfig config = new TestConfig();
-        config.getQuartzConfiguration().put("de.spinscale.dropwizard.jobs.timezone", "Europe/London");
+        config.getQuartzConfiguration().put("io.github.dropwizard-jobs.timezone", "Europe/London");
         CronExpressionParser cronExpressionParser = new CronExpressionParser(config);
 
         jobManager = new JobManager(config, List.of(startTestJob, onTestJob, onTestJobWithJobName, everyTestJob,
