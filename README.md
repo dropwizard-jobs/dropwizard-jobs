@@ -74,6 +74,17 @@ public void initialize(Bootstrap<MyConfiguration> bootstrap) {
 }
 ```
 
+## Using HK2 for Dependency Injection
+
+If your jobs require dependencies that are only available at runtime (e.g., Hibernate DAOs, service classes),
+you can use the built-in `Hk2JobsBundle` which leverages Dropwizard's HK2 dependency injection container.
+Unlike the plain `JobsBundle`, `Hk2JobsBundle` defers job discovery to Jersey container startup, so all
+registered services are available for injection.
+
+See the [HK2 integration documentation](dropwizard-jobs-core/README.md) for setup instructions and examples.
+
+For Guice users, see the [Guice integration documentation](dropwizard-jobs-guice/README.md).
+
 ## Available job types
 
 The `@OnApplicationStart` annotation triggers a job after the quartz scheduler is started
