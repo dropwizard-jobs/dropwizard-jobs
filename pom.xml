@@ -40,6 +40,7 @@
         <maven-site-plugin.version>3.21.0</maven-site-plugin.version>
         <jersey.version>3.1.10</jersey.version>
         <c3p0.version>0.12.0</c3p0.version>
+        <mchange-commons-java.version>0.4.0</mchange-commons-java.version>
     </properties>
 
     <developers>
@@ -201,6 +202,11 @@
                 <groupId>org.springframework</groupId>
                 <artifactId>spring-expression</artifactId>
                 <version>${spring.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.mchange</groupId>
+                <artifactId>mchange-commons-java</artifactId>
+                <version>${mchange-commons-java.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
