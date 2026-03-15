@@ -34,12 +34,10 @@ jobs:
                   VERSION=${VERSION#v}
                   mvn --batch-mode versions:set -DnewVersion=$VERSION -DgenerateBackupPoms=false
 
-            - name: Install GPG secret key
-              run: |
-                  # Install gpg secret key
-                  cat <(echo -e "${{ secrets.OSSRH_GPG_SECRET_KEY }}") | gpg --batch --import
-                  # Verify gpg secret key
-                  gpg --list-secret-keys --keyid-format LONG
+            - name: Publish to GitHub Packages
+              run: mvn --batch-mode deploy
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
             - name: Publish to Maven Central
               run: mvn --batch-mode -Drelease deploy
