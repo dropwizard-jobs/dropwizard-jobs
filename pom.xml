@@ -39,6 +39,7 @@
         <awaitility.version>4.2.0</awaitility.version>
         <maven-site-plugin.version>3.21.0</maven-site-plugin.version>
         <jersey.version>3.1.10</jersey.version>
+        <c3p0.version>0.12.0</c3p0.version>
     </properties>
 
     <developers>
@@ -173,6 +174,16 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.mchange</groupId>
+                <artifactId>c3p0</artifactId>
+                <version>${c3p0.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <build>
         <plugins>
