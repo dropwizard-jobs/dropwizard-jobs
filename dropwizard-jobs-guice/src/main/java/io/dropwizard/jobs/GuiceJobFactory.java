@@ -13,10 +13,22 @@ import com.google.inject.ConfigurationException;
 
 import java.lang.reflect.InvocationTargetException;
 
+/**
+ * A Quartz {@link JobFactory} implementation that uses Guice to instantiate jobs.
+ * <p>
+ * This factory allows Guice to manage the dependency injection of job instances,
+ * enabling jobs to receive Guice-injected dependencies.
+ * </p>
+ */
 public class GuiceJobFactory implements JobFactory {
 
     private final Injector injector;
 
+    /**
+     * Creates a new GuiceJobFactory with the specified Injector.
+     *
+     * @param injector the Guice Injector to use for job instantiation
+     */
     @Inject
     public GuiceJobFactory(Injector injector) {
         this.injector = injector;
