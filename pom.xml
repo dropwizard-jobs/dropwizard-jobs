@@ -38,6 +38,7 @@
         <spring.version>7.0.6</spring.version>
         <awaitility.version>4.2.0</awaitility.version>
         <maven-site-plugin.version>3.21.0</maven-site-plugin.version>
+        <jersey.version>3.1.10</jersey.version>
     </properties>
 
     <developers>
