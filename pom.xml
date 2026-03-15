@@ -42,6 +42,7 @@
         <quartz.version>2.5.2</quartz.version>
         <snakeyaml.version>2.6</snakeyaml.version>
         <spring.version>7.0.6</spring.version>
+        <commons-lang3.version>3.20.0</commons-lang3.version>
     </properties>
 
     <developers>
@@ -177,6 +178,11 @@
                 <groupId>org.springframework</groupId>
                 <artifactId>spring-context</artifactId>
                 <version>${spring.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>${commons-lang3.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
