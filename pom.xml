@@ -37,6 +37,7 @@
         <snakeyaml.version>2.6</snakeyaml.version>
         <spring.version>7.0.6</spring.version>
         <awaitility.version>4.2.0</awaitility.version>
+        <maven-site-plugin.version>3.21.0</maven-site-plugin.version>
     </properties>
 
     <developers>
@@ -235,6 +236,12 @@
                             </goals>
                         </execution>
                     </executions>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-site-plugin</artifactId>
+                    <version>${maven-site-plugin.version}</version>
                 </plugin>
 
             </plugins>
