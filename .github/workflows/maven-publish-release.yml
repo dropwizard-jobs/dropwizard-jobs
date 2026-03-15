@@ -4,44 +4,51 @@
 name: Maven Publish Release
 
 on:
-  release:
-    types: [created]
+    release:
+        types: [created]
+    push:
+        tags:
+          - "v.*"
 
 jobs:
-  publish:
+    publish:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            packages: write
 
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
+        steps:
+            - uses: actions/checkout@v5
+            - name: Set up JDK 25
+              uses: actions/setup-java@v5
+              with:
+                  java-version: "25"
+                  distribution: "temurin"
+                  server-id: sonatype-nexus-staging
+                  server-username: MAVEN_USERNAME
+                  server-password: MAVEN_PASSWORD
 
-    steps:
-    - uses: actions/checkout@v5
-    - name: Set up JDK 25
-      uses: actions/setup-java@v5
-      with:
-        java-version: '25'
-        distribution: 'temurin'
-        server-id: sonatype-nexus-staging
-        server-username: MAVEN_USERNAME
-        server-password: MAVEN_PASSWORD
+            - name: Set release version
+              run: |
+                  VERSION=${{ github.event.release.tag_name }}
+                  VERSION=${VERSION#v}
+                  mvn --batch-mode versions:set -DnewVersion=$VERSION -DgenerateBackupPoms=false
 
-    - name: Set release version
-      run: |
-        VERSION=${{ github.event.release.tag_name }}
-        VERSION=${VERSION#v}
-        mvn --batch-mode versions:set -DnewVersion=$VERSION -DgenerateBackupPoms=false
+            - name: Install GPG secret key
+              run: |
+                  # Install gpg secret key
+                  cat <(echo -e "${{ secrets.OSSRH_GPG_SECRET_KEY }}") | gpg --batch --import
+                  # Verify gpg secret key
+                  gpg --list-secret-keys --keyid-format LONG
 
-    - name: Install GPG secret key
-      run: |
-        # Install gpg secret key
-        cat <(echo -e "${{ secrets.OSSRH_GPG_SECRET_KEY }}") | gpg --batch --import
-        # Verify gpg secret key
-        gpg --list-secret-keys --keyid-format LONG
+            - name: Publish to GitHub Packages
+              run: mvn --batch-mode deploy
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Publish to Maven Central
-      run: mvn --batch-mode -Drelease deploy
-      env:
-        MAVEN_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-        MAVEN_PASSWORD: ${{ secrets.SONATYPE_TOKEN }}
-        MAVEN_GPG_PASSPHRASE: ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
+            - name: Publish to Maven Central
+              run: mvn --batch-mode -Drelease deploy
+              env:
+                  MAVEN_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+                  MAVEN_PASSWORD: ${{ secrets.SONATYPE_TOKEN }}
+                  MAVEN_GPG_PASSPHRASE: ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
