@@ -5,6 +5,7 @@ import org.glassfish.hk2.api.ServiceLocator;
 import org.glassfish.jersey.internal.inject.InjectionManager;
 import org.glassfish.jersey.server.spi.AbstractContainerLifecycleListener;
 import org.glassfish.jersey.server.spi.Container;
+import org.quartz.JobListener;
 import org.quartz.Scheduler;
 
 import io.dropwizard.core.setup.Environment;
@@ -13,24 +14,24 @@ import java.util.Objects;
 
 /**
  * A {@link JobsBundle} implementation that uses HK2 to instantiate a {@link Job}.
- * 
+ *
  * <p>
  * Example of usage:
  * </p>
- * 
- * <pre>
+ *
+ * <pre>{@code
  * public class MyDropwizardApplication extends Application<MyConfiguration> {
  *     ...
- * 
- *     &#64;Override
+ *
+ *     @Override
  *     public void initialize(Bootstrap<MyConfiguration> bootstrap) {
  *         bootstrap.addBundle(new Hk2JobsBundle(BuilderHelper.createContractFilter(Job.class.getName())));
  *     }
- * 
- *     &#64;Override
+ *
+ *     @Override
  *     public void run(MyConfiguration configuration, Environment environment) {
  *         environment.jersey().register(new AbstractBinder() {
- *             &#64;Override
+ *             @Override
  *             protected void configure() {
  *                 // Register jobs with contract type `io.dropwizard.jobs.Job`.
  *                 bind(MyJobWithPerLookup.class).to(Job.class);
@@ -40,7 +41,7 @@ import java.util.Objects;
  *         });
  *     }
  * }
- * </pre>
+ * }</pre>
  */
 public class Hk2JobsBundle extends JobsBundle {
 
