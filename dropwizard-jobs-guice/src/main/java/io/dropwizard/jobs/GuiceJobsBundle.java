@@ -16,35 +16,35 @@ import java.util.function.Supplier;
  * This bundle supports two usage modes:
  * </p>
  * 
- * <h3>Eager Mode</h3>
+ * <h2>Eager Mode</h2>
  * <p>
  * Use {@link #GuiceJobsBundle(Injector)} when the Guice Injector is available at bundle
  * construction time (init phase). This is the traditional usage pattern:
  * </p>
- * 
- * <pre>
- * &#64;Override
+ *
+ * <pre>{@code
+ * @Override
  * public void initialize(Bootstrap<MyConfig> bootstrap) {
  *     Injector injector = Guice.createInjector(new MyModule());
  *     bootstrap.addBundle(new GuiceJobsBundle(injector));
  * }
- * </pre>
- * 
- * <h3>Deferred Mode</h3>
+ * }</pre>
+ *
+ * <h2>Deferred Mode</h2>
  * <p>
  * Use {@link #GuiceJobsBundle(Supplier)} when the Guice Injector is not available until
  * the run phase (e.g., when using dropwizard-guicey). The supplier is called during
  * {@link Managed#start()}, after all bundles have completed their run() methods:
  * </p>
- * 
- * <pre>
- * &#64;Override
+ *
+ * <pre>{@code
+ * @Override
  * public void initialize(Bootstrap<MyConfig> bootstrap) {
  *     guiceBundle = GuiceBundle.builder()...build();
  *     bootstrap.addBundle(guiceBundle);
  *     bootstrap.addBundle(new GuiceJobsBundle(() -> guiceBundle.getInjector()));
  * }
- * </pre>
+ * }</pre>
  */
 public class GuiceJobsBundle extends JobsBundle {
 
