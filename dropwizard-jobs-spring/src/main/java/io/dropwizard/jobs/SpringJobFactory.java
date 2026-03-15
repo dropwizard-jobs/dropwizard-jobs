@@ -12,10 +12,27 @@ import org.springframework.context.ApplicationContext;
 
 import java.lang.reflect.InvocationTargetException;
 
+/**
+ * A Quartz {@link org.quartz.spi.JobFactory} implementation that integrates with Spring for dependency injection.
+ * <p>
+ * This factory creates job instances by first attempting to retrieve them from the Spring application context.
+ * If a job class is not registered as a Spring bean, it falls back to creating the job via Spring's autowiring
+ * capabilities, and finally via reflection if autowiring fails.
+ * </p>
+ *
+ * @see org.quartz.spi.JobFactory
+ * @see SpringJobManager
+ */
 public class SpringJobFactory implements JobFactory {
 
+    /** The Spring application context used for bean retrieval and autowiring. */
     ApplicationContext context;
 
+    /**
+     * Creates a new SpringJobFactory with the specified application context.
+     *
+     * @param context the Spring application context used to discover and autowire jobs
+     */
     public SpringJobFactory(ApplicationContext context) {
         this.context = context;
     }
