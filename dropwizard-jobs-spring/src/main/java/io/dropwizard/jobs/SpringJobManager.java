@@ -20,6 +20,7 @@ import java.util.List;
  */
 public class SpringJobManager extends JobManager {
 
+    /** The job factory used to create job instances with Spring dependency injection. */
     protected SpringJobFactory jobFactory;
 
     /**
@@ -42,7 +43,6 @@ public class SpringJobManager extends JobManager {
      * @param config the application configuration containing job and Quartz settings
      * @param context the Spring application context used to discover and instantiate jobs and job listeners
      * @see Hk2JobsBundle#run(JobConfiguration, io.dropwizard.core.setup.Environment)
-     * @see GuiceJobManager#getJobs(com.google.inject.Injector)
      */
     public SpringJobManager(JobConfiguration config, ApplicationContext context) {
         super(config, toJobMetadata(new ArrayList<>(context.getBeansOfType(Job.class).values())),
