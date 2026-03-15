@@ -1,35 +1,33 @@
-# This workflow will build a package using Maven and then publish it to GitHub packages when a release is created
-# For more information see: https://github.com/actions/setup-java/blob/main/docs/advanced-usage.md#apache-maven-with-a-settings-path
+# This workflow publishes SNAPSHOT artifacts to Maven Central Snapshots via the Sonatype Central Portal
+# Triggered on every push to master
 
 name: Maven Publish Snapshot
 
 on:
-  push:
-    branches:
-      - master
+    push:
+        branches:
+            - master
+            - publish
 
 jobs:
-  build:
+    publish:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
 
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
+        steps:
+            - uses: actions/checkout@v5
+            - name: Set up JDK 25
+              uses: actions/setup-java@v5
+              with:
+                java-version: '25'
+                distribution: "temurin"
+                server-id: snapshot
+                server-username: MAVEN_USERNAME
+                server-password: MAVEN_PASSWORD
 
-    steps:
-    - uses: actions/checkout@v5
-    - name: Set up JDK 25
-      uses: actions/setup-java@v5
-      with:
-        java-version: '25'
-        distribution: 'temurin'
-        server-id: github # Value of the distributionManagement/repository/id field of the pom.xml
-        settings-path: ${{ github.workspace }} # location for the settings.xml file
-
-    - name: Build with Maven
-      run: mvn -B package --file pom.xml
-
-    - name: Publish to GitHub Packages Apache Maven
-      run: mvn deploy -s $GITHUB_WORKSPACE/settings.xml
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
+            - name: Publish Snapshot to Maven Central
+              run: mvn --batch-mode deploy
+              env:
+                  MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
+                  MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}

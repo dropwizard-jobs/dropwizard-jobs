@@ -8,3 +8,4 @@ target/
 coverage/
 cc-test-reporter
 dropwizard-jobs-core/.sts4-cache/classpath-data.json
+settings.xml
