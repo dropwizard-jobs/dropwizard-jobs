@@ -24,19 +24,19 @@ import java.util.stream.Collectors;
  * Example of usage:
  * </p>
  * 
- * <pre>
+ * <pre>{@code
  * public class MyDropwizardApplication extends Application<MyConfiguration> {
  *     ...
- * 
- *     &#64;Override
+ *
+ *     @Override
  *     public void initialize(Bootstrap<MyConfiguration> bootstrap) {
  *         bootstrap.addBundle(new Hk2JobsBundle(BuilderHelper.createContractFilter(Job.class.getName())));
  *     }
- * 
- *     &#64;Override
+ *
+ *     @Override
  *     public void run(MyConfiguration configuration, Environment environment) {
  *         environment.jersey().register(new AbstractBinder() {
- *             &#64;Override
+ *             @Override
  *             protected void configure() {
  *                 // Register jobs with contract type `io.dropwizard.jobs.Job`.
  *                 bind(MyJobWithPerLookup.class).to(Job.class);
@@ -46,7 +46,7 @@ import java.util.stream.Collectors;
  *         });
  *     }
  * }
- * </pre>
+ * }</pre>
  */
 public class Hk2JobsBundle extends JobsBundle {
 
