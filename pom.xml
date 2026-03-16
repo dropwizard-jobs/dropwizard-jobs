@@ -17,8 +17,9 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <closeTestReports>true</closeTestReports>
-        <awaitility.version>4.2.0</awaitility.version>
+        <awaitility.version>4.3.0</awaitility.version>
         <c3p0.version>0.12.0</c3p0.version>
+        <commons-lang3.version>3.20.0</commons-lang3.version>
         <dropwizard.version>5.0.1</dropwizard.version>
         <guava.version>33.5.0-jre</guava.version>
         <guice.version>7.0.0</guice.version>
@@ -26,7 +27,7 @@
         <jacoco-maven-plugin.version>0.8.14</jacoco-maven-plugin.version>
         <jakarta-inject.version>2.0.1.MR</jakarta-inject.version>
         <jersey.version>3.1.11</jersey.version>
-        <jetty.version>12.1.6</jetty.version>
+        <jetty.version>12.1.7</jetty.version>
         <junit.jupiter.version>6.0.3</junit.jupiter.version>
         <logback.version>1.5.32</logback.version>
         <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
@@ -42,7 +43,6 @@
         <quartz.version>2.5.2</quartz.version>
         <snakeyaml.version>2.6</snakeyaml.version>
         <spring.version>7.0.6</spring.version>
-        <commons-lang3.version>3.20.0</commons-lang3.version>
     </properties>
 
     <developers>
