@@ -33,8 +33,12 @@ jobs:
                   VERSION=${VERSION#v}
                   mvn --batch-mode versions:set -DnewVersion=$VERSION -DgenerateBackupPoms=false
 
+            - name: Import GPG key
+              run: |
+                  echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --batch --import
+
             - name: Publish to Maven Central
-              run: mvn --batch-mode -Drelease deploy
+              run: mvn --batch-mode -Drelease -Dgpg.passphrase=${{ secrets.GPG_PASSPHRASE }} deploy
               env:
                   MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
                   MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
