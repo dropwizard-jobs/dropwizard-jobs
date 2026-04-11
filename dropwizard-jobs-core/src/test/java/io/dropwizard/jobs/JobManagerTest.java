@@ -5,6 +5,7 @@ import io.dropwizard.jobs.annotations.On;
 import io.dropwizard.jobs.scheduler.CronExpressionParser;
 import org.hamcrest.Matchers;
 import org.hamcrest.core.IsEqual;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.quartz.*;
@@ -22,11 +23,16 @@ import static org.mockito.Mockito.*;
 
 public class JobManagerTest {
 
-    private JobManager jobManager = JobManager.fromJobs(new TestConfig(), new ArrayList<>());
+    private JobManager jobManager;
     private final ApplicationStartTestJob startTestJob = new ApplicationStartTestJob();
     private final OnTestJob onTestJob = new OnTestJob();
     private final OnTestJobWithJobName onTestJobWithJobName = new OnTestJobWithJobName();
     private final EveryTestJob everyTestJob = new EveryTestJob();
+
+    @BeforeEach
+    public void setUp() {
+        jobManager = JobManager.fromJobs(new TestConfig(), new ArrayList<>());
+    }
     private final EveryTestJobWithDelay everyTestJobWithDelay = new EveryTestJobWithDelay();
     private final EveryTestJobAlternativeConfiguration everyTestJobAlternativeConfiguration = new EveryTestJobAlternativeConfiguration();
     private final EveryTestJobWithJobName everyTestJobWithJobName = new EveryTestJobWithJobName();
