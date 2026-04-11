@@ -335,7 +335,7 @@ public class JobManager implements Managed, JobMediator {
     }
 
     /**
-
+ 
      * Schedules a job to run immediately.
      * <p>
      * This method creates a trigger that fires immediately and schedules the job
@@ -345,6 +345,7 @@ public class JobManager implements Managed, JobMediator {
      * @param jobDetail the job detail describing the job to schedule
      * @throws SchedulerException if the job cannot be scheduled
      */
+    @Override
     public void scheduleNow(JobDetail jobDetail) throws SchedulerException {
         Trigger nowTrigger = nowTrigger();
         scheduler.scheduleJob(jobDetail, Set.of(nowTrigger), true);
