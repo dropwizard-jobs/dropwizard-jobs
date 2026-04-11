@@ -420,6 +420,7 @@ public class JobManagerTest {
             return jobs;
         }
 
+        @Override
         public Map<String, String> getQuartzConfiguration() {
             return quartzConfiguration;
         }
