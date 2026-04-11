@@ -3,7 +3,6 @@ package io.dropwizard.jobs;
 import org.glassfish.hk2.api.Filter;
 import org.glassfish.hk2.api.ServiceHandle;
 import org.glassfish.hk2.api.ServiceLocator;
-import org.quartz.JobKey;
 import org.quartz.Scheduler;
 import org.quartz.spi.JobFactory;
 import org.quartz.spi.TriggerFiredBundle;
@@ -33,7 +32,6 @@ public class Hk2JobFactory implements JobFactory {
 
     @Override
     public org.quartz.Job newJob(TriggerFiredBundle bundle, Scheduler scheduler) {
-        JobKey jobKey = bundle.getJobDetail().getKey();
         Class<? extends org.quartz.Job> jobClass = bundle.getJobDetail().getJobClass();
 
         // Find the service handle for this job class
