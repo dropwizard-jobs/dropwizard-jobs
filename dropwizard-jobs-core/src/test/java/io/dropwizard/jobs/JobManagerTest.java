@@ -421,6 +421,7 @@ public class JobManagerTest {
         }
 
         @Override
+        @Override
         public Map<String, String> getQuartzConfiguration() {
             return quartzConfiguration;
         }
