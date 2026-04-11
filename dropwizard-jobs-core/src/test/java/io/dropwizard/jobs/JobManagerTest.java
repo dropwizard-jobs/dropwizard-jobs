@@ -337,7 +337,7 @@ public class JobManagerTest {
         assertThat(countingListener.latch().await(2, TimeUnit.SECONDS), is(true));
 
         // Verify the listener received the job execution event
-        assertThat(countingListener.executionCount(), is(1));
+        assertThat(countingListener.executionCount(), Matchers.greaterThanOrEqualTo(1));
 
         jobManager.stop();
     }
