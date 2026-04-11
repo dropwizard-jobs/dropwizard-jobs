@@ -37,7 +37,8 @@ public class Hk2JobFactory implements JobFactory {
         // Find the service handle for this job class
         @SuppressWarnings("unchecked")
         ServiceHandle<Job> handle = locator.getAllServiceHandles(jobFilter).stream()
-                .filter(sh -> sh.getActiveDescriptor().getImplementationClass().equals(jobClass))
+                .filter(sh -> sh.getActiveDescriptor() != null
+                        && sh.getActiveDescriptor().getImplementationClass().equals(jobClass))
                 .findFirst()
                 .map(sh -> (ServiceHandle<Job>) sh)
                 .orElseThrow(() -> new IllegalStateException("No HK2 service found for job class: " + jobClass));
