@@ -43,7 +43,7 @@
         <nexus-staging-maven-plugin.version>1.7.0</nexus-staging-maven-plugin.version>
         <quartz.version>2.5.2</quartz.version>
         <snakeyaml.version>2.6</snakeyaml.version>
-        <spring.version>7.0.6</spring.version>
+        <spring.version>7.0.7</spring.version>
     </properties>
 
     <developers>
