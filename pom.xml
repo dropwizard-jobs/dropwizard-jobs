@@ -37,7 +37,7 @@
         <maven-site-plugin.version>3.21.0</maven-site-plugin.version>
         <maven-source-plugin.version>3.4.0</maven-source-plugin.version>
         <maven-surefire-plugin.version>3.5.5</maven-surefire-plugin.version>
-        <mchange-commons-java.version>0.4.0</mchange-commons-java.version>
+        <mchange-commons-java.version>0.5.0</mchange-commons-java.version>
         <central-publishing-maven-plugin.version>0.10.0</central-publishing-maven-plugin.version>
         <mockito.version>5.23.0</mockito.version>
         <nexus-staging-maven-plugin.version>1.7.0</nexus-staging-maven-plugin.version>
