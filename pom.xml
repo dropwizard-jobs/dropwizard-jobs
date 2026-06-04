@@ -20,7 +20,7 @@
         <awaitility.version>4.3.0</awaitility.version>
         <c3p0.version>0.13.0</c3p0.version>
         <commons-lang3.version>3.20.0</commons-lang3.version>
-        <dropwizard.version>5.0.1</dropwizard.version>
+        <dropwizard.version>5.0.2</dropwizard.version>
         <guava.version>33.6.0-jre</guava.version>
         <guice.version>7.0.0</guice.version>
         <jackson.version>2.21.3</jackson.version>
