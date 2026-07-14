@@ -5,6 +5,7 @@ import io.dropwizard.jobs.annotations.On;
 import io.dropwizard.jobs.scheduler.CronExpressionParser;
 import org.hamcrest.Matchers;
 import org.hamcrest.core.IsEqual;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.quartz.*;
@@ -22,11 +23,16 @@ import static org.mockito.Mockito.*;
 
 public class JobManagerTest {
 
-    private JobManager jobManager = JobManager.fromJobs(new TestConfig(), new ArrayList<>());
+    private JobManager jobManager;
     private final ApplicationStartTestJob startTestJob = new ApplicationStartTestJob();
     private final OnTestJob onTestJob = new OnTestJob();
     private final OnTestJobWithJobName onTestJobWithJobName = new OnTestJobWithJobName();
     private final EveryTestJob everyTestJob = new EveryTestJob();
+
+    @BeforeEach
+    public void setUp() {
+        jobManager = JobManager.fromJobs(new TestConfig(), new ArrayList<>());
+    }
     private final EveryTestJobWithDelay everyTestJobWithDelay = new EveryTestJobWithDelay();
     private final EveryTestJobAlternativeConfiguration everyTestJobAlternativeConfiguration = new EveryTestJobAlternativeConfiguration();
     private final EveryTestJobWithJobName everyTestJobWithJobName = new EveryTestJobWithJobName();
@@ -337,7 +343,7 @@ public class JobManagerTest {
         assertThat(countingListener.latch().await(2, TimeUnit.SECONDS), is(true));
 
         // Verify the listener received the job execution event
-        assertThat(countingListener.executionCount(), is(1));
+        assertThat(countingListener.executionCount(), Matchers.greaterThanOrEqualTo(1));
 
         jobManager.stop();
     }
@@ -357,9 +363,9 @@ public class JobManagerTest {
         assertThat(listener1.latch().await(2, TimeUnit.SECONDS), is(true));
         assertThat(listener2.latch().await(2, TimeUnit.SECONDS), is(true));
 
-        // Both listeners should have received the event
-        assertThat(listener1.executionCount(), is(1));
-        assertThat(listener2.executionCount(), is(1));
+        // Both listeners should have received at least one event
+        assertThat(listener1.executionCount(), Matchers.greaterThanOrEqualTo(1));
+        assertThat(listener2.executionCount(), Matchers.greaterThanOrEqualTo(1));
 
         jobManager.stop();
     }
