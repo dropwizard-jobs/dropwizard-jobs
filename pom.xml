@@ -23,7 +23,8 @@
         <dropwizard.version>5.0.2</dropwizard.version>
         <guava.version>33.7.0-jre</guava.version>
         <guice.version>7.0.0</guice.version>
-        <jackson.version>2.22.1</jackson.version>
+        <httpclient5.version>5.6.4</httpclient5.version>
+        <jackson.version>2.22.2</jackson.version>
         <jacoco-maven-plugin.version>0.8.15</jacoco-maven-plugin.version>
         <jakarta-inject.version>2.0.1.MR</jakarta-inject.version>
         <jersey.version>4.0.2</jersey.version>
@@ -146,9 +147,11 @@
                 <version>${jetty.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-core</artifactId>
+                <groupId>com.fasterxml.jackson</groupId>
+                <artifactId>jackson-bom</artifactId>
                 <version>${jackson.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
             <dependency>
                 <groupId>ch.qos.logback</groupId>
@@ -184,6 +187,11 @@
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-lang3</artifactId>
                 <version>${commons-lang3.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.httpcomponents.client5</groupId>
+                <artifactId>httpclient5</artifactId>
+                <version>${httpclient5.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
