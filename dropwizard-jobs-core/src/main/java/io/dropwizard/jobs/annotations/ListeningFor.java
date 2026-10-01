@@ -49,7 +49,7 @@ public @interface ListeningFor {
      * The meaning depends on the matcher type:
      * </p>
      * <ul>
-     *   <li>{@code JOB_NAME_EQUALS} - the exact job name to match</li>
+     *   <li>{@code JOB_NAME_EQUALS} - the exact job name to match, in any job group</li>
      *   <li>{@code JOB_GROUP_EQUALS} - the exact group name to match</li>
      *   <li>{@code JOB_NAME_STARTS_WITH} - the job name prefix</li>
      *   <li>{@code JOB_NAME_ENDS_WITH} - the job name suffix</li>
@@ -70,7 +70,7 @@ public @interface ListeningFor {
      * </p>
      * <ul>
      *   <li>{@link #ALL_JOBS} → {@code EverythingMatcher.allJobs()}</li>
-     *   <li>{@link #JOB_NAME_EQUALS} → {@code KeyMatcher.keyEquals(JobKey.jobKey(value))}</li>
+     *   <li>{@link #JOB_NAME_EQUALS} → {@code NameMatcher.nameEquals(value)}</li>
      *   <li>{@link #JOB_GROUP_EQUALS} → {@code GroupMatcher.jobGroupEquals(value)}</li>
      *   <li>{@link #JOB_NAME_STARTS_WITH} → {@code NameMatcher.nameStartsWith(value)}</li>
      *   <li>{@link #JOB_NAME_ENDS_WITH} → {@code NameMatcher.nameEndsWith(value)}</li>
@@ -83,7 +83,7 @@ public @interface ListeningFor {
     enum MatcherType {
         /** Matches all jobs. No value required. */
         ALL_JOBS,
-        /** Matches a job with the exact name specified in value. */
+        /** Matches jobs with the exact name specified in value, in any group. */
         JOB_NAME_EQUALS,
         /** Matches all jobs in the group specified in value. */
         JOB_GROUP_EQUALS,

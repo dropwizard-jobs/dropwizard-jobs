@@ -14,7 +14,6 @@ import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.impl.matchers.EverythingMatcher;
 import org.quartz.impl.matchers.GroupMatcher;
-import org.quartz.impl.matchers.KeyMatcher;
 import org.quartz.impl.matchers.NameMatcher;
 
 import java.util.List;
@@ -22,6 +21,8 @@ import java.util.List;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 public class JobListenerRegistrarTest {
@@ -45,10 +46,12 @@ public class JobListenerRegistrarTest {
     }
 
     @Test
-    public void testJobNameEqualsProducesKeyMatcher() {
+    public void testJobNameEqualsMatchesAcrossGroups() {
         Matcher<JobKey> matcher = JobListenerRegistrar.resolveMatcherFrom(NameMatchTestJobListener.class);
 
-        assertThat(matcher, instanceOf(KeyMatcher.class));
+        assertTrue(matcher.isMatch(JobKey.jobKey("testJob")));
+        assertTrue(matcher.isMatch(JobKey.jobKey("testJob", "reporting")));
+        assertFalse(matcher.isMatch(JobKey.jobKey("otherJob", "reporting")));
     }
 
     @Test
@@ -120,7 +123,10 @@ public class JobListenerRegistrarTest {
     @Test
     public void testToMatcherJobNameEquals() {
         Matcher<JobKey> matcher = JobListenerRegistrar.toMatcher(MatcherType.JOB_NAME_EQUALS, "myJob");
-        assertThat(matcher, instanceOf(KeyMatcher.class));
+        assertTrue(matcher.isMatch(JobKey.jobKey("myJob")));
+        assertTrue(matcher.isMatch(JobKey.jobKey("myJob", "batch")));
+        assertFalse(matcher.isMatch(JobKey.jobKey("myJobExtra", "batch")));
+        assertFalse(matcher.isMatch(JobKey.jobKey("prefixmyJob", "batch")));
     }
 
     @Test
@@ -218,7 +224,9 @@ public class JobListenerRegistrarTest {
         verify(mockListenerManager).addJobListener(eq(testListener), matcherCaptor.capture());
 
         Matcher<JobKey> capturedMatcher = matcherCaptor.getValue();
-        assertThat(capturedMatcher, instanceOf(KeyMatcher.class));
+        assertTrue(capturedMatcher.isMatch(JobKey.jobKey("testJob")));
+        assertTrue(capturedMatcher.isMatch(JobKey.jobKey("testJob", "reporting")));
+        assertFalse(capturedMatcher.isMatch(JobKey.jobKey("otherJob", "reporting")));
     }
 
     @Test

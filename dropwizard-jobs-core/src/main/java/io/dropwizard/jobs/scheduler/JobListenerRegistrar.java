@@ -9,7 +9,6 @@ import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.impl.matchers.EverythingMatcher;
 import org.quartz.impl.matchers.GroupMatcher;
-import org.quartz.impl.matchers.KeyMatcher;
 import org.quartz.impl.matchers.NameMatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,7 +91,7 @@ public class JobListenerRegistrar {
     static Matcher<JobKey> toMatcher(MatcherType type, String value) {
         return switch (type) {
             case ALL_JOBS -> EverythingMatcher.allJobs();
-            case JOB_NAME_EQUALS -> KeyMatcher.keyEquals(JobKey.jobKey(value));
+            case JOB_NAME_EQUALS -> NameMatcher.nameEquals(value);
             case JOB_GROUP_EQUALS -> GroupMatcher.jobGroupEquals(value);
             case JOB_NAME_STARTS_WITH -> NameMatcher.nameStartsWith(value);
             case JOB_NAME_ENDS_WITH -> NameMatcher.nameEndsWith(value);
