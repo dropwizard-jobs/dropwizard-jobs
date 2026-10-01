@@ -49,7 +49,7 @@ public @interface ListeningFor {
      * The meaning depends on the matcher type:
      * </p>
      * <ul>
-     *   <li>{@code JOB_NAME_EQUALS} - the exact job name to match</li>
+     *   <li>{@code JOB_NAME_EQUALS} - the exact job name to match, in any job group</li>
      *   <li>{@code JOB_GROUP_EQUALS} - the exact group name to match</li>
      *   <li>{@code JOB_NAME_STARTS_WITH} - the job name prefix</li>
      *   <li>{@code JOB_NAME_ENDS_WITH} - the job name suffix</li>

@@ -219,11 +219,11 @@ The `@ListeningFor` annotation supports a `matcher` attribute and a `value` attr
 | Matcher Type | Description | Example |
 |---|---|---|
 | `ALL_JOBS` (default) | Listens to all jobs | `@ListeningFor` |
-| `JOB_NAME_EQUALS` | Match specific job by name | `@ListeningFor(matcher = MatcherType.JOB_NAME_EQUALS, value = "myJob")` |
+| `JOB_NAME_EQUALS` | Match specific job by name, in any group | `@ListeningFor(matcher = MatcherType.JOB_NAME_EQUALS, value = "myJob")` |
 | `JOB_GROUP_EQUALS` | Match jobs in a specific group | `@ListeningFor(matcher = MatcherType.JOB_GROUP_EQUALS, value = "myGroup")` |
-| `JOB_NAME_STARTS_WITH` | Match jobs whose name starts with | `@ListeningFor(matcher = MatcherType.JOB_NAME_STARTS_WITH, value = "report")` |
-| `JOB_NAME_ENDS_WITH` | Match jobs whose name ends with | `@ListeningFor(matcher = MatcherType.JOB_NAME_ENDS_WITH, value = "Cleanup")` |
-| `JOB_NAME_CONTAINS` | Match jobs whose name contains | `@ListeningFor(matcher = MatcherType.JOB_NAME_CONTAINS, value = "import")` |
+| `JOB_NAME_STARTS_WITH` | Match jobs whose name starts with, in any group | `@ListeningFor(matcher = MatcherType.JOB_NAME_STARTS_WITH, value = "report")` |
+| `JOB_NAME_ENDS_WITH` | Match jobs whose name ends with, in any group | `@ListeningFor(matcher = MatcherType.JOB_NAME_ENDS_WITH, value = "Cleanup")` |
+| `JOB_NAME_CONTAINS` | Match jobs whose name contains, in any group | `@ListeningFor(matcher = MatcherType.JOB_NAME_CONTAINS, value = "import")` |
 | `JOB_GROUP_STARTS_WITH` | Match jobs whose group starts with | `@ListeningFor(matcher = MatcherType.JOB_GROUP_STARTS_WITH, value = "batch")` |
 | `JOB_GROUP_ENDS_WITH` | Match jobs whose group ends with | `@ListeningFor(matcher = MatcherType.JOB_GROUP_ENDS_WITH, value = "Jobs")` |
 | `JOB_GROUP_CONTAINS` | Match jobs whose group contains | `@ListeningFor(matcher = MatcherType.JOB_GROUP_CONTAINS, value = "critical")` |

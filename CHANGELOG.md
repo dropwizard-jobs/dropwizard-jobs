@@ -2,6 +2,14 @@
 
 **Only BREAKING changes are listed here. Please check [release logs](https://github.com/dropwizard-jobs/dropwizard-jobs/releases) for a list of full changes**
 
+## 8.0.0
+
+* BREAKING: `@ListeningFor(matcher = JOB_NAME_EQUALS, value = "x")` now matches a job named
+  `x` in **any** job group, not only in `DEFAULT`. It compared a full job key, so a listener
+  for a job scheduled into a named group never fired. The annotation documentation already
+  stated that names match across groups. Applications that relied on the old
+  `DEFAULT`-only behaviour will now receive events from every group holding that job name.
+
 ## 6.0.0
 
 * Major refactoring and clean up by @hakandilek in #121
