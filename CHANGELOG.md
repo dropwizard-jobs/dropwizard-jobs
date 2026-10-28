@@ -6,9 +6,11 @@
 
 * BREAKING: `@ListeningFor(matcher = JOB_NAME_EQUALS, value = "x")` now matches a job named
   `x` in **any** job group, not only in `DEFAULT`. It compared a full job key, so a listener
-  for a job scheduled into a named group never fired. The annotation documentation already
-  stated that names match across groups. Applications that relied on the old
-  `DEFAULT`-only behaviour will now receive events from every group holding that job name.
+  for a job scheduled into a named group never fired. This aligns exact-name matching with
+  the other name filters, which already ignored groups. Applications that relied on the old
+  `DEFAULT`-only behaviour will now receive events from every group holding that job name
+  unless they set `group = "DEFAULT"`. The optional `group` attribute restricts any `JOB_NAME_*`
+  matcher to one exact group; it cannot be combined with `ALL_JOBS` or `JOB_GROUP_*` matchers.
 
 ## 6.0.0
 
@@ -75,7 +77,7 @@
 
 ## 5.0.0
 
-* Dependency updates due to vulnerabilities - #161 #160 #159 
+* Dependency updates due to vulnerabilities - #161 #160 #159
 * Updated to use Dropwizard 3 - #151 - Thanks to @eddymouthaan
 * Artifact publishing refactored to publish snapshots on [GH package repository](https://github.com/orgs/dropwizard-jobs/packages?repo_name=dropwizard-jobs) - #162
 
@@ -92,8 +94,8 @@
 
 * The `groupId` has been renamed to `io.github.dropwizard-jobs`
 * Repository moved to `https://github.com/dropwizard-jobs/dropwizard-jobs`
-* Java packages are renamed to `io.dropwizard.jobs.*` 
-* See [release notes](https://github.com/dropwizard-jobs/dropwizard-jobs/releases/tag/v4.1.0-RELEASE) for a full list of changes 
+* Java packages are renamed to `io.dropwizard.jobs.*`
+* See [release notes](https://github.com/dropwizard-jobs/dropwizard-jobs/releases/tag/v4.1.0-RELEASE) for a full list of changes
 
 ## 2.0.0
 

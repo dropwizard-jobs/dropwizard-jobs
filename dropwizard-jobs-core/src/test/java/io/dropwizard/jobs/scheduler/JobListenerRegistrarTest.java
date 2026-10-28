@@ -15,17 +15,26 @@ import org.quartz.SchedulerException;
 import org.quartz.impl.matchers.EverythingMatcher;
 import org.quartz.impl.matchers.GroupMatcher;
 import org.quartz.impl.matchers.NameMatcher;
+import org.quartz.listeners.JobListenerSupport;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 public class JobListenerRegistrarTest {
+
+    private static final Map<MatcherType, String> NAME_MATCHES = Map.of(
+            MatcherType.JOB_NAME_EQUALS, "report",
+            MatcherType.JOB_NAME_STARTS_WITH, "reportJob",
+            MatcherType.JOB_NAME_ENDS_WITH, "dailyreport",
+            MatcherType.JOB_NAME_CONTAINS, "dailyreportJob");
 
     // ========================================================================
     // Tests for resolveMatcherFrom() - testing matcher resolution from annotations
@@ -171,6 +180,58 @@ public class JobListenerRegistrarTest {
         assertThat(matcher, instanceOf(GroupMatcher.class));
     }
 
+    @Test
+    public void testNameMatchersWithoutGroupMatchAcrossGroups() {
+        for (Map.Entry<MatcherType, String> entry : NAME_MATCHES.entrySet()) {
+            Matcher<JobKey> matcher = JobListenerRegistrar.toMatcher(entry.getKey(), "report", "");
+            for (String group : List.of(Scheduler.DEFAULT_GROUP, "reporting", "batch")) {
+                assertTrue(matcher.isMatch(JobKey.jobKey(entry.getValue(), group)), entry.getKey().name());
+                assertFalse(matcher.isMatch(JobKey.jobKey("otherJob", group)), entry.getKey().name());
+            }
+        }
+    }
+
+    @Test
+    public void testNameMatchersCanBeRestrictedToGroup() {
+        for (Map.Entry<MatcherType, String> entry : NAME_MATCHES.entrySet()) {
+            Matcher<JobKey> matcher = JobListenerRegistrar.toMatcher(entry.getKey(), "report", "reporting");
+            assertTrue(matcher.isMatch(JobKey.jobKey(entry.getValue(), "reporting")), entry.getKey().name());
+            assertFalse(matcher.isMatch(JobKey.jobKey(entry.getValue())), entry.getKey().name());
+            assertFalse(matcher.isMatch(JobKey.jobKey(entry.getValue(), "batch")), entry.getKey().name());
+            assertFalse(matcher.isMatch(JobKey.jobKey("otherJob", "reporting")), entry.getKey().name());
+        }
+    }
+
+    @Test
+    public void testExplicitDefaultGroupPreservesExactNameScope() {
+        Matcher<JobKey> matcher = JobListenerRegistrar.toMatcher(MatcherType.JOB_NAME_EQUALS, "report", Scheduler.DEFAULT_GROUP);
+
+        assertTrue(matcher.isMatch(JobKey.jobKey("report")));
+        assertFalse(matcher.isMatch(JobKey.jobKey("report", "reporting")));
+        assertFalse(matcher.isMatch(JobKey.jobKey("reportJob")));
+        assertFalse(matcher.isMatch(JobKey.jobKey("dailyreport")));
+    }
+
+    @Test
+    public void testGroupNamesAreMatchedLiterally() {
+        Matcher<JobKey> matcher = JobListenerRegistrar.toMatcher(MatcherType.JOB_NAME_EQUALS, "report", " reporting ");
+
+        assertTrue(matcher.isMatch(JobKey.jobKey("report", " reporting ")));
+        assertFalse(matcher.isMatch(JobKey.jobKey("report", "reporting")));
+    }
+
+    @Test
+    public void testGroupRestrictionRejectsNonNameMatchers() {
+        for (MatcherType type : MatcherType.values()) {
+            if (!NAME_MATCHES.containsKey(type)) {
+                IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                        () -> JobListenerRegistrar.toMatcher(type, "report", "reporting"));
+                assertEquals("@ListeningFor group is only supported for JOB_NAME_* matchers, not " + type,
+                        exception.getMessage());
+            }
+        }
+    }
+
     // ========================================================================
     // Tests for register() method - integration with Scheduler
     // ========================================================================
@@ -240,5 +301,51 @@ public class JobListenerRegistrarTest {
         registrar.register();
 
         verify(mockListenerManager, never()).addJobListener(any(JobListener.class), any(Matcher.class));
+    }
+
+    @Test
+    public void testRegisterWithGroupRestrictedListener() throws SchedulerException {
+        Scheduler mockScheduler = mock(Scheduler.class);
+        org.quartz.ListenerManager mockListenerManager = mock(org.quartz.ListenerManager.class);
+        when(mockScheduler.getListenerManager()).thenReturn(mockListenerManager);
+
+        JobListener listener = new ScopedNameTestJobListener();
+        JobListenerRegistrar registrar = new JobListenerRegistrar(mockScheduler, List.of(listener));
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<Matcher<JobKey>> matcherCaptor = ArgumentCaptor.forClass(Matcher.class);
+
+        registrar.register();
+
+        verify(mockListenerManager).addJobListener(eq(listener), matcherCaptor.capture());
+        Matcher<JobKey> matcher = matcherCaptor.getValue();
+        assertTrue(matcher.isMatch(JobKey.jobKey("testJob", "reporting")));
+        assertFalse(matcher.isMatch(JobKey.jobKey("testJob")));
+        assertFalse(matcher.isMatch(JobKey.jobKey("testJob", "batch")));
+        assertFalse(matcher.isMatch(JobKey.jobKey("otherJob", "reporting")));
+    }
+
+    @Test
+    public void testRegisterRejectsInvalidGroupBeforeAccessingScheduler() {
+        Scheduler mockScheduler = mock(Scheduler.class);
+        JobListenerRegistrar registrar = new JobListenerRegistrar(mockScheduler, List.of(new InvalidGroupTestJobListener()));
+
+        assertThrows(IllegalArgumentException.class, registrar::register);
+        verifyNoInteractions(mockScheduler);
+    }
+
+    @ListeningFor(matcher = MatcherType.JOB_NAME_EQUALS, value = "testJob", group = "reporting")
+    static class ScopedNameTestJobListener extends JobListenerSupport {
+        @Override
+        public String getName() {
+            return getClass().getSimpleName();
+        }
+    }
+
+    @ListeningFor(group = "reporting")
+    static class InvalidGroupTestJobListener extends JobListenerSupport {
+        @Override
+        public String getName() {
+            return getClass().getSimpleName();
+        }
     }
 }

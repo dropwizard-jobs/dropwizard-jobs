@@ -214,7 +214,7 @@ public class MyJobListener implements JobListener {
 
 ### Matcher Types
 
-The `@ListeningFor` annotation supports a `matcher` attribute and a `value` attribute to control which jobs the listener observes:
+The `@ListeningFor` annotation supports `matcher` and `value` attributes, plus an optional `group` restriction for name matchers:
 
 | Matcher Type | Description | Example |
 |---|---|---|
@@ -227,6 +227,23 @@ The `@ListeningFor` annotation supports a `matcher` attribute and a `value` attr
 | `JOB_GROUP_STARTS_WITH` | Match jobs whose group starts with | `@ListeningFor(matcher = MatcherType.JOB_GROUP_STARTS_WITH, value = "batch")` |
 | `JOB_GROUP_ENDS_WITH` | Match jobs whose group ends with | `@ListeningFor(matcher = MatcherType.JOB_GROUP_ENDS_WITH, value = "Jobs")` |
 | `JOB_GROUP_CONTAINS` | Match jobs whose group contains | `@ListeningFor(matcher = MatcherType.JOB_GROUP_CONTAINS, value = "critical")` |
+
+### Group-Scoped Name Matching
+
+The four `JOB_NAME_*` matchers match across all groups by default. Set `group` to restrict the name match to one exact group:
+
+```java
+@ListeningFor(matcher = MatcherType.JOB_NAME_EQUALS, value = "myJob", group = "reporting")
+```
+
+An empty `group` (the default) leaves matching unrestricted by group. Non-empty group names are matched literally, without trimming or normalization.
+Setting a non-empty `group` with `ALL_JOBS` or a `JOB_GROUP_*` matcher throws `IllegalArgumentException` during listener registration, before jobs are scheduled.
+
+Previously, `JOB_NAME_EQUALS` matched only jobs in `DEFAULT`. To preserve that scope explicitly:
+
+```java
+@ListeningFor(matcher = MatcherType.JOB_NAME_EQUALS, value = "myJob", group = "DEFAULT")
+```
 
 ### Registering Job Listeners
 
