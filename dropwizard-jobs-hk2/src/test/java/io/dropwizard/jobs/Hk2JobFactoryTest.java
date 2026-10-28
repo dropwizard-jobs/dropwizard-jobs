@@ -4,6 +4,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -17,6 +19,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.quartz.JobDetail;
+import org.quartz.JobBuilder;
 import org.quartz.JobKey;
 import org.quartz.Scheduler;
 import org.quartz.spi.TriggerFiredBundle;
@@ -47,6 +50,7 @@ public class Hk2JobFactoryTest {
             @Override
             protected void configure() {
                 bind(ApplicationStartTestJob.class).to(Job.class);
+                bind(ApplicationStopTestJob.class).to(Job.class).in(jakarta.inject.Singleton.class);
             }
         });
         
@@ -70,6 +74,17 @@ public class Hk2JobFactoryTest {
         org.quartz.Job job = jobFactory.newJob(bundle, scheduler);
         
         assertThat(job, is(instanceOf(ApplicationStartTestJob.class)));
+    }
+
+    @Test
+    public void respectsSingletonAndPerLookupScopes() {
+        TriggerFiredBundle perLookup = mock(TriggerFiredBundle.class);
+        when(perLookup.getJobDetail()).thenReturn(JobBuilder.newJob(ApplicationStartTestJob.class).build());
+        assertNotSame(jobFactory.newJob(perLookup, null), jobFactory.newJob(perLookup, null));
+
+        TriggerFiredBundle singleton = mock(TriggerFiredBundle.class);
+        when(singleton.getJobDetail()).thenReturn(JobBuilder.newJob(ApplicationStopTestJob.class).build());
+        assertSame(jobFactory.newJob(singleton, null), jobFactory.newJob(singleton, null));
     }
 
     @Test

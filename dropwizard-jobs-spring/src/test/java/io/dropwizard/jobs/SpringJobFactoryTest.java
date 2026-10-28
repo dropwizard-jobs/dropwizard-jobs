@@ -68,6 +68,17 @@ class SpringJobFactoryTest {
     }
 
     @Test
+    void prototypeJobsAreNewForEachExecution() throws Exception {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext()) {
+            context.registerBean(ReflectiveTestJob.class, definition -> definition.setScope("prototype"));
+            context.refresh();
+            SpringJobFactory factory = new SpringJobFactory(context);
+            assertNotSame(factory.newJob(bundleFor(ReflectiveTestJob.class), null),
+                    factory.newJob(bundleFor(ReflectiveTestJob.class), null));
+        }
+    }
+
+    @Test
     void reflectionFailuresRetainTheirCauses() {
         ApplicationContext context = mock(ApplicationContext.class);
         when(context.getAutowireCapableBeanFactory()).thenThrow(new IllegalStateException("autowiring unavailable"));

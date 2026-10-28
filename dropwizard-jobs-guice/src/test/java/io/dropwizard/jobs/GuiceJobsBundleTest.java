@@ -143,6 +143,46 @@ public class GuiceJobsBundleTest {
         assertThat(bundle.getScheduler(), is(notNullValue()));
     }
 
+    @Test
+    public void deferredSupplierFailureIsPreserved() throws Exception {
+        IllegalStateException expected = new IllegalStateException("injector unavailable");
+        prepareDeferredBundle(() -> { throw expected; });
+        assertThat(assertThrows(IllegalStateException.class, managed::start), is(expected));
+    }
+
+    @Test
+    public void deferredNullInjectorFailsDuringStart() throws Exception {
+        prepareDeferredBundle(() -> null);
+        assertThrows(NullPointerException.class, managed::start);
+    }
+
+    @Test
+    public void deferredStopDelegatesToStartedManager() throws Exception {
+        GuiceJobsBundle bundle = prepareDeferredBundle(Guice::createInjector);
+        managed.start();
+        assertTrue(bundle.getScheduler().isStarted());
+        managed.stop();
+        managed = null;
+        assertTrue(bundle.getScheduler().isShutdown());
+    }
+
+    @Test
+    public void deferredStopBeforeStartDoesNotInvokeSupplier() throws Exception {
+        GuiceJobsBundle bundle = prepareDeferredBundle(() -> { throw new AssertionError("supplier called before start"); });
+        managed.stop();
+        assertThat(bundle.getScheduler(), is(nullValue()));
+    }
+
+    private GuiceJobsBundle prepareDeferredBundle(Supplier<Injector> supplier) throws Exception {
+        GuiceJobsBundle bundle = new GuiceJobsBundle(supplier);
+        when(environment.lifecycle()).thenReturn(applicationContext);
+        bundle.run(new MyConfiguration(), environment);
+        ArgumentCaptor<Managed> captor = ArgumentCaptor.forClass(Managed.class);
+        verify(applicationContext).manage(captor.capture());
+        managed = captor.getValue();
+        return bundle;
+    }
+
     // ========== Backward compatibility tests ==========
 
     @Test

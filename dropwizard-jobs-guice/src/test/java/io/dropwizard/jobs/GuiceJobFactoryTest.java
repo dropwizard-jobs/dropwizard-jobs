@@ -76,6 +76,13 @@ class GuiceJobFactoryTest {
     }
 
     @Test
+    void unscopedJobsAreNewForEachExecution() throws Exception {
+        GuiceJobFactory factory = new GuiceJobFactory(Guice.createInjector());
+        assertNotSame(factory.newJob(bundleFor(ReflectiveTestJob.class), null),
+                factory.newJob(bundleFor(ReflectiveTestJob.class), null));
+    }
+
+    @Test
     void reflectionFailuresRetainTheirCauses() {
         Injector injector = Guice.createInjector(binder -> binder.requireExplicitBindings());
         GuiceJobFactory factory = new GuiceJobFactory(injector);
