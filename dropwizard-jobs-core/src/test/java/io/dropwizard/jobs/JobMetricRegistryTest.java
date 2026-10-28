@@ -17,12 +17,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static io.dropwizard.jobs.Job.DROPWIZARD_JOBS_KEY;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.sameInstance;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 
 @Timeout(10)
@@ -102,15 +103,71 @@ public class JobMetricRegistryTest {
             for (Future<MetricRegistry> future : futures) {
                 assertThat(future.get(5, TimeUnit.SECONDS), is(sameInstance(expectedRegistry)));
             }
+            assertEquals(numThreads, expectedRegistry.timer(MetricRegistry.name(job.getClass())).getCount());
         } finally {
             executor.shutdownNow();
             assertTrue(executor.awaitTermination(5, TimeUnit.SECONDS));
         }
     }
 
-    /**
-     * Simple test job implementation for testing metric registry behavior.
-     */
+    @Test
+    public void successfulExecutionReceivesOriginalContextAndRecordsTiming() throws Exception {
+        MetricRegistry registry = new MetricRegistry();
+        AtomicReference<JobExecutionContext> received = new AtomicReference<>();
+        Job job = new TestJob(registry) {
+            @Override
+            public void doJob(JobExecutionContext context) {
+                received.set(context);
+            }
+        };
+        JobExecutionContext context = mock(JobExecutionContext.class);
+
+        job.execute(context);
+
+        assertSame(context, received.get());
+        assertEquals(1, registry.timer(MetricRegistry.name(job.getClass())).getCount());
+    }
+
+    @Test
+    public void failedExecutionRecordsTimingAndPreservesQuartzExceptionFlags() {
+        MetricRegistry registry = new MetricRegistry();
+        IllegalStateException cause = new IllegalStateException("dependency failed");
+        JobExecutionException expected = new JobExecutionException(cause);
+        expected.setRefireImmediately(true);
+        expected.setUnscheduleFiringTrigger(true);
+        expected.setUnscheduleAllTriggers(true);
+        Job job = new TestJob(registry) {
+            @Override
+            public void doJob(JobExecutionContext context) throws JobExecutionException {
+                throw expected;
+            }
+        };
+
+        JobExecutionException actual = assertThrows(JobExecutionException.class, () -> job.execute(mock(JobExecutionContext.class)));
+
+        assertSame(expected, actual);
+        assertSame(cause, actual.getCause());
+        assertTrue(actual.refireImmediately());
+        assertTrue(actual.unscheduleFiringTrigger());
+        assertTrue(actual.unscheduleAllTriggers());
+        assertEquals(1, registry.timer(MetricRegistry.name(job.getClass())).getCount());
+    }
+
+    @Test
+    public void uncheckedFailureAlsoRecordsTimingAndPreservesException() {
+        MetricRegistry registry = new MetricRegistry();
+        IllegalStateException expected = new IllegalStateException("execution failed");
+        Job job = new TestJob(registry) {
+            @Override
+            public void doJob(JobExecutionContext context) {
+                throw expected;
+            }
+        };
+
+        assertSame(expected, assertThrows(IllegalStateException.class, () -> job.execute(mock(JobExecutionContext.class))));
+        assertEquals(1, registry.timer(MetricRegistry.name(job.getClass())).getCount());
+    }
+
     private static class TestJob extends Job {
 
         public TestJob() {

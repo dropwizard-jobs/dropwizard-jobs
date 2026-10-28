@@ -18,6 +18,12 @@ import org.quartz.impl.triggers.CronTriggerImpl;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
+import static org.awaitility.Awaitility.await;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -450,6 +456,33 @@ public class JobManagerTest {
         }
     }
 
+    @Test
+    public void shutdownWaitsForRunningJobAndPreventsFurtherExecutions() throws Exception {
+        BlockingTestJob job = new BlockingTestJob();
+        jobManager = JobManager.fromJobs(new TestConfig(), List.of(job));
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        try {
+            jobManager.start();
+            assertTrue(job.started.await(2, TimeUnit.SECONDS));
+            Future<?> stopping = executor.submit(() -> {
+                jobManager.stop();
+                return null;
+            });
+            await().atMost(2, TimeUnit.SECONDS).until(() -> jobManager.scheduler.isInStandbyMode());
+            assertFalse(stopping.isDone());
+
+            job.release.countDown();
+            stopping.get(5, TimeUnit.SECONDS);
+
+            assertTrue(jobManager.scheduler.isShutdown());
+            assertEquals(1, job.executions.get());
+        } finally {
+            job.release.countDown();
+            executor.shutdownNow();
+            assertTrue(executor.awaitTermination(5, TimeUnit.SECONDS));
+        }
+    }
+
     private ScheduledJob scheduledJob(String name) {
         JobKey key = JobKey.jobKey(name, "recovery-tests");
         Trigger trigger = TriggerBuilder.newTrigger().withIdentity(name + "-trigger", key.getGroup())
@@ -543,6 +576,28 @@ public class JobManagerTest {
 
         public int executionCount() {
             return executionCount;
+        }
+    }
+
+    @Every("10ms")
+    @DisallowConcurrentExecution
+    public static class BlockingTestJob extends Job {
+        final CountDownLatch started = new CountDownLatch(1);
+        final CountDownLatch release = new CountDownLatch(1);
+        final AtomicInteger executions = new AtomicInteger();
+
+        @Override
+        public void doJob(JobExecutionContext context) throws JobExecutionException {
+            executions.incrementAndGet();
+            started.countDown();
+            try {
+                if (!release.await(5, TimeUnit.SECONDS)) {
+                    throw new JobExecutionException("Test did not release running job");
+                }
+            } catch (InterruptedException interrupted) {
+                Thread.currentThread().interrupt();
+                throw new JobExecutionException(interrupted);
+            }
         }
     }
 
