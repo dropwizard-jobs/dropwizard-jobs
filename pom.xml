@@ -41,6 +41,7 @@
         <maven-surefire-plugin.version>3.6.1</maven-surefire-plugin.version>
         <mchange-commons-java.version>0.6.1</mchange-commons-java.version>
         <central-publishing-maven-plugin.version>0.12.0</central-publishing-maven-plugin.version>
+        <dropwizard-metrics.version>4.2.40</dropwizard-metrics.version>
         <mockito.version>5.24.0</mockito.version>
         <nexus-staging-maven-plugin.version>1.7.0</nexus-staging-maven-plugin.version>
         <quartz.version>2.5.2</quartz.version>
@@ -146,6 +147,13 @@
                 <groupId>org.eclipse.jetty.ee10</groupId>
                 <artifactId>jetty-ee10-servlets</artifactId>
                 <version>${jetty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.dropwizard.metrics</groupId>
+                <artifactId>metrics-bom</artifactId>
+                <version>${dropwizard-metrics.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson</groupId>
