@@ -34,11 +34,14 @@ jobs:
                   ./mvnw --batch-mode versions:set -DnewVersion="$VERSION" -DgenerateBackupPoms=false
 
             - name: Import GPG key
+              env:
+                  GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
               run: |
-                  echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --batch --import
+                  printf '%s\n' "$GPG_PRIVATE_KEY" | gpg --batch --import
 
             - name: Publish to Maven Central
-              run: ./mvnw --batch-mode -Drelease -Dgpg.passphrase=${{ secrets.GPG_PASSPHRASE }} deploy
+              run: ./mvnw --batch-mode -Drelease deploy
               env:
+                  MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
                   MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
                   MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
