@@ -28,6 +28,7 @@ public class TimeParserUtil {
      * @param duration
      *            1d, 3h, 2mn, 7s, 50ms
      * @return The number of milliseconds
+    * @throws IllegalArgumentException if the duration is invalid or exceeds the millisecond range
      */
     public static long parseDuration(String duration) {
         if (duration == null || duration.isEmpty()) {
@@ -44,7 +45,11 @@ public class TimeParserUtil {
         
         for (Entry<Pattern, Long> entry : UNIT_MULTIPLIERS) {
             if (entry.getKey().matcher(unit).matches()) {
-                return value * entry.getValue();
+                try {
+                    return Math.multiplyExact(value, entry.getValue());
+                } catch (ArithmeticException e) {
+                    throw new IllegalArgumentException("Duration exceeds millisecond range: " + duration, e);
+                }
             }
         }
         
