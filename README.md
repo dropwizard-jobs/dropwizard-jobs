@@ -384,6 +384,9 @@ jobManager.start();
 You can also create a `MutableJobConfiguration` from an existing configuration and overlay
 additional properties:
 
+The `myCustomJob` schedule key below matches `@Every("${myCustomJob}")`, or an empty `@Every`
+annotation on a class named `MyCustomJob`.
+
 ```java
 // Start with configuration loaded from YAML
 JobConfiguration yamlConfig = applicationConfiguration;
@@ -391,7 +394,7 @@ JobConfiguration yamlConfig = applicationConfiguration;
 // Create a mutable copy and add dynamic properties
 MutableJobConfiguration config = new MutableJobConfiguration(yamlConfig)
     .withQuartzProperty("org.quartz.dataSource.myDS.URL", dynamicJdbcUrl)
-    .withJob("MyCustomJob", "30s");  // Override job schedule
+  .withJob("myCustomJob", "30s");  // Override job schedule
 ```
 
 ### Available Methods
@@ -421,7 +424,13 @@ For `@On` jobs, the cron expression can have an optional timezone specified in s
 If no timezone is given, the `de.spinscale.dropwizard.jobs.timezone` system property will be used,
 otherwise your server's default timezone will apply.
 
-Where MyJob and MyOtherJob are the names of Job classes in the application. In the `Configuration` class add the corresponding property:
+For an empty annotation value, configuration keys use the job's simple class name with its first
+character lowercased: `MyJob` uses `myJob`, and `MyOtherJob` uses `myOtherJob`.
+
+Select a key explicitly with `@Every("${myJob}")` or `@On("${cronJob}")`. Literal schedules such as
+`@Every("10s")` are used directly and are not overridden through this map.
+
+In the `Configuration` class add the corresponding property:
 
 ```java
 @JsonProperty("jobs")
