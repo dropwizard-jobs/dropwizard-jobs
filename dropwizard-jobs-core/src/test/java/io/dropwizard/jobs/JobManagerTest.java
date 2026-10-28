@@ -1,6 +1,8 @@
 package io.dropwizard.jobs;
 
 import io.dropwizard.jobs.annotations.Every;
+import io.dropwizard.jobs.annotations.ListeningFor;
+import io.dropwizard.jobs.annotations.ListeningFor.MatcherType;
 import io.dropwizard.jobs.annotations.On;
 import io.dropwizard.jobs.scheduler.CronExpressionParser;
 import org.hamcrest.Matchers;
@@ -10,11 +12,15 @@ import org.mockito.Mockito;
 import org.quartz.*;
 import org.quartz.impl.matchers.GroupMatcher;
 import org.quartz.impl.triggers.CronTriggerImpl;
+import org.quartz.listeners.JobListenerSupport;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.*;
@@ -364,6 +370,37 @@ public class JobManagerTest {
         jobManager.stop();
     }
 
+    @Test
+    public void testAnnotatedJobListenersMatchJobNamesAndGroups() throws Exception {
+        RecordingTestJobListener allJobsListener = new RecordingTestJobListener(5);
+        NameMatchingTestJobListener nameListener = new NameMatchingTestJobListener();
+        ReportingGroupTestJobListener reportingListener = new ReportingGroupTestJobListener();
+        DefaultGroupTestJobListener defaultListener = new DefaultGroupTestJobListener();
+        TestConfig config = new TestConfig();
+        config.getQuartzConfiguration().put("org.quartz.scheduler.instanceName", "listener-matching-" + UUID.randomUUID());
+
+        jobManager = JobManager.fromJobs(config,
+                List.of(new ListenerTestJob(null), new ListenerTestJob("reporting"), new ListenerTestJob("batch"),
+                        new OtherListenerTestJob(null), new OtherListenerTestJob("reporting")),
+                List.of(allJobsListener, nameListener, reportingListener, defaultListener));
+
+        try {
+            jobManager.start();
+            assertTrue(allJobsListener.latch().await(2, TimeUnit.SECONDS));
+        } finally {
+            jobManager.stop();
+        }
+
+        JobKey defaultKey = JobKey.jobKey("listenerTestJob");
+        JobKey reportingKey = JobKey.jobKey("listenerTestJob", "reporting");
+        JobKey batchKey = JobKey.jobKey("listenerTestJob", "batch");
+        assertThat(allJobsListener.executedJobs(), containsInAnyOrder(defaultKey, reportingKey, batchKey,
+                JobKey.jobKey("otherListenerTestJob"), JobKey.jobKey("otherListenerTestJob", "reporting")));
+        assertThat(nameListener.executedJobs(), containsInAnyOrder(defaultKey, reportingKey, batchKey));
+        assertThat(reportingListener.executedJobs(), containsInAnyOrder(reportingKey));
+        assertThat(defaultListener.executedJobs(), containsInAnyOrder(defaultKey));
+    }
+
     /**
      * A test JobListener that counts job executions using a CountDownLatch.
      */
@@ -406,6 +443,55 @@ public class JobManagerTest {
         }
     }
 
+    static class RecordingTestJobListener extends JobListenerSupport {
+        private final Queue<JobKey> executedJobs = new ConcurrentLinkedQueue<>();
+        private final CountDownLatch latch;
+
+        public RecordingTestJobListener(int expectedExecutions) {
+            latch = new CountDownLatch(expectedExecutions);
+        }
+
+        @Override
+        public String getName() {
+            return getClass().getSimpleName();
+        }
+
+        @Override
+        public void jobWasExecuted(JobExecutionContext context, JobExecutionException jobException) {
+            executedJobs.add(context.getJobDetail().getKey());
+            latch.countDown();
+        }
+
+        public CountDownLatch latch() {
+            return latch;
+        }
+
+        public List<JobKey> executedJobs() {
+            return List.copyOf(executedJobs);
+        }
+    }
+
+    @ListeningFor(matcher = MatcherType.JOB_NAME_EQUALS, value = "listenerTestJob")
+    static class NameMatchingTestJobListener extends RecordingTestJobListener {
+        public NameMatchingTestJobListener() {
+            super(3);
+        }
+    }
+
+    @ListeningFor(matcher = MatcherType.JOB_NAME_EQUALS, value = "listenerTestJob", group = "reporting")
+    static class ReportingGroupTestJobListener extends RecordingTestJobListener {
+        public ReportingGroupTestJobListener() {
+            super(1);
+        }
+    }
+
+    @ListeningFor(matcher = MatcherType.JOB_NAME_EQUALS, value = "listenerTestJob", group = Scheduler.DEFAULT_GROUP)
+    static class DefaultGroupTestJobListener extends RecordingTestJobListener {
+        public DefaultGroupTestJobListener() {
+            super(1);
+        }
+    }
+
     private static class TestConfig extends JobConfiguration {
         private final Map<String, String> quartzConfiguration;
 
@@ -430,6 +516,20 @@ public class JobManagerTest {
     static class EveryTestJobWithDefaultConfiguration extends AbstractJob {
         public EveryTestJobWithDefaultConfiguration() {
             super(1);
+        }
+    }
+
+    @Every(value = "1h", repeatCount = 0, jobName = "listenerTestJob")
+    static class ListenerTestJob extends AbstractJob {
+        public ListenerTestJob(String groupName) {
+            super(1, groupName);
+        }
+    }
+
+    @Every(value = "1h", repeatCount = 0, jobName = "otherListenerTestJob")
+    static class OtherListenerTestJob extends AbstractJob {
+        public OtherListenerTestJob(String groupName) {
+            super(1, groupName);
         }
     }
 

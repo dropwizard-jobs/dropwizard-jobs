@@ -11,7 +11,8 @@ import java.lang.annotation.Target;
  * <p>
  * The annotation specifies which jobs the listener should receive events for,
  * using a {@link MatcherType} to define the matching strategy and an optional
- * {@link #value()} for the match pattern.
+ * {@link #value()} for the match pattern. Name matchers apply across all job groups
+ * unless {@link #group()} restricts them to a specific group.
  * </p>
  * <p>
  * Example usage:
@@ -49,7 +50,7 @@ public @interface ListeningFor {
      * The meaning depends on the matcher type:
      * </p>
      * <ul>
-     *   <li>{@code JOB_NAME_EQUALS} - the exact job name to match</li>
+     *   <li>{@code JOB_NAME_EQUALS} - the exact job name to match, in any job group</li>
      *   <li>{@code JOB_GROUP_EQUALS} - the exact group name to match</li>
      *   <li>{@code JOB_NAME_STARTS_WITH} - the job name prefix</li>
      *   <li>{@code JOB_NAME_ENDS_WITH} - the job name suffix</li>
@@ -58,19 +59,40 @@ public @interface ListeningFor {
      *   <li>{@code JOB_GROUP_ENDS_WITH} - the group name suffix</li>
      *   <li>{@code JOB_GROUP_CONTAINS} - the group name substring</li>
      * </ul>
+    * <p>
+    * Name matchers apply across all job groups unless {@link #group()} restricts them to one group.
+    * </p>
      *
      * @return the match pattern value
      */
     String value() default "";
 
     /**
+     * Restricts a name matcher to an exact job group. The default empty string allows any group.
+     * <p>
+     * Supported only with {@code JOB_NAME_EQUALS}, {@code JOB_NAME_STARTS_WITH},
+     * {@code JOB_NAME_ENDS_WITH}, and {@code JOB_NAME_CONTAINS}. A non-empty group with
+     * another matcher type causes an {@link IllegalArgumentException} during listener registration.
+     * Group names are matched literally, without trimming or normalization.
+     * </p>
+     * <p>
+     * Set this to {@code "DEFAULT"} with {@code JOB_NAME_EQUALS} to preserve the previous
+     * default-group-only matching behavior.
+     * </p>
+     *
+     * @return the exact group name, or an empty string for any group
+     */
+    String group() default "";
+
+    /**
      * Defines the matching strategy for determining which jobs a listener receives events for.
      * <p>
-     * Each enum constant maps directly to a Quartz {@link org.quartz.Matcher} implementation:
+    * Without a group restriction, each enum constant maps directly to a Quartz
+    * {@link org.quartz.Matcher} implementation:
      * </p>
      * <ul>
      *   <li>{@link #ALL_JOBS} → {@code EverythingMatcher.allJobs()}</li>
-     *   <li>{@link #JOB_NAME_EQUALS} → {@code KeyMatcher.keyEquals(JobKey.jobKey(value))}</li>
+     *   <li>{@link #JOB_NAME_EQUALS} → {@code NameMatcher.nameEquals(value)}</li>
      *   <li>{@link #JOB_GROUP_EQUALS} → {@code GroupMatcher.jobGroupEquals(value)}</li>
      *   <li>{@link #JOB_NAME_STARTS_WITH} → {@code NameMatcher.nameStartsWith(value)}</li>
      *   <li>{@link #JOB_NAME_ENDS_WITH} → {@code NameMatcher.nameEndsWith(value)}</li>
@@ -79,11 +101,15 @@ public @interface ListeningFor {
      *   <li>{@link #JOB_GROUP_ENDS_WITH} → {@code GroupMatcher.jobGroupEndsWith(value)}</li>
      *   <li>{@link #JOB_GROUP_CONTAINS} → {@code GroupMatcher.jobGroupContains(value)}</li>
      * </ul>
+    * <p>
+    * When {@link ListeningFor#group()} is set, a name matcher is combined with
+    * {@code GroupMatcher.jobGroupEquals(group)} using {@code AndMatcher.and(...)}.
+    * </p>
      */
     enum MatcherType {
         /** Matches all jobs. No value required. */
         ALL_JOBS,
-        /** Matches a job with the exact name specified in value. */
+        /** Matches jobs with the exact name specified in value, in any group. */
         JOB_NAME_EQUALS,
         /** Matches all jobs in the group specified in value. */
         JOB_GROUP_EQUALS,

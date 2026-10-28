@@ -7,9 +7,9 @@ import org.quartz.JobListener;
 import org.quartz.Matcher;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
+import org.quartz.impl.matchers.AndMatcher;
 import org.quartz.impl.matchers.EverythingMatcher;
 import org.quartz.impl.matchers.GroupMatcher;
-import org.quartz.impl.matchers.KeyMatcher;
 import org.quartz.impl.matchers.NameMatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,6 +55,7 @@ public class JobListenerRegistrar {
      * </p>
      *
      * @throws SchedulerException if listener registration fails
+    * @throws IllegalArgumentException if a group restriction is used with a non-name matcher
      */
     public void register() throws SchedulerException {
         for (JobListener listener : jobListeners) {
@@ -79,7 +80,7 @@ public class JobListenerRegistrar {
         if (annotation == null) {
             return EverythingMatcher.allJobs();
         }
-        return toMatcher(annotation.matcher(), annotation.value());
+        return toMatcher(annotation.matcher(), annotation.value(), annotation.group());
     }
 
     /**
@@ -92,7 +93,7 @@ public class JobListenerRegistrar {
     static Matcher<JobKey> toMatcher(MatcherType type, String value) {
         return switch (type) {
             case ALL_JOBS -> EverythingMatcher.allJobs();
-            case JOB_NAME_EQUALS -> KeyMatcher.keyEquals(JobKey.jobKey(value));
+            case JOB_NAME_EQUALS -> NameMatcher.nameEquals(value);
             case JOB_GROUP_EQUALS -> GroupMatcher.jobGroupEquals(value);
             case JOB_NAME_STARTS_WITH -> NameMatcher.nameStartsWith(value);
             case JOB_NAME_ENDS_WITH -> NameMatcher.nameEndsWith(value);
@@ -100,6 +101,19 @@ public class JobListenerRegistrar {
             case JOB_GROUP_STARTS_WITH -> GroupMatcher.jobGroupStartsWith(value);
             case JOB_GROUP_ENDS_WITH -> GroupMatcher.jobGroupEndsWith(value);
             case JOB_GROUP_CONTAINS -> GroupMatcher.jobGroupContains(value);
+        };
+    }
+
+    static Matcher<JobKey> toMatcher(MatcherType type, String value, String group) {
+        Matcher<JobKey> matcher = toMatcher(type, value);
+        if (group.isEmpty()) {
+            return matcher;
+        }
+        return switch (type) {
+            case JOB_NAME_EQUALS, JOB_NAME_STARTS_WITH, JOB_NAME_ENDS_WITH, JOB_NAME_CONTAINS ->
+                    AndMatcher.and(matcher, GroupMatcher.jobGroupEquals(group));
+            default -> throw new IllegalArgumentException(
+                    "@ListeningFor group is only supported for JOB_NAME_* matchers, not " + type);
         };
     }
 
@@ -117,6 +131,7 @@ public class JobListenerRegistrar {
         if (annotation.matcher() == MatcherType.ALL_JOBS) {
             return "ALL_JOBS";
         }
-        return annotation.matcher() + "('" + annotation.value() + "')";
+        String description = annotation.matcher() + "('" + annotation.value() + "')";
+        return annotation.group().isEmpty() ? description : description + " in group '" + annotation.group() + "'";
     }
 }
