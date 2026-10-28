@@ -3,7 +3,7 @@ package io.dropwizard.jobs.parser;
 import static io.dropwizard.jobs.parser.TimeParserUtil.parseDuration;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
 
@@ -26,6 +26,30 @@ public class TimeParserUtilTest {
         shouldThrowException("foo");
         shouldThrowException("0");
         shouldThrowException(null);
+    }
+
+    @Test
+    public void rejectsMultiplicationOverflowInsteadOfWrapping() {
+        for (String duration : java.util.List.of(Long.MAX_VALUE + "s", "106751991168d")) {
+            IllegalArgumentException failure = assertThrows(IllegalArgumentException.class, () -> parseDuration(duration), duration);
+            assertInstanceOf(ArithmeticException.class, failure.getCause());
+            assertTrue(failure.getMessage().contains(duration));
+        }
+    }
+
+    @Test
+    public void acceptsLargestRepresentableAndZeroDurations() {
+        assertEquals(Long.MAX_VALUE, parseDuration(Long.MAX_VALUE + "ms"));
+        long seconds = Long.MAX_VALUE / 1_000;
+        assertEquals(seconds * 1_000, parseDuration(seconds + "s"));
+        assertEquals(0, parseDuration("0ms"));
+    }
+
+    @Test
+    public void rejectsMalformedAndOutOfRangeNumbers() {
+        for (String duration : java.util.List.of("", " 1s", "1s ", "-1s", "+1s", "1.5s", "1S", "9223372036854775808ms")) {
+            assertThrows(IllegalArgumentException.class, () -> parseDuration(duration), duration);
+        }
     }
 
     private void shouldThrowException(String duration) {

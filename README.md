@@ -471,6 +471,51 @@ jobs:
   foobar: 10s
 ```
 
+## Testing
+
+Run the complete reactor, including real Quartz and DI/container integration tests:
+
+```bash
+./mvnw -B clean verify
+```
+
+All tests use the `*Test` suffix and run through Surefire. Classes run concurrently
+with a fixed pool of four threads; methods within each class run sequentially.
+Scheduler fixtures use isolated names and guaranteed teardown. Tests that replace
+the shared metrics registry use the same resource lock.
+
+For serial execution or a different concurrency limit:
+
+```bash
+./mvnw -B clean verify -Djunit.jupiter.execution.parallel.enabled=false
+./mvnw -B clean verify -Dtest.parallelism=2
+```
+
+For a focused check:
+
+```bash
+./mvnw -B test -pl dropwizard-jobs-core -Dtest=JobManagerTest
+./mvnw -B verify -pl dropwizard-jobs-hk2 -am
+```
+
+`verify` generates Surefire XML reports and JaCoCo HTML/XML/CSV reports in each
+module's target directory, and enforces these coverage floors without class exclusions:
+
+| Module | Line Coverage | Branch Coverage |
+| --- | --- | --- |
+| Core | 95% | 90% |
+| Guice | 95% | 80% |
+| HK2 | 98% | 90% |
+| Spring | 98% | Not applicable: no branches |
+
+Coverage floors are module-specific regression guards, not substitutes for behavior
+assertions. Focused `test` runs do not regenerate reports or run the `verify` coverage
+checks. CI retains reports even when verification fails and checks JDKs 17, 21, 25, and 27.
+
+The fast suite covers RAMJobStore recovery paths and real Jersey/DI lifecycles. It
+does not certify persistent-store restarts or distributed cluster failover against a
+database. Those scenarios require separately configured acceptance infrastructure.
+
 ## Thanks
 
 - The playframework 1.x for the idea of simple annotations at Job classes

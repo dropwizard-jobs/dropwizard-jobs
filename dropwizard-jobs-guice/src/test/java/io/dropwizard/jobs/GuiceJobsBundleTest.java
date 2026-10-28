@@ -14,8 +14,11 @@ import static org.mockito.Mockito.when;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
+import java.util.UUID;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.mockito.ArgumentCaptor;
 
 import com.google.inject.Guice;
@@ -25,10 +28,19 @@ import io.dropwizard.core.setup.Environment;
 import io.dropwizard.lifecycle.Managed;
 import io.dropwizard.lifecycle.setup.LifecycleEnvironment;
 
+@Timeout(15)
 public class GuiceJobsBundleTest {
 
     private final Environment environment = mock(Environment.class);
     private final LifecycleEnvironment applicationContext = mock(LifecycleEnvironment.class);
+    private Managed managed;
+
+    @AfterEach
+    public void stopManaged() throws Exception {
+        if (managed != null) {
+            managed.stop();
+        }
+    }
 
     @Test
     public void assertJobsBundleIsWorking() throws Exception {
@@ -103,7 +115,7 @@ public class GuiceJobsBundleTest {
         // Capture and invoke the Managed wrapper's start()
         ArgumentCaptor<Managed> managedCaptor = ArgumentCaptor.forClass(Managed.class);
         verify(applicationContext).manage(managedCaptor.capture());
-        Managed managed = managedCaptor.getValue();
+        managed = managedCaptor.getValue();
         managed.start();
 
         // Supplier SHOULD be called after Managed.start()
@@ -124,11 +136,51 @@ public class GuiceJobsBundleTest {
         // Capture and invoke the Managed wrapper's start()
         ArgumentCaptor<Managed> managedCaptor = ArgumentCaptor.forClass(Managed.class);
         verify(applicationContext).manage(managedCaptor.capture());
-        Managed managed = managedCaptor.getValue();
+        managed = managedCaptor.getValue();
         managed.start();
 
         // After start(), getScheduler() should return a non-null scheduler
         assertThat(bundle.getScheduler(), is(notNullValue()));
+    }
+
+    @Test
+    public void deferredSupplierFailureIsPreserved() throws Exception {
+        IllegalStateException expected = new IllegalStateException("injector unavailable");
+        prepareDeferredBundle(() -> { throw expected; });
+        assertThat(assertThrows(IllegalStateException.class, managed::start), is(expected));
+    }
+
+    @Test
+    public void deferredNullInjectorFailsDuringStart() throws Exception {
+        prepareDeferredBundle(() -> null);
+        assertThrows(NullPointerException.class, managed::start);
+    }
+
+    @Test
+    public void deferredStopDelegatesToStartedManager() throws Exception {
+        GuiceJobsBundle bundle = prepareDeferredBundle(Guice::createInjector);
+        managed.start();
+        assertTrue(bundle.getScheduler().isStarted());
+        managed.stop();
+        managed = null;
+        assertTrue(bundle.getScheduler().isShutdown());
+    }
+
+    @Test
+    public void deferredStopBeforeStartDoesNotInvokeSupplier() throws Exception {
+        GuiceJobsBundle bundle = prepareDeferredBundle(() -> { throw new AssertionError("supplier called before start"); });
+        managed.stop();
+        assertThat(bundle.getScheduler(), is(nullValue()));
+    }
+
+    private GuiceJobsBundle prepareDeferredBundle(Supplier<Injector> supplier) throws Exception {
+        GuiceJobsBundle bundle = new GuiceJobsBundle(supplier);
+        when(environment.lifecycle()).thenReturn(applicationContext);
+        bundle.run(new MyConfiguration(), environment);
+        ArgumentCaptor<Managed> captor = ArgumentCaptor.forClass(Managed.class);
+        verify(applicationContext).manage(captor.capture());
+        managed = captor.getValue();
+        return bundle;
     }
 
     // ========== Backward compatibility tests ==========
@@ -140,5 +192,10 @@ public class GuiceJobsBundleTest {
         });
     }
 
-    private static class MyConfiguration extends JobConfiguration {}
+    private static class MyConfiguration extends MutableJobConfiguration {
+        MyConfiguration() {
+            withQuartzProperties(DefaultQuartzConfiguration.get());
+            withQuartzProperty("org.quartz.scheduler.instanceName", "guice-bundle-" + UUID.randomUUID());
+        }
+    }
 }

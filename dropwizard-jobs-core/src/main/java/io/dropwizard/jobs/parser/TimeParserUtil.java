@@ -44,7 +44,11 @@ public class TimeParserUtil {
         
         for (Entry<Pattern, Long> entry : UNIT_MULTIPLIERS) {
             if (entry.getKey().matcher(unit).matches()) {
-                return value * entry.getValue();
+                try {
+                    return Math.multiplyExact(value, entry.getValue());
+                } catch (ArithmeticException overflow) {
+                    throw new IllegalArgumentException("Duration exceeds supported millisecond range: " + duration, overflow);
+                }
             }
         }
         

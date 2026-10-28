@@ -32,13 +32,21 @@ public class CronExpressionParser {
      * @return the cron schedule with the timezone applied to it if needed
      */
     public CronScheduleBuilder parse(String cronExpression) {
-        int i = cronExpression.indexOf("[");
-        int j = cronExpression.indexOf("]");
+        if (cronExpression == null || cronExpression.isBlank()) {
+            throw new IllegalArgumentException("Cron expression must not be null or blank");
+        }
+        cronExpression = cronExpression.trim();
+        int openingBracket = cronExpression.indexOf('[');
+        int closingBracket = cronExpression.indexOf(']');
         TimeZone timezone = defaultTimezone;
-        if (i > -1 && j > -1) {
-            String timezoneId = cronExpression.substring(i + 1, j);
+        if (openingBracket >= 0 || closingBracket >= 0) {
+            if (openingBracket < 0 || closingBracket <= openingBracket || closingBracket != cronExpression.length() - 1
+                    || cronExpression.indexOf('[', openingBracket + 1) >= 0) {
+                throw new IllegalArgumentException("Invalid timezone suffix in cron expression: " + cronExpression);
+            }
+            String timezoneId = cronExpression.substring(openingBracket + 1, closingBracket);
             timezone = validateAndGetTimeZone(timezoneId);
-            cronExpression = cronExpression.substring(0, i).trim();
+            cronExpression = cronExpression.substring(0, openingBracket).trim();
         }
         return CronScheduleBuilder.cronSchedule(cronExpression).inTimeZone(timezone);
     }

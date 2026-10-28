@@ -13,6 +13,7 @@
 
     <properties>
         <hk2.version>4.0.3</hk2.version>
+        <jacoco.minimum.line.coverage>0.98</jacoco.minimum.line.coverage>
     </properties>
 
     <dependencies>
@@ -32,12 +33,6 @@
             <groupId>org.glassfish.hk2</groupId>
             <artifactId>hk2-locator</artifactId>
             <version>${hk2.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.glassfish.jersey.core</groupId>
-            <artifactId>jersey-server</artifactId>
-            <version>${jersey.version}</version>
         </dependency>
 
         <!-- Test dependencies -->

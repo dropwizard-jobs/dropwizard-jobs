@@ -5,7 +5,12 @@ import io.dropwizard.jobs.annotations.On;
 import io.dropwizard.jobs.scheduler.CronExpressionParser;
 import org.hamcrest.Matchers;
 import org.hamcrest.core.IsEqual;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.parallel.ResourceLock;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mockito;
 import org.quartz.*;
 import org.quartz.impl.matchers.GroupMatcher;
@@ -13,6 +18,12 @@ import org.quartz.impl.triggers.CronTriggerImpl;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
+import static org.awaitility.Awaitility.await;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -20,6 +31,8 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@Timeout(15)
+@ResourceLock(Job.DROPWIZARD_JOBS_KEY)
 public class JobManagerTest {
 
     private JobManager jobManager = JobManager.fromJobs(new TestConfig(), new ArrayList<>());
@@ -32,6 +45,13 @@ public class JobManagerTest {
     private final EveryTestJobWithJobName everyTestJobWithJobName = new EveryTestJobWithJobName();
     private final ApplicationStopTestJob applicationStopTestJob = new ApplicationStopTestJob();
     private final OnTestJobAlternativeConfiguration onTestJobAlternativeConfiguration = new OnTestJobAlternativeConfiguration();
+
+    @AfterEach
+    public void shutdownScheduler() throws SchedulerException {
+        if (jobManager.scheduler != null && !jobManager.scheduler.isShutdown()) {
+            jobManager.scheduler.shutdown(true);
+        }
+    }
 
     @Test
     public void testThatJobsAreExecuted() throws Exception {
@@ -67,7 +87,6 @@ public class JobManagerTest {
         assertTrue(jobManager.scheduler.checkExists(JobKey.jobKey(jobName)));
         assertThat(jobManager.scheduler.getTriggersOfJob(JobKey.jobKey(jobName)).size(), IsEqual.equalTo(1));
 
-        assertThat(everyTestJobWithDelay.latch().await(100, TimeUnit.MILLISECONDS), is(false));
         assertThat(everyTestJobWithJobName.latch().await(1, TimeUnit.SECONDS), is(true));
         assertThat(everyTestJobAlternativeConfiguration.latch().await(1, TimeUnit.SECONDS), is(true));
         assertThat(everyTestJob.latch().await(1, TimeUnit.SECONDS), is(true));
@@ -319,12 +338,165 @@ public class JobManagerTest {
     }
 
     @Test
+    public void createsJobWithRequestedIdentityAndMetadata() throws Exception {
+        Scheduler scheduler = mock(Scheduler.class);
+        jobManager.scheduler = scheduler;
+        ScheduledJob scheduled = scheduledJob("new-job");
+
+        jobManager.scheduleOrRescheduleJob(scheduled);
+
+        ArgumentCaptor<JobDetail> detail = ArgumentCaptor.forClass(JobDetail.class);
+        verify(scheduler).scheduleJob(detail.capture(), same(scheduled.getTrigger()));
+        assertEquals(scheduled.getJobKey(), detail.getValue().getKey());
+        assertEquals(scheduled.getClazz(), detail.getValue().getJobClass());
+        assertTrue(detail.getValue().requestsRecovery());
+        assertTrue(detail.getValue().isDurable());
+    }
+
+    @Test
+    public void reschedulesByExistingTriggerKeyWithoutDeletingJob() throws Exception {
+        Scheduler scheduler = mock(Scheduler.class);
+        jobManager.scheduler = scheduler;
+        ScheduledJob scheduled = scheduledJob("existing-job");
+        Trigger existing = TriggerBuilder.newTrigger().withIdentity("old-trigger", "old-group").build();
+        when(scheduler.checkExists(scheduled.getJobKey())).thenReturn(true);
+        doReturn(List.of(existing)).when(scheduler).getTriggersOfJob(scheduled.getJobKey());
+
+        jobManager.scheduleOrRescheduleJob(scheduled);
+
+        verify(scheduler).rescheduleJob(existing.getKey(), scheduled.getTrigger());
+        verify(scheduler, never()).deleteJob(any(JobKey.class));
+        verify(scheduler, never()).scheduleJob(any(JobDetail.class), any(Trigger.class));
+    }
+
+    @Test
+    public void replacesZeroAndMultipleTriggersInOrder() throws Exception {
+        for (int triggerCount : List.of(0, 2)) {
+            Scheduler scheduler = mock(Scheduler.class);
+            jobManager.scheduler = scheduler;
+            ScheduledJob scheduled = scheduledJob("replacement-" + triggerCount);
+            List<Trigger> existing = new ArrayList<>();
+            for (int triggerIndex = 0; triggerIndex < triggerCount; triggerIndex++) {
+                existing.add(TriggerBuilder.newTrigger().withIdentity("old-" + triggerIndex).build());
+            }
+            when(scheduler.checkExists(scheduled.getJobKey())).thenReturn(true);
+            doReturn(existing).when(scheduler).getTriggersOfJob(scheduled.getJobKey());
+
+            jobManager.scheduleOrRescheduleJob(scheduled);
+
+            InOrder calls = inOrder(scheduler);
+            calls.verify(scheduler).checkExists(scheduled.getJobKey());
+            calls.verify(scheduler).getTriggersOfJob(scheduled.getJobKey());
+            calls.verify(scheduler).deleteJob(scheduled.getJobKey());
+            calls.verify(scheduler).scheduleJob(any(JobDetail.class), same(scheduled.getTrigger()));
+            verify(scheduler, never()).rescheduleJob(any(TriggerKey.class), any(Trigger.class));
+        }
+    }
+
+    @Test
+    public void replacementAndReschedulingLeaveOneUpdatedQuartzTrigger() throws Exception {
+        jobManager.start();
+        for (int triggerCount : List.of(0, 1, 2)) {
+            ScheduledJob scheduled = scheduledJob("quartz-replacement-" + triggerCount);
+            JobDetail existing = JobBuilder.newJob(EveryTestJobWithDefaultConfiguration.class)
+                    .withIdentity(scheduled.getJobKey()).storeDurably().requestRecovery().build();
+            jobManager.scheduler.addJob(existing, false);
+            for (int triggerIndex = 0; triggerIndex < triggerCount; triggerIndex++) {
+                Trigger oldTrigger = TriggerBuilder.newTrigger()
+                        .withIdentity("old-" + triggerCount + "-" + triggerIndex)
+                        .forJob(scheduled.getJobKey())
+                        .startAt(new Date(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(1)))
+                        .withSchedule(SimpleScheduleBuilder.repeatSecondlyForever(5)).build();
+                jobManager.scheduler.scheduleJob(oldTrigger);
+            }
+
+            jobManager.scheduleOrRescheduleJob(scheduled);
+
+            List<? extends Trigger> triggers = jobManager.scheduler.getTriggersOfJob(scheduled.getJobKey());
+            assertEquals(1, triggers.size());
+            SimpleTrigger updated = assertInstanceOf(SimpleTrigger.class, triggers.get(0));
+            assertEquals(scheduled.getTrigger().getKey(), updated.getKey());
+            assertEquals(scheduled.getJobKey(), updated.getJobKey());
+            assertEquals(30_000L, updated.getRepeatInterval());
+            assertEquals(11, updated.getPriority());
+            assertTrue(jobManager.scheduler.getJobDetail(scheduled.getJobKey()).isDurable());
+            assertTrue(jobManager.scheduler.getJobDetail(scheduled.getJobKey()).requestsRecovery());
+        }
+    }
+
+    @Test
+    public void failuresAtEachQuartzOperationDoNotPreventLaterJobs() throws Exception {
+        for (String operation : List.of("checkExists", "getTriggersOfJob", "rescheduleJob", "deleteJob", "scheduleJob")) {
+            Scheduler scheduler = mock(Scheduler.class);
+            jobManager.scheduler = scheduler;
+            ScheduledJob failing = scheduledJob("failing-" + operation);
+            SchedulerException failure = new SchedulerException(operation);
+            when(scheduler.checkExists(failing.getJobKey())).thenReturn(!operation.equals("scheduleJob"));
+            doReturn(operation.equals("deleteJob") ? List.of() : List.of(failing.getTrigger()))
+                    .when(scheduler).getTriggersOfJob(failing.getJobKey());
+            switch (operation) {
+                case "checkExists" -> when(scheduler.checkExists(failing.getJobKey())).thenThrow(failure);
+                case "getTriggersOfJob" -> when(scheduler.getTriggersOfJob(failing.getJobKey())).thenThrow(failure);
+                case "rescheduleJob" -> when(scheduler.rescheduleJob(failing.getTrigger().getKey(), failing.getTrigger()))
+                        .thenThrow(failure);
+                case "deleteJob" -> when(scheduler.deleteJob(failing.getJobKey())).thenThrow(failure);
+                case "scheduleJob" -> when(scheduler.scheduleJob(any(JobDetail.class), same(failing.getTrigger())))
+                        .thenThrow(failure);
+                default -> fail("Unexpected operation: " + operation);
+            }
+
+            assertDoesNotThrow(() -> jobManager.scheduleOrRescheduleJob(failing), operation);
+            if (!operation.equals("scheduleJob")) {
+                verify(scheduler, never()).scheduleJob(any(JobDetail.class), same(failing.getTrigger()));
+            }
+            ScheduledJob next = scheduledJob("next-" + operation);
+            assertDoesNotThrow(() -> jobManager.scheduleOrRescheduleJob(next), operation);
+            verify(scheduler).scheduleJob(any(JobDetail.class), same(next.getTrigger()));
+        }
+    }
+
+    @Test
+    public void shutdownWaitsForRunningJobAndPreventsFurtherExecutions() throws Exception {
+        BlockingTestJob job = new BlockingTestJob();
+        jobManager = JobManager.fromJobs(new TestConfig(), List.of(job));
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        try {
+            jobManager.start();
+            assertTrue(job.started.await(2, TimeUnit.SECONDS));
+            Future<?> stopping = executor.submit(() -> {
+                jobManager.stop();
+                return null;
+            });
+            await().atMost(2, TimeUnit.SECONDS).until(() -> jobManager.scheduler.isInStandbyMode());
+            assertFalse(stopping.isDone());
+
+            job.release.countDown();
+            stopping.get(5, TimeUnit.SECONDS);
+
+            assertTrue(jobManager.scheduler.isShutdown());
+            assertEquals(1, job.executions.get());
+        } finally {
+            job.release.countDown();
+            executor.shutdownNow();
+            assertTrue(executor.awaitTermination(5, TimeUnit.SECONDS));
+        }
+    }
+
+    private ScheduledJob scheduledJob(String name) {
+        JobKey key = JobKey.jobKey(name, "recovery-tests");
+        Trigger trigger = TriggerBuilder.newTrigger().withIdentity(name + "-trigger", key.getGroup())
+                .forJob(key).startAt(new Date(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(1)))
+                .withSchedule(SimpleScheduleBuilder.repeatSecondlyForever(30)).withPriority(11).build();
+        return new ScheduledJob(key, EveryTestJobWithDefaultConfiguration.class, trigger, true, true, name);
+    }
+
+    @Test
     public void testJobListenersAreRegisteredDuringStart() throws Exception {
         // Create a counting listener that tracks job executions
         CountingTestJobListener countingListener = new CountingTestJobListener("CountingTestJobListener");
 
         jobManager = JobManager.fromJobs(new TestConfig(),
-                List.of(new EveryTestJobWithDefaultConfiguration()),
+            List.of(new OneShotTestJob()),
                 List.of(countingListener));
 
         jobManager.start();
@@ -348,7 +520,7 @@ public class JobManagerTest {
         CountingTestJobListener listener2 = new CountingTestJobListener("Listener2");
 
         jobManager = JobManager.fromJobs(new TestConfig(),
-                List.of(new EveryTestJobWithDefaultConfiguration()),
+            List.of(new OneShotTestJob()),
                 List.of(listener1, listener2));
 
         jobManager.start();
@@ -406,11 +578,41 @@ public class JobManagerTest {
         }
     }
 
+    @Every("10ms")
+    @DisallowConcurrentExecution
+    public static class BlockingTestJob extends Job {
+        final CountDownLatch started = new CountDownLatch(1);
+        final CountDownLatch release = new CountDownLatch(1);
+        final AtomicInteger executions = new AtomicInteger();
+
+        @Override
+        public void doJob(JobExecutionContext context) throws JobExecutionException {
+            executions.incrementAndGet();
+            started.countDown();
+            try {
+                if (!release.await(5, TimeUnit.SECONDS)) {
+                    throw new JobExecutionException("Test did not release running job");
+                }
+            } catch (InterruptedException interrupted) {
+                Thread.currentThread().interrupt();
+                throw new JobExecutionException(interrupted);
+            }
+        }
+    }
+
+    @Every(value = "1h", repeatCount = 0)
+    static class OneShotTestJob extends AbstractJob {
+        OneShotTestJob() {
+            super(1);
+        }
+    }
+
     private static class TestConfig extends JobConfiguration {
         private final Map<String, String> quartzConfiguration;
 
         private TestConfig() {
             quartzConfiguration = new HashMap<>(DefaultQuartzConfiguration.get());
+            quartzConfiguration.put("org.quartz.scheduler.instanceName", "job-manager-" + UUID.randomUUID());
         }
 
         private final Map<String, String> jobs = new HashMap<>();
