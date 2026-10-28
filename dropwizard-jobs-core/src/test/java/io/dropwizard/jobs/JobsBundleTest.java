@@ -48,7 +48,7 @@ public class JobsBundleTest {
     @AfterEach
     public void removeSharedRegistry() throws Exception {
         try {
-            if (startedManager != null && !startedManager.getScheduler().isShutdown()) {
+            if (startedManager != null && startedManager.getScheduler() != null && !startedManager.getScheduler().isShutdown()) {
                 startedManager.getScheduler().shutdown(true);
             }
         } finally {

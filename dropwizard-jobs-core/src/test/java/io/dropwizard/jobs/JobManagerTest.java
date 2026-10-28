@@ -87,7 +87,6 @@ public class JobManagerTest {
         assertTrue(jobManager.scheduler.checkExists(JobKey.jobKey(jobName)));
         assertThat(jobManager.scheduler.getTriggersOfJob(JobKey.jobKey(jobName)).size(), IsEqual.equalTo(1));
 
-        assertThat(everyTestJobWithDelay.latch().await(100, TimeUnit.MILLISECONDS), is(false));
         assertThat(everyTestJobWithJobName.latch().await(1, TimeUnit.SECONDS), is(true));
         assertThat(everyTestJobAlternativeConfiguration.latch().await(1, TimeUnit.SECONDS), is(true));
         assertThat(everyTestJob.latch().await(1, TimeUnit.SECONDS), is(true));

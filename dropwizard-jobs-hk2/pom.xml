@@ -13,6 +13,7 @@
 
     <properties>
         <hk2.version>4.0.3</hk2.version>
+        <jacoco.minimum.line.coverage>0.98</jacoco.minimum.line.coverage>
     </properties>
 
     <dependencies>

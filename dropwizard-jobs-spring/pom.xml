@@ -10,6 +10,10 @@
     <artifactId>dropwizard-jobs-spring</artifactId>
     <name>dropwizard-jobs-spring</name>
 
+    <properties>
+        <jacoco.minimum.line.coverage>0.98</jacoco.minimum.line.coverage>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>io.github.dropwizard-jobs</groupId>

@@ -10,6 +10,10 @@
     <artifactId>dropwizard-jobs-guice</artifactId>
     <name>dropwizard-jobs-guice</name>
 
+    <properties>
+        <jacoco.minimum.branch.coverage>0.80</jacoco.minimum.branch.coverage>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>io.github.dropwizard-jobs</groupId>
