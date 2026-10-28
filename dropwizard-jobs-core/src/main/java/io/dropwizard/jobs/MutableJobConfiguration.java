@@ -88,7 +88,7 @@ public class MutableJobConfiguration extends JobConfiguration {
     /**
      * Adds a single job schedule override.
      *
-     * @param jobName the job name (matching the annotation value)
+    * @param jobName the placeholder key, or the uncapitalized job class name for an empty annotation value
      * @param schedule the schedule expression (duration or cron)
      * @return this configuration for method chaining
      */
