@@ -1,2 +1,2 @@
-build = "mvn"
+build = "./mvnw -B package"
 jdkVersion = "25"
