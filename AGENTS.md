@@ -15,8 +15,7 @@ This file provides guidance to agents when working with code in this repository.
 ## Non-Obvious Project Details
 
 - Java 17 source/target; CI tests against 17, 21, 25
-- `dropwizard-jobs-spring` uses `javax.inject:javax.inject:1` while the rest of the project uses
-    `jakarta.inject` — do not mix
+- All modules, including `dropwizard-jobs-spring`, use `jakarta.inject`; do not add `javax.inject`.
 - `@Every` annotation value and `@On` cron can be overridden via `JobConfiguration` map at runtime
     (key = value string from annotation)
 - `JobManager.stop()` uses a hardcoded 100ms sleep before shutdown — this is intentional sequencing,
@@ -83,8 +82,6 @@ This file provides guidance to agents when working with code in this repository.
     parse — this indirection enables runtime config override
 - `@On` cron resolution: annotation value → `JobConfiguration` map lookup → `CronExpressionParser`
     (handles `[TZ]` suffix) → Quartz CronTrigger
-- Spring module has javax.inject/jakarta.inject mismatch with parent — architectural debt, must be
-    resolved if upgrading to full Jakarta
 
 ## Project Context
 
