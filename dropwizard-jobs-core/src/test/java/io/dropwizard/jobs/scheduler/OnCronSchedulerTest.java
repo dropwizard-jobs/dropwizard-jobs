@@ -9,9 +9,12 @@ import org.quartz.CronTrigger;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobKey;
 import org.quartz.Trigger;
+import org.quartz.TriggerBuilder;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Date;
+import java.util.TimeZone;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
@@ -61,6 +64,37 @@ class OnCronSchedulerTest {
         long after = System.currentTimeMillis();
         assertTrue(trigger.getStartTime().getTime() >= Instant.ofEpochMilli(before).truncatedTo(ChronoUnit.SECONDS).toEpochMilli());
         assertTrue(trigger.getStartTime().getTime() <= after);
+    }
+
+    @Test
+    void rejectsMalformedTimezoneSuffixesAndMissingCronExpressions() {
+        CronExpressionParser parser = new CronExpressionParser(new MutableJobConfiguration());
+        for (String expression : List.of("0 15 10 ? * * ]UTC[", "0 15 10 ? * * [UTC] trailing",
+                "0 15 10 ? * * [UTC][UTC]", "0 15 10 ? * * [UTC", "0 15 10 ? * * UTC]",
+                "0 15 10 ? * * []", "", " ")) {
+            assertThrows(IllegalArgumentException.class, () -> parser.parse(expression), expression);
+        }
+        assertThrows(IllegalArgumentException.class, () -> parser.parse(null));
+        RuntimeException invalidCron = assertThrows(RuntimeException.class, () -> parser.parse("not a cron"));
+        assertInstanceOf(java.text.ParseException.class, invalidCron.getCause());
+    }
+
+    @Test
+    void missingConfigurationUsesJvmTimezone() {
+        CronTrigger trigger = (CronTrigger) new CronExpressionParser(null).parse("0 15 10 ? * *").build();
+        assertEquals(TimeZone.getDefault(), trigger.getTimeZone());
+    }
+
+    @Test
+    void daylightSavingChangesUtcFireTimeWithoutChangingLocalSchedule() {
+        CronExpressionParser parser = new CronExpressionParser(new MutableJobConfiguration());
+        CronTrigger trigger = (CronTrigger) TriggerBuilder.newTrigger()
+                .startAt(Date.from(Instant.parse("2026-01-01T00:00:00Z")))
+                .withSchedule(parser.parse("0 0 12 ? * * [Europe/Stockholm]")).build();
+        assertEquals(Instant.parse("2026-03-28T11:00:00Z"),
+                trigger.getFireTimeAfter(Date.from(Instant.parse("2026-03-28T00:00:00Z"))).toInstant());
+        assertEquals(Instant.parse("2026-03-29T10:00:00Z"),
+                trigger.getFireTimeAfter(Date.from(Instant.parse("2026-03-29T00:00:00Z"))).toInstant());
     }
 
     private ScheduledJob capture(Class<? extends Job> jobClass) {
