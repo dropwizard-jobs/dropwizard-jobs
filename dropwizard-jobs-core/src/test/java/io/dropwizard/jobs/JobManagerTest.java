@@ -9,6 +9,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.parallel.ResourceLock;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mockito;
 import org.quartz.*;
 import org.quartz.impl.matchers.GroupMatcher;
@@ -328,6 +330,132 @@ public class JobManagerTest {
 
         // Verify the scheduler was called (even though it threw an exception)
         verify(mockScheduler).checkExists(jobKey);
+    }
+
+    @Test
+    public void createsJobWithRequestedIdentityAndMetadata() throws Exception {
+        Scheduler scheduler = mock(Scheduler.class);
+        jobManager.scheduler = scheduler;
+        ScheduledJob scheduled = scheduledJob("new-job");
+
+        jobManager.scheduleOrRescheduleJob(scheduled);
+
+        ArgumentCaptor<JobDetail> detail = ArgumentCaptor.forClass(JobDetail.class);
+        verify(scheduler).scheduleJob(detail.capture(), same(scheduled.getTrigger()));
+        assertEquals(scheduled.getJobKey(), detail.getValue().getKey());
+        assertEquals(scheduled.getClazz(), detail.getValue().getJobClass());
+        assertTrue(detail.getValue().requestsRecovery());
+        assertTrue(detail.getValue().isDurable());
+    }
+
+    @Test
+    public void reschedulesByExistingTriggerKeyWithoutDeletingJob() throws Exception {
+        Scheduler scheduler = mock(Scheduler.class);
+        jobManager.scheduler = scheduler;
+        ScheduledJob scheduled = scheduledJob("existing-job");
+        Trigger existing = TriggerBuilder.newTrigger().withIdentity("old-trigger", "old-group").build();
+        when(scheduler.checkExists(scheduled.getJobKey())).thenReturn(true);
+        doReturn(List.of(existing)).when(scheduler).getTriggersOfJob(scheduled.getJobKey());
+
+        jobManager.scheduleOrRescheduleJob(scheduled);
+
+        verify(scheduler).rescheduleJob(existing.getKey(), scheduled.getTrigger());
+        verify(scheduler, never()).deleteJob(any(JobKey.class));
+        verify(scheduler, never()).scheduleJob(any(JobDetail.class), any(Trigger.class));
+    }
+
+    @Test
+    public void replacesZeroAndMultipleTriggersInOrder() throws Exception {
+        for (int triggerCount : List.of(0, 2)) {
+            Scheduler scheduler = mock(Scheduler.class);
+            jobManager.scheduler = scheduler;
+            ScheduledJob scheduled = scheduledJob("replacement-" + triggerCount);
+            List<Trigger> existing = new ArrayList<>();
+            for (int triggerIndex = 0; triggerIndex < triggerCount; triggerIndex++) {
+                existing.add(TriggerBuilder.newTrigger().withIdentity("old-" + triggerIndex).build());
+            }
+            when(scheduler.checkExists(scheduled.getJobKey())).thenReturn(true);
+            doReturn(existing).when(scheduler).getTriggersOfJob(scheduled.getJobKey());
+
+            jobManager.scheduleOrRescheduleJob(scheduled);
+
+            InOrder calls = inOrder(scheduler);
+            calls.verify(scheduler).checkExists(scheduled.getJobKey());
+            calls.verify(scheduler).getTriggersOfJob(scheduled.getJobKey());
+            calls.verify(scheduler).deleteJob(scheduled.getJobKey());
+            calls.verify(scheduler).scheduleJob(any(JobDetail.class), same(scheduled.getTrigger()));
+            verify(scheduler, never()).rescheduleJob(any(TriggerKey.class), any(Trigger.class));
+        }
+    }
+
+    @Test
+    public void replacementAndReschedulingLeaveOneUpdatedQuartzTrigger() throws Exception {
+        jobManager.start();
+        for (int triggerCount : List.of(0, 1, 2)) {
+            ScheduledJob scheduled = scheduledJob("quartz-replacement-" + triggerCount);
+            JobDetail existing = JobBuilder.newJob(EveryTestJobWithDefaultConfiguration.class)
+                    .withIdentity(scheduled.getJobKey()).storeDurably().requestRecovery().build();
+            jobManager.scheduler.addJob(existing, false);
+            for (int triggerIndex = 0; triggerIndex < triggerCount; triggerIndex++) {
+                Trigger oldTrigger = TriggerBuilder.newTrigger()
+                        .withIdentity("old-" + triggerCount + "-" + triggerIndex)
+                        .forJob(scheduled.getJobKey())
+                        .startAt(new Date(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(1)))
+                        .withSchedule(SimpleScheduleBuilder.repeatSecondlyForever(5)).build();
+                jobManager.scheduler.scheduleJob(oldTrigger);
+            }
+
+            jobManager.scheduleOrRescheduleJob(scheduled);
+
+            List<? extends Trigger> triggers = jobManager.scheduler.getTriggersOfJob(scheduled.getJobKey());
+            assertEquals(1, triggers.size());
+            SimpleTrigger updated = assertInstanceOf(SimpleTrigger.class, triggers.get(0));
+            assertEquals(scheduled.getTrigger().getKey(), updated.getKey());
+            assertEquals(scheduled.getJobKey(), updated.getJobKey());
+            assertEquals(30_000L, updated.getRepeatInterval());
+            assertEquals(11, updated.getPriority());
+            assertTrue(jobManager.scheduler.getJobDetail(scheduled.getJobKey()).isDurable());
+            assertTrue(jobManager.scheduler.getJobDetail(scheduled.getJobKey()).requestsRecovery());
+        }
+    }
+
+    @Test
+    public void failuresAtEachQuartzOperationDoNotPreventLaterJobs() throws Exception {
+        for (String operation : List.of("checkExists", "getTriggersOfJob", "rescheduleJob", "deleteJob", "scheduleJob")) {
+            Scheduler scheduler = mock(Scheduler.class);
+            jobManager.scheduler = scheduler;
+            ScheduledJob failing = scheduledJob("failing-" + operation);
+            SchedulerException failure = new SchedulerException(operation);
+            when(scheduler.checkExists(failing.getJobKey())).thenReturn(!operation.equals("scheduleJob"));
+            doReturn(operation.equals("deleteJob") ? List.of() : List.of(failing.getTrigger()))
+                    .when(scheduler).getTriggersOfJob(failing.getJobKey());
+            switch (operation) {
+                case "checkExists" -> when(scheduler.checkExists(failing.getJobKey())).thenThrow(failure);
+                case "getTriggersOfJob" -> when(scheduler.getTriggersOfJob(failing.getJobKey())).thenThrow(failure);
+                case "rescheduleJob" -> when(scheduler.rescheduleJob(failing.getTrigger().getKey(), failing.getTrigger()))
+                        .thenThrow(failure);
+                case "deleteJob" -> when(scheduler.deleteJob(failing.getJobKey())).thenThrow(failure);
+                case "scheduleJob" -> when(scheduler.scheduleJob(any(JobDetail.class), same(failing.getTrigger())))
+                        .thenThrow(failure);
+                default -> fail("Unexpected operation: " + operation);
+            }
+
+            assertDoesNotThrow(() -> jobManager.scheduleOrRescheduleJob(failing), operation);
+            if (!operation.equals("scheduleJob")) {
+                verify(scheduler, never()).scheduleJob(any(JobDetail.class), same(failing.getTrigger()));
+            }
+            ScheduledJob next = scheduledJob("next-" + operation);
+            assertDoesNotThrow(() -> jobManager.scheduleOrRescheduleJob(next), operation);
+            verify(scheduler).scheduleJob(any(JobDetail.class), same(next.getTrigger()));
+        }
+    }
+
+    private ScheduledJob scheduledJob(String name) {
+        JobKey key = JobKey.jobKey(name, "recovery-tests");
+        Trigger trigger = TriggerBuilder.newTrigger().withIdentity(name + "-trigger", key.getGroup())
+                .forJob(key).startAt(new Date(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(1)))
+                .withSchedule(SimpleScheduleBuilder.repeatSecondlyForever(30)).withPriority(11).build();
+        return new ScheduledJob(key, EveryTestJobWithDefaultConfiguration.class, trigger, true, true, name);
     }
 
     @Test
