@@ -2,12 +2,16 @@ package io.dropwizard.jobs;
 
 import org.junit.jupiter.api.Test;
 import org.quartz.JobDetail;
+import org.quartz.JobBuilder;
+import org.quartz.JobExecutionContext;
 import org.quartz.JobKey;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.spi.TriggerFiredBundle;
 
 import java.util.Collections;
+import java.util.Map;
+import java.lang.reflect.InvocationTargetException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -20,7 +24,7 @@ public class DropwizardJobFactoryTest {
     public void testNewJobReturnsPreRegisteredInstanceWhenClassAndGroupMatch() throws SchedulerException {
         // Setup: create a pre-registered job metadata
         EveryTestJob preRegisteredJob = new EveryTestJob();
-        JobMetadata metadata = new JobMetadata(preRegisteredJob.getClass(), preRegisteredJob.getGroupName());
+        JobMetadata metadata = new JobMetadata(preRegisteredJob);
         JobFilters jobFilters = new JobFilters(Collections.singletonList(metadata));
         DropwizardJobFactory factory = new DropwizardJobFactory(jobFilters);
 
@@ -38,9 +42,7 @@ public class DropwizardJobFactoryTest {
         // Execute
         Job result = factory.newJob(bundle, scheduler);
 
-        // Verify: should return a new instance of the pre-registered job class
-        assertThat(result, is(notNullValue()));
-        assertThat(result, is(instanceOf(EveryTestJob.class)));
+        assertSame(preRegisteredJob, result);
     }
 
     @Test
@@ -123,9 +125,62 @@ public class DropwizardJobFactoryTest {
         assertThat(exception.getMessage(), containsString(JobWithoutNoArgConstructor.class.getName()));
     }
 
-    /**
-     * Test job class without a no-arg constructor for testing the error case.
-     */
+    @Test
+    public void constructsRegisteredMetadataWithoutAnInstance() throws Exception {
+        JobFilters filters = new JobFilters(java.util.List.of(new JobMetadata(ReflectiveTestJob.class, null)));
+        assertInstanceOf(ReflectiveTestJob.class, new DropwizardJobFactory(filters)
+                .newJob(bundleFor(ReflectiveTestJob.class), null));
+    }
+
+    @Test
+    public void resolvesProxySuperclassForRuntimeScheduledJobs() throws Exception {
+        DropwizardJobFactory factory = new DropwizardJobFactory(new JobFilters(Collections.emptyList()));
+        assertEquals(ReflectiveTestJob.class, factory.newJob(bundleFor(ReflectiveTestJob$$Proxy.class), null).getClass());
+    }
+
+    @Test
+    public void reflectionFailuresRetainTheirCauses() {
+        Map<Class<? extends Job>, Class<? extends Throwable>> cases = Map.of(
+                AbstractTestJob.class, InstantiationException.class,
+                PrivateConstructorTestJob.class, IllegalAccessException.class,
+                ThrowingConstructorTestJob.class, InvocationTargetException.class);
+        DropwizardJobFactory factory = new DropwizardJobFactory(new JobFilters(Collections.emptyList()));
+        cases.forEach((jobClass, causeClass) -> {
+            SchedulerException failure = assertThrows(SchedulerException.class, () -> factory.newJob(bundleFor(jobClass), null));
+            assertInstanceOf(causeClass, failure.getCause());
+            assertTrue(failure.getMessage().contains(jobClass.getName()));
+        });
+    }
+
+    private TriggerFiredBundle bundleFor(Class<? extends Job> jobClass) {
+        TriggerFiredBundle bundle = mock(TriggerFiredBundle.class);
+        when(bundle.getJobDetail()).thenReturn(JobBuilder.newJob(jobClass).withIdentity("factory-test").build());
+        return bundle;
+    }
+
+    public static class ReflectiveTestJob extends Job {
+        @Override
+        public void doJob(JobExecutionContext context) {
+        }
+    }
+
+    public static class ReflectiveTestJob$$Proxy extends ReflectiveTestJob {
+    }
+
+    public abstract static class AbstractTestJob extends ReflectiveTestJob {
+    }
+
+    public static class PrivateConstructorTestJob extends ReflectiveTestJob {
+        private PrivateConstructorTestJob() {
+        }
+    }
+
+    public static class ThrowingConstructorTestJob extends ReflectiveTestJob {
+        public ThrowingConstructorTestJob() {
+            throw new IllegalStateException("constructor failure");
+        }
+    }
+
     private static class JobWithoutNoArgConstructor extends Job {
         @SuppressWarnings("unused")
         public JobWithoutNoArgConstructor(String requiredArg) {
