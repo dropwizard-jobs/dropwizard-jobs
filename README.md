@@ -28,6 +28,15 @@ Add to your pom:
 </dependency>
 ```
 
+## Jackson compatibility
+
+Direct Jackson dependencies use Jackson 3.2.4 in the `tools.jackson` namespace, including the Guava module.
+Dropwizard 5 still uses Jackson 2 for application configuration, so its Jackson 2.22.4 BOM remains managed separately.
+The shared annotations remain in `com.fasterxml.jackson.annotation`.
+
+Use Dropwizard's configured object mapper for full application configuration. Jackson 3 supports the job-owned
+`jobs` and `quartz` properties, but its mappers and modules are not interchangeable with Dropwizard's Jackson 2 ones.
+
 ## Installing the bundle from source code
 
 ```bash
