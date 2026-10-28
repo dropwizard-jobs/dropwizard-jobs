@@ -5,10 +5,10 @@ This is an extension for [dropwizard-jobs](https://github.com/dropwizard-jobs/dr
 through Jersey, so no extra dependency is needed beyond this module. This is especially handy when
 you need to inject dependencies into Jobs.
 
-This module uses [`Hk2JobManager`](src/main/java/io/dropwizard/jobs/Hk2JobManager.java) which leverages
-[`JobMetadata`](../dropwizard-jobs-core/src/main/java/io/dropwizard/jobs/JobMetadata.java) to avoid
-useless job instantiation during discovery. Jobs are discovered using `ServiceHandle` without creating
-instances, and only instantiated when needed for scheduling.
+The public [`Hk2JobsBundle`](../dropwizard-jobs-core/src/main/java/io/dropwizard/jobs/Hk2JobsBundle.java)
+is supplied by the core dependency, so applications have a single bundle implementation on their
+classpath. This module additionally provides [`Hk2JobManager`](src/main/java/io/dropwizard/jobs/Hk2JobManager.java)
+and [`Hk2JobFactory`](src/main/java/io/dropwizard/jobs/Hk2JobFactory.java) for programmatic integration.
 
 ## Using maven central repository
 
@@ -44,7 +44,7 @@ After installing locally, include the following dependency:
 
 ## Activating the HK2 bundle
 
-The [`Hk2JobsBundle`](src/main/java/io/dropwizard/jobs/Hk2JobsBundle.java) uses HK2's `Filter` to discover
+The [`Hk2JobsBundle`](../dropwizard-jobs-core/src/main/java/io/dropwizard/jobs/Hk2JobsBundle.java) uses HK2's `Filter` to discover
 jobs. The most common approach is to use `BuilderHelper.createContractFilter(Job.class.getName())` to find
 all jobs bound to the `Job` contract.
 
@@ -99,7 +99,7 @@ environment.jersey().register(new AbstractBinder() {
 
 ## Job Injection
 
-Once the [`Hk2JobsBundle`](src/main/java/io/dropwizard/jobs/Hk2JobsBundle.java) has been added and your
+Once the [`Hk2JobsBundle`](../dropwizard-jobs-core/src/main/java/io/dropwizard/jobs/Hk2JobsBundle.java) has been added and your
 jobs are registered, you can inject dependencies into your Jobs. A common usage is to inject constructor
 arguments:
 
@@ -127,7 +127,7 @@ public class InjectedJob extends Job {
 
 ## Job Listener support
 
-The [`Hk2JobsBundle`](src/main/java/io/dropwizard/jobs/Hk2JobsBundle.java) supports optional
+The [`Hk2JobsBundle`](../dropwizard-jobs-core/src/main/java/io/dropwizard/jobs/Hk2JobsBundle.java) supports optional
 `JobListener` discovery via a second filter parameter:
 
 ```java
@@ -166,33 +166,30 @@ This means:
 
 The bundle registers an `AbstractContainerLifecycleListener` internally to handle this lifecycle:
 
-- On container startup: discovers jobs via `locator.getAllServiceHandles(searchCriteria)` and
+- On container startup: discovers jobs via `locator.getAllServices(searchCriteria)` and
     starts the [`JobManager`](../dropwizard-jobs-core/src/main/java/io/dropwizard/jobs/JobManager.java)
 - On container shutdown: stops the [`JobManager`](../dropwizard-jobs-core/src/main/java/io/dropwizard/jobs/JobManager.java)
 
-### Efficient Job Discovery
+### Job Discovery
 
-This module uses [`Hk2JobManager`](src/main/java/io/dropwizard/jobs/Hk2JobManager.java), which leverages
-[`JobMetadata`](../dropwizard-jobs-core/src/main/java/io/dropwizard/jobs/JobMetadata.java) to avoid
-instantiating all job classes during discovery:
+The bundle resolves matching job services during Jersey startup to read their annotations and group
+names, then records [`JobMetadata`](../dropwizard-jobs-core/src/main/java/io/dropwizard/jobs/JobMetadata.java)
+for scheduling. During execution, its Quartz factory obtains job services according to their configured
+HK2 scopes (Singleton, PerLookup, PerThread).
 
-1. Jobs are discovered using HK2's `ServiceHandle` without creating instances
-2. Only one instance per unique job class is created (to get the group name)
-3. [`JobMetadata`](../dropwizard-jobs-core/src/main/java/io/dropwizard/jobs/JobMetadata.java) is used
-    for scheduling decisions
-4. Actual job instances are created by HK2 when Quartz executes them
-
-This approach minimizes unnecessary object creation and respects your configured HK2 scopes
-(Singleton, PerLookup, PerThread).
+For programmatic integration, [`Hk2JobManager`](src/main/java/io/dropwizard/jobs/Hk2JobManager.java)
+discovers descriptors through `ServiceHandle` and creates one instance per unique job class to obtain
+its group name. The public bundle does not delegate to this manager.
 
 ## Architecture
 
-This module follows the Factory/Manager/Bundle triple pattern used by all DI extensions:
+The public bundle is defined in core and integrates with the Jersey lifecycle. This module provides
+additional factory and manager APIs:
 
 - [`Hk2JobFactory`](src/main/java/io/dropwizard/jobs/Hk2JobFactory.java) - Quartz `JobFactory`
     that creates job instances via HK2
 - [`Hk2JobManager`](src/main/java/io/dropwizard/jobs/Hk2JobManager.java) - Extends
     [`JobManager`](../dropwizard-jobs-core/src/main/java/io/dropwizard/jobs/JobManager.java) with
     HK2-specific job discovery
-- [`Hk2JobsBundle`](src/main/java/io/dropwizard/jobs/Hk2JobsBundle.java) - Dropwizard bundle
-    that wires everything together
+- [`Hk2JobsBundle`](../dropwizard-jobs-core/src/main/java/io/dropwizard/jobs/Hk2JobsBundle.java) - The
+    core Dropwizard bundle, reused without a duplicate class in this artifact
