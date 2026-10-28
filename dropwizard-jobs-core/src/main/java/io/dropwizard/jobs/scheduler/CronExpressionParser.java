@@ -30,17 +30,24 @@ public class CronExpressionParser {
      *
      * @param cronExpression the modified cron format
      * @return the cron schedule with the timezone applied to it if needed
+     * @throws IllegalArgumentException if the timezone suffix is malformed
      */
     public CronScheduleBuilder parse(String cronExpression) {
-        int i = cronExpression.indexOf("[");
-        int j = cronExpression.indexOf("]");
+        String expression = cronExpression.trim();
+        int timezoneStart = expression.indexOf('[');
+        int timezoneEnd = expression.indexOf(']');
         TimeZone timezone = defaultTimezone;
-        if (i > -1 && j > -1) {
-            String timezoneId = cronExpression.substring(i + 1, j);
+        if (timezoneStart >= 0 || timezoneEnd >= 0) {
+            if (timezoneStart < 0 || timezoneEnd <= timezoneStart || timezoneEnd != expression.length() - 1
+                    || expression.indexOf('[', timezoneStart + 1) >= 0) {
+                throw new IllegalArgumentException("Invalid timezone suffix in cron expression '" + cronExpression
+                        + "'. Expected a single [timezone] at the end.");
+            }
+            String timezoneId = expression.substring(timezoneStart + 1, timezoneEnd);
             timezone = validateAndGetTimeZone(timezoneId);
-            cronExpression = cronExpression.substring(0, i).trim();
+            expression = expression.substring(0, timezoneStart).trim();
         }
-        return CronScheduleBuilder.cronSchedule(cronExpression).inTimeZone(timezone);
+        return CronScheduleBuilder.cronSchedule(expression).inTimeZone(timezone);
     }
 
     /**
