@@ -32,6 +32,7 @@
         <jersey.version>4.0.3</jersey.version>
         <jetty.version>12.1.14</jetty.version>
         <junit.jupiter.version>6.1.3</junit.jupiter.version>
+        <logback-access.version>2.0.15</logback-access.version>
         <logback.version>1.6.6</logback.version>
         <maven-compiler-plugin.version>3.16.0</maven-compiler-plugin.version>
         <maven-gpg-plugin.version>3.2.8</maven-gpg-plugin.version>
@@ -186,6 +187,11 @@
                 <version>${logback.version}</version>
             </dependency>
             <dependency>
+                <groupId>ch.qos.logback.access</groupId>
+                <artifactId>logback-access-jetty12</artifactId>
+                <version>${logback-access.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>com.mchange</groupId>
                 <artifactId>c3p0</artifactId>
                 <version>${c3p0.version}</version>
@@ -276,9 +282,9 @@
             <version>${logback.version}</version>
         </dependency>
         <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-access</artifactId>
-            <version>${logback.version}</version>
+            <groupId>ch.qos.logback.access</groupId>
+            <artifactId>logback-access-common</artifactId>
+            <version>${logback-access.version}</version>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
