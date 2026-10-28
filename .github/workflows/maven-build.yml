@@ -33,4 +33,13 @@ jobs:
         distribution: 'temurin'
         cache: maven
     - name: Build with Maven
-      run: mvn -B package --file pom.xml
+      run: ./mvnw -B -ntp clean verify
+    - name: Retain verification reports
+      if: always()
+      uses: actions/upload-artifact@v7.0.2
+      with:
+        name: verification-jdk-${{ matrix.java }}
+        path: |
+          **/target/surefire-reports/
+          **/target/site/jacoco/
+        retention-days: 14
