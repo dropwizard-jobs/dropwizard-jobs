@@ -26,7 +26,14 @@ jobs:
                 server-username: MAVEN_USERNAME
                 server-password: MAVEN_PASSWORD
 
+            - name: Read project version
+              id: project
+              run: |
+                  version=$(./mvnw --batch-mode --non-recursive help:evaluate -Dexpression=project.version -q -DforceStdout)
+                  echo "version=$version" >> "$GITHUB_OUTPUT"
+
             - name: Publish Snapshot to Maven Central
+              if: endsWith(steps.project.outputs.version, '-SNAPSHOT')
               run: mvn --batch-mode -Dgpg.passphrase=${{ secrets.GPG_PASSPHRASE }} deploy
               env:
                   MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
