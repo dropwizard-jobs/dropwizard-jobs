@@ -9,6 +9,12 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
+import com.google.common.collect.ImmutableMap;
+
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.datatype.guava.GuavaModule;
+
 /**
  * Tests for {@link MutableJobConfiguration}.
  * <p>
@@ -26,6 +32,46 @@ class MutableJobConfigurationTest {
         assertThat(config.getQuartzConfiguration(), is(anEmptyMap()));
         assertFalse(config.hasJobs());
         assertFalse(config.hasQuartzConfiguration());
+    }
+
+    @Test
+    void testJackson3JobConfigurationProperties() {
+        JsonMapper mapper = JsonMapper.builder().addModule(new GuavaModule()).build();
+        Map<String, Map<String, String>> properties = Map.of(
+            "jobs", Map.of("scheduledJob", "5s"),
+            "quartz", Map.of("org.quartz.scheduler.instanceName", "testScheduler"));
+
+        MutableJobConfiguration config = mapper.readValue(mapper.writeValueAsString(properties), MutableJobConfiguration.class);
+        Map<String, Object> serialized = mapper.convertValue(config, new TypeReference<Map<String, Object>>() {});
+
+        assertEquals(properties.get("jobs"), config.getJobs());
+        assertEquals(properties.get("quartz"), config.getQuartzConfiguration());
+        assertEquals(properties.get("jobs"), serialized.get("jobs"));
+        assertEquals(properties.get("quartz"), serialized.get("quartz"));
+    }
+
+    @Test
+    void testJackson3GuavaRoundTrip() {
+        JsonMapper mapper = JsonMapper.builder().addModule(new GuavaModule()).build();
+        ImmutableMap<String, String> jobs = ImmutableMap.of("scheduledJob", "5s");
+
+        ImmutableMap<String, String> restored = mapper.readValue(mapper.writeValueAsString(jobs),
+            new TypeReference<ImmutableMap<String, String>>() {});
+
+        assertThat(restored, is(jobs));
+    }
+
+    @Test
+    void testDropwizardJackson2ConfigurationRoundTrip() throws Exception {
+        com.fasterxml.jackson.databind.ObjectMapper mapper = io.dropwizard.jackson.Jackson.newObjectMapper();
+        MutableJobConfiguration config = new MutableJobConfiguration()
+            .withJob("scheduledJob", "5s")
+            .withQuartzProperty("org.quartz.scheduler.instanceName", "testScheduler");
+
+        MutableJobConfiguration restored = mapper.readValue(mapper.writeValueAsString(config), MutableJobConfiguration.class);
+
+        assertThat(restored.getJobs(), is(config.getJobs()));
+        assertThat(restored.getQuartzConfiguration(), is(config.getQuartzConfiguration()));
     }
 
     @Test
