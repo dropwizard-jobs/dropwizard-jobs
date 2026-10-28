@@ -10,6 +10,8 @@ import org.mockito.Mockito;
 import org.quartz.*;
 import org.quartz.impl.matchers.GroupMatcher;
 import org.quartz.impl.triggers.CronTriggerImpl;
+import org.quartz.simpl.RAMJobStore;
+import org.quartz.spi.JobFactory;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -245,6 +247,53 @@ public class JobManagerTest {
     }
 
     @Test
+    public void testDefaultSchedulersKeepFactoriesAndShutdownIndependent() throws Exception {
+        EveryTestJobWithDefaultConfiguration firstJob = new EveryTestJobWithDefaultConfiguration();
+        EveryTestJobWithDefaultConfiguration secondJob = new EveryTestJobWithDefaultConfiguration();
+        JobManager firstManager = defaultManagerFor(firstJob);
+        JobManager secondManager = defaultManagerFor(secondJob);
+        try {
+            firstManager.start();
+            secondManager.start();
+
+            assertNotSame(firstManager.getScheduler(), secondManager.getScheduler());
+            assertNotEquals(firstManager.getScheduler().getSchedulerName(), secondManager.getScheduler().getSchedulerName());
+            assertEquals(10, firstManager.getScheduler().getMetaData().getThreadPoolSize());
+            assertEquals(RAMJobStore.class, firstManager.getScheduler().getMetaData().getJobStoreClass());
+            assertTrue(firstManager.configuration.getQuartzConfiguration().isEmpty());
+
+            JobDetail detail = JobBuilder.newJob(EveryTestJobWithDefaultConfiguration.class).withIdentity("factory-check").build();
+            firstManager.scheduleNow(detail);
+            assertTrue(firstJob.latch().await(2, TimeUnit.SECONDS));
+            assertEquals(1L, secondJob.latch().getCount());
+
+            firstManager.stop();
+            assertFalse(secondManager.getScheduler().isShutdown());
+            secondManager.scheduleNow(detail);
+            assertTrue(secondJob.latch().await(2, TimeUnit.SECONDS));
+        } finally {
+            try {
+                if (firstManager.scheduler != null && !firstManager.scheduler.isShutdown()) {
+                    firstManager.stop();
+                }
+            } finally {
+                if (secondManager.scheduler != null && !secondManager.scheduler.isShutdown()) {
+                    secondManager.stop();
+                }
+            }
+        }
+    }
+
+    private JobManager defaultManagerFor(Job job) {
+        return new JobManager(new JobConfiguration(), Collections.emptyList()) {
+            @Override
+            protected JobFactory getJobFactory() {
+                return (bundle, scheduler) -> job;
+            }
+        };
+    }
+
+    @Test
     public void throwsExceptionWhenNoPropertiesAreDefined() {
         assertThrows(SchedulerConfigException.class, () -> {
             TestConfig config = new TestConfig();
@@ -267,6 +316,8 @@ public class JobManagerTest {
                 everyTestJobWithJobName));
         jobManager.start();
         assertThat(jobManager.getScheduler().getMetaData().getThreadPoolSize(), Matchers.is(15));
+        assertEquals(config.getQuartzConfiguration().get("org.quartz.scheduler.instanceName"),
+            jobManager.getScheduler().getSchedulerName());
         jobManager.stop();
     }
 

@@ -14,8 +14,10 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Manages the lifecycle and scheduling of Quartz jobs in a Dropwizard application.
@@ -207,17 +209,14 @@ public class JobManager implements Managed, JobMediator {
      * <p>
      * If custom Quartz configuration is provided via {@link JobConfiguration#getQuartzConfiguration()},
      * it will be used to initialize the scheduler. Otherwise, the default scheduler configuration
-     * (RAMJobStore) is used.
+    * (RAMJobStore) is used with a unique scheduler name so managers do not share lifecycle or job factories.
+    * Explicitly configured scheduler names and cluster settings are preserved.
      * </p>
      *
      * @return a configured Quartz scheduler
      * @throws SchedulerException if the scheduler cannot be created
      */
     private Scheduler createScheduler() throws SchedulerException {
-        if (configuration.getQuartzConfiguration().isEmpty()) {
-            return StdSchedulerFactory.getDefaultScheduler();
-        }
-
         StdSchedulerFactory factory = new StdSchedulerFactory();
         factory.initialize(createProperties());
         return factory.getScheduler();
@@ -230,7 +229,13 @@ public class JobManager implements Managed, JobMediator {
      */
     private Properties createProperties() {
         Properties properties = new Properties();
-        properties.putAll(configuration.getQuartzConfiguration());
+        Map<String, String> quartzConfiguration = configuration.getQuartzConfiguration();
+        if (quartzConfiguration.isEmpty()) {
+            properties.putAll(DefaultQuartzConfiguration.get());
+            properties.setProperty(StdSchedulerFactory.PROP_SCHED_INSTANCE_NAME, "dropwizard-jobs-" + UUID.randomUUID());
+        } else {
+            properties.putAll(quartzConfiguration);
+        }
         return properties;
     }
 
