@@ -33,7 +33,7 @@ Add to your pom:
 ```bash
 git clone https://github.com/dropwizard-jobs/dropwizard-jobs
 cd dropwizard-jobs
-./mvn install
+./mvnw install
 ```
 
 After installing the plugin locally you can include it in your pom.xml
