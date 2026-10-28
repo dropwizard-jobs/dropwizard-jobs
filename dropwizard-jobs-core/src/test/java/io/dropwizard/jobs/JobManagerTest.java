@@ -291,6 +291,31 @@ public class JobManagerTest {
     }
 
     @Test
+    public void rejectMalformedTimezoneSuffixes() {
+        CronExpressionParser parser = new CronExpressionParser(new TestConfig());
+        for (String expression : List.of(
+                "0 15 10 ? * * [UTC] unexpected-text",
+                "0 15 10 ? * * ]UTC[",
+                "0 15 10 ? * * [UTC",
+                "0 15 10 ? * * UTC]",
+                "0 15 10 ? * * [[UTC]]",
+                "0 15 10 ? * * [UTC][Europe/London]",
+                "0 15 10 ? * * [UTC]]")) {
+            IllegalArgumentException failure = assertThrows(IllegalArgumentException.class,
+                    () -> parser.parse(expression), expression);
+            assertTrue(failure.getMessage().contains("timezone suffix"), failure.getMessage());
+        }
+    }
+
+    @Test
+    public void allowTimezoneSuffixWithTrailingWhitespace() {
+        CronExpressionParser parser = new CronExpressionParser(new TestConfig());
+        CronTriggerImpl trigger = (CronTriggerImpl) parser.parse("0 15 10 ? * * [UTC] \t ").build();
+        assertEquals(TimeZone.getTimeZone("UTC"), trigger.getTimeZone());
+        assertEquals("0 15 10 ? * *", trigger.getCronExpression());
+    }
+
+    @Test
     public void shouldCatchAndLogSchedulerExceptionWithoutThrowing() throws Exception {
         // Create a mock scheduler that throws SchedulerException
         Scheduler mockScheduler = mock(Scheduler.class);
