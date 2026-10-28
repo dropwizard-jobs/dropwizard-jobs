@@ -9,6 +9,7 @@
 name: Maven Test and Build
 
 on:
+  workflow_call:
   push:
     branches:
       - master
@@ -16,11 +17,22 @@ on:
     branches:
       - master
 
+permissions:
+  contents: read
+
 jobs:
+  lint-workflows:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v7
+    - name: Validate GitHub Actions workflows
+      uses: docker://rhysd/actionlint:1.7.12
+
   build:
 
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         java: ['17', '21', '25']
 

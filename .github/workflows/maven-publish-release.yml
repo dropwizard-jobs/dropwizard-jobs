@@ -11,7 +11,13 @@ on:
             - "v*"
 
 jobs:
+    verify:
+        uses: ./.github/workflows/maven-build.yml
+        permissions:
+            contents: read
+
     publish:
+        needs: verify
         runs-on: ubuntu-latest
         permissions:
             contents: read
