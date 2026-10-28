@@ -20,7 +20,7 @@ import io.dropwizard.core.Configuration;
  * </p>
  * <pre>{@code
  * jobs:
- *   myJob: "5s"  # Override @Every annotation value
+ *   myJob: "5s"  # Schedule for @Every("${myJob}") or @Every on MyJob
  * quartz:
  *   org.quartz.scheduler.instanceName: "myScheduler"
  * }</pre>
@@ -33,9 +33,14 @@ public class JobConfiguration extends Configuration {
     /**
      * Returns a map of job names to their schedule values for runtime override.
      * <p>
-     * The keys should match the value specified in job annotations (e.g., the value
-     * in {@code @Every("myJob")}). The values are schedule expressions that will
-     * replace the annotation values at runtime.
+    * An explicit placeholder such as {@code @Every("${myJob}")} or
+    * {@code @On("${myJob}")} selects the key {@code myJob}. When the annotation
+    * value is empty, the key is the job's simple class name with its first character
+    * lowercased: {@code MyJob} uses {@code myJob}.
+    * </p>
+    * <p>
+    * Literal annotation values such as {@code @Every("5s")} are used directly;
+    * they are not looked up in this map.
      * </p>
      * <p>
      * For {@code @Every} jobs, values can be durations like "5s", "1m", "1h".
