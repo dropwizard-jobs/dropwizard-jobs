@@ -67,13 +67,14 @@ public class Hk2JobManager extends JobManager {
 
         // Group by implementation class to avoid duplicate instantiation
         Map<Class<? extends Job>, List<ServiceHandle<?>>> byClass = handles.stream()
-                .collect(Collectors.groupingBy(sh -> (Class<? extends Job>) sh.getActiveDescriptor().getImplementationClass()));
+            .collect(Collectors.groupingBy(handle -> (Class<? extends Job>) locator
+                .reifyDescriptor(handle.getActiveDescriptor()).getImplementationClass()));
 
         List<JobMetadata> metadata = new ArrayList<>();
         for (Map.Entry<Class<? extends Job>, List<ServiceHandle<?>>> entry : byClass.entrySet()) {
             Class<? extends Job> clazz = entry.getKey();
             // Instantiate one instance to get the group name
-            Job instance = locator.getService(clazz);
+            Job instance = (Job) entry.getValue().get(0).getService();
             String groupName = instance.getGroupName();
             metadata.add(new JobMetadata(clazz, groupName));
         }
