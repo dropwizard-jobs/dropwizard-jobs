@@ -28,9 +28,14 @@ jobs:
                   server-password: MAVEN_PASSWORD
 
             - name: Set release version
+              env:
+                  RELEASE_TAG: ${{ github.ref_name }}
               run: |
-                  VERSION=${{ github.ref_name }}
-                  VERSION=${VERSION#v}
+                  VERSION="${RELEASE_TAG#v}"
+                  if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9]+([.-][A-Za-z0-9]+)*)?$ || "$VERSION" == *-SNAPSHOT ]]; then
+                      printf '%s\n' 'Invalid release tag: expected a non-SNAPSHOT release version' >&2
+                      exit 1
+                  fi
                   ./mvnw --batch-mode versions:set -DnewVersion="$VERSION" -DgenerateBackupPoms=false
 
             - name: Import GPG key
