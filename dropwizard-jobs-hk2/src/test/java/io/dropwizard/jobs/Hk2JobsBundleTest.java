@@ -15,10 +15,18 @@ import org.junit.jupiter.api.Test;
 import io.dropwizard.core.setup.Environment;
 import io.dropwizard.jersey.setup.JerseyEnvironment;
 
+import java.util.Collections;
+
 public class Hk2JobsBundleTest {
 
     private final Environment environment = mock(Environment.class);
     private final JerseyEnvironment jerseyEnvironment = mock(JerseyEnvironment.class);
+
+    @Test
+    public void testBundleHasSingleClasspathDefinition() throws Exception {
+        assertThat(Collections.list(Hk2JobsBundle.class.getClassLoader()
+                .getResources("io/dropwizard/jobs/Hk2JobsBundle.class")).size(), is(1));
+    }
 
     @Test
     public void testNullFilterThrowsNullPointerException() {
