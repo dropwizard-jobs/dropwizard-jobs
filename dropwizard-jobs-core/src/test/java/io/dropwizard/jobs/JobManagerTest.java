@@ -5,7 +5,10 @@ import io.dropwizard.jobs.annotations.On;
 import io.dropwizard.jobs.scheduler.CronExpressionParser;
 import org.hamcrest.Matchers;
 import org.hamcrest.core.IsEqual;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.Mockito;
 import org.quartz.*;
 import org.quartz.impl.matchers.GroupMatcher;
@@ -20,6 +23,8 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@Timeout(15)
+@ResourceLock(Job.DROPWIZARD_JOBS_KEY)
 public class JobManagerTest {
 
     private JobManager jobManager = JobManager.fromJobs(new TestConfig(), new ArrayList<>());
@@ -32,6 +37,13 @@ public class JobManagerTest {
     private final EveryTestJobWithJobName everyTestJobWithJobName = new EveryTestJobWithJobName();
     private final ApplicationStopTestJob applicationStopTestJob = new ApplicationStopTestJob();
     private final OnTestJobAlternativeConfiguration onTestJobAlternativeConfiguration = new OnTestJobAlternativeConfiguration();
+
+    @AfterEach
+    public void shutdownScheduler() throws SchedulerException {
+        if (jobManager.scheduler != null && !jobManager.scheduler.isShutdown()) {
+            jobManager.scheduler.shutdown(true);
+        }
+    }
 
     @Test
     public void testThatJobsAreExecuted() throws Exception {
@@ -324,7 +336,7 @@ public class JobManagerTest {
         CountingTestJobListener countingListener = new CountingTestJobListener("CountingTestJobListener");
 
         jobManager = JobManager.fromJobs(new TestConfig(),
-                List.of(new EveryTestJobWithDefaultConfiguration()),
+            List.of(new OneShotTestJob()),
                 List.of(countingListener));
 
         jobManager.start();
@@ -348,7 +360,7 @@ public class JobManagerTest {
         CountingTestJobListener listener2 = new CountingTestJobListener("Listener2");
 
         jobManager = JobManager.fromJobs(new TestConfig(),
-                List.of(new EveryTestJobWithDefaultConfiguration()),
+            List.of(new OneShotTestJob()),
                 List.of(listener1, listener2));
 
         jobManager.start();
@@ -406,11 +418,19 @@ public class JobManagerTest {
         }
     }
 
+    @Every(value = "1h", repeatCount = 0)
+    static class OneShotTestJob extends AbstractJob {
+        OneShotTestJob() {
+            super(1);
+        }
+    }
+
     private static class TestConfig extends JobConfiguration {
         private final Map<String, String> quartzConfiguration;
 
         private TestConfig() {
             quartzConfiguration = new HashMap<>(DefaultQuartzConfiguration.get());
+            quartzConfiguration.put("org.quartz.scheduler.instanceName", "job-manager-" + UUID.randomUUID());
         }
 
         private final Map<String, String> jobs = new HashMap<>();

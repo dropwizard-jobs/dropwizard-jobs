@@ -6,6 +6,8 @@ import io.dropwizard.core.setup.Bootstrap;
 import io.dropwizard.core.setup.Environment;
 import io.dropwizard.lifecycle.setup.LifecycleEnvironment;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.ArgumentCaptor;
 
 import java.util.ArrayList;
@@ -15,10 +17,16 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.mockito.Mockito.*;
 
+@ResourceLock(DROPWIZARD_JOBS_KEY)
 public class JobsBundleTest {
 
     private final Environment environment = mock(Environment.class);
     private final LifecycleEnvironment applicationContext = mock(LifecycleEnvironment.class);
+
+    @AfterEach
+    public void removeSharedRegistry() {
+        SharedMetricRegistries.remove(DROPWIZARD_JOBS_KEY);
+    }
 
     @Test
     public void assertJobsBundleIsWorking() throws Exception {

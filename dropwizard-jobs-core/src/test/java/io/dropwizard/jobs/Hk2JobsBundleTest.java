@@ -7,6 +7,7 @@ import jakarta.inject.Singleton;
 
 import org.glassfish.hk2.api.Filter;
 import org.glassfish.hk2.api.ServiceLocator;
+import org.glassfish.hk2.api.ServiceLocatorFactory;
 import org.glassfish.hk2.utilities.BuilderHelper;
 import org.glassfish.hk2.utilities.ServiceLocatorUtilities;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
@@ -15,6 +16,9 @@ import org.glassfish.jersey.server.ApplicationHandler;
 import org.glassfish.jersey.server.spi.AbstractContainerLifecycleListener;
 import org.glassfish.jersey.server.spi.Container;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.parallel.ResourceLock;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -25,10 +29,27 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+@Timeout(15)
+@ResourceLock(Job.DROPWIZARD_JOBS_KEY)
 public class Hk2JobsBundleTest {
 
     private final JobConfiguration configuration = mock(JobConfiguration.class);
     private final Environment environment = mock(Environment.class);
+    private Hk2JobsBundle jobsBundle;
+    private ServiceLocator serviceLocator;
+
+    @AfterEach
+    public void closeResources() throws Exception {
+        try {
+            if (jobsBundle != null && jobsBundle.getScheduler() != null && !jobsBundle.getScheduler().isShutdown()) {
+                jobsBundle.getScheduler().shutdown(true);
+            }
+        } finally {
+            if (serviceLocator != null) {
+                ServiceLocatorFactory.getInstance().destroy(serviceLocator);
+            }
+        }
+    }
 
     /**
      * A test case for the {@link Hk2JobsBundle#run(JobConfiguration, Environment)} and
@@ -37,7 +58,7 @@ public class Hk2JobsBundleTest {
     @Test
     public void registerToContainer() throws Exception {
         final Filter searchCriteria = BuilderHelper.createContractFilter(Job.class.getName());
-        final Hk2JobsBundle jobsBundle = new Hk2JobsBundle(searchCriteria);
+        jobsBundle = new Hk2JobsBundle(searchCriteria);
 
         // initialization
         final DropwizardResourceConfig resourceConfig = DropwizardResourceConfig.forTesting();
@@ -45,7 +66,7 @@ public class Hk2JobsBundleTest {
         jobsBundle.run(configuration, environment);
         final ApplicationHandler applicationHandler = new ApplicationHandler(resourceConfig);
         final InjectionManager im = applicationHandler.getInjectionManager();
-        final ServiceLocator serviceLocator = im.getInstance(ServiceLocator.class);
+        serviceLocator = im.getInstance(ServiceLocator.class);
         ServiceLocatorUtilities.bind(serviceLocator, new AbstractBinder() {
             @Override
             protected void configure() {
@@ -107,6 +128,7 @@ public class Hk2JobsBundleTest {
 
         final Container container = mock(Container.class);
         final ApplicationHandler applicationHandler = new ApplicationHandler();
+        serviceLocator = applicationHandler.getInjectionManager().getInstance(ServiceLocator.class);
         when(container.getApplicationHandler()).thenReturn(applicationHandler);
         try {
             listener.get().onStartup(container);

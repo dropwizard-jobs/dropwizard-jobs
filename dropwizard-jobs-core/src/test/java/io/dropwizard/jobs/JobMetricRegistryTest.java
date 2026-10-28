@@ -5,6 +5,8 @@ import com.codahale.metrics.SharedMetricRegistries;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.parallel.ResourceLock;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 
@@ -14,13 +16,17 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import static io.dropwizard.jobs.Job.DROPWIZARD_JOBS_KEY;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.sameInstance;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
+@Timeout(10)
+@ResourceLock(DROPWIZARD_JOBS_KEY)
 public class JobMetricRegistryTest {
 
     @BeforeEach
@@ -77,32 +83,29 @@ public class JobMetricRegistryTest {
 
         List<Future<MetricRegistry>> futures = new ArrayList<>();
 
-        for (int i = 0; i < numThreads; i++) {
-            futures.add(executor.submit(() -> {
-                startLatch.await();
-                try {
-                    JobExecutionContext mockContext = mock(JobExecutionContext.class);
-                    job.execute(mockContext);
-                } finally {
-                    doneLatch.countDown();
-                }
-                return job.getMetricRegistry();
-            }));
+        try {
+            for (int threadIndex = 0; threadIndex < numThreads; threadIndex++) {
+                futures.add(executor.submit(() -> {
+                    try {
+                        assertTrue(startLatch.await(5, TimeUnit.SECONDS));
+                        job.execute(mock(JobExecutionContext.class));
+                        return job.getMetricRegistry();
+                    } finally {
+                        doneLatch.countDown();
+                    }
+                }));
+            }
+
+            startLatch.countDown();
+            assertTrue(doneLatch.await(5, TimeUnit.SECONDS));
+
+            for (Future<MetricRegistry> future : futures) {
+                assertThat(future.get(5, TimeUnit.SECONDS), is(sameInstance(expectedRegistry)));
+            }
+        } finally {
+            executor.shutdownNow();
+            assertTrue(executor.awaitTermination(5, TimeUnit.SECONDS));
         }
-
-        // Release all threads simultaneously
-        startLatch.countDown();
-
-        // Wait for all threads to complete
-        doneLatch.await();
-
-        // Verify all threads got the same registry instance without exceptions
-        for (Future<MetricRegistry> future : futures) {
-            MetricRegistry registry = future.get();
-            assertThat(registry, is(sameInstance(expectedRegistry)));
-        }
-
-        executor.shutdown();
     }
 
     /**

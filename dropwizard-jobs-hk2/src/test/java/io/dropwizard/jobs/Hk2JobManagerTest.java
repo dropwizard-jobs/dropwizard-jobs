@@ -4,21 +4,39 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 import java.util.concurrent.TimeUnit;
+import java.util.UUID;
 
 import jakarta.inject.Singleton;
 
 import org.glassfish.hk2.api.Filter;
 import org.glassfish.hk2.api.ServiceLocator;
+import org.glassfish.hk2.api.ServiceLocatorFactory;
 import org.glassfish.hk2.utilities.BuilderHelper;
 import org.glassfish.hk2.utilities.ServiceLocatorUtilities;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
+@Timeout(15)
 public class Hk2JobManagerTest {
 
     private JobManager jobManager;
     private ServiceLocator locator;
+
+    @AfterEach
+    public void closeResources() throws Exception {
+        try {
+            if (jobManager != null && jobManager.getScheduler() != null && !jobManager.getScheduler().isShutdown()) {
+                jobManager.getScheduler().shutdown(true);
+            }
+        } finally {
+            if (locator != null) {
+                ServiceLocatorFactory.getInstance().destroy(locator);
+            }
+        }
+    }
 
     @BeforeEach
     public void setUp() {
@@ -69,6 +87,10 @@ public class Hk2JobManagerTest {
         assertThat(stopJob.latch.await(1, TimeUnit.SECONDS), is(true));
     }
 
-    public static class TestConfig extends JobConfiguration {
+    public static class TestConfig extends MutableJobConfiguration {
+        public TestConfig() {
+            withQuartzProperties(DefaultQuartzConfiguration.get());
+            withQuartzProperty("org.quartz.scheduler.instanceName", "hk2-manager-" + UUID.randomUUID());
+        }
     }
 }

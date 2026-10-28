@@ -14,8 +14,11 @@ import static org.mockito.Mockito.when;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
+import java.util.UUID;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.mockito.ArgumentCaptor;
 
 import com.google.inject.Guice;
@@ -25,10 +28,19 @@ import io.dropwizard.core.setup.Environment;
 import io.dropwizard.lifecycle.Managed;
 import io.dropwizard.lifecycle.setup.LifecycleEnvironment;
 
+@Timeout(15)
 public class GuiceJobsBundleTest {
 
     private final Environment environment = mock(Environment.class);
     private final LifecycleEnvironment applicationContext = mock(LifecycleEnvironment.class);
+    private Managed managed;
+
+    @AfterEach
+    public void stopManaged() throws Exception {
+        if (managed != null) {
+            managed.stop();
+        }
+    }
 
     @Test
     public void assertJobsBundleIsWorking() throws Exception {
@@ -103,7 +115,7 @@ public class GuiceJobsBundleTest {
         // Capture and invoke the Managed wrapper's start()
         ArgumentCaptor<Managed> managedCaptor = ArgumentCaptor.forClass(Managed.class);
         verify(applicationContext).manage(managedCaptor.capture());
-        Managed managed = managedCaptor.getValue();
+        managed = managedCaptor.getValue();
         managed.start();
 
         // Supplier SHOULD be called after Managed.start()
@@ -124,7 +136,7 @@ public class GuiceJobsBundleTest {
         // Capture and invoke the Managed wrapper's start()
         ArgumentCaptor<Managed> managedCaptor = ArgumentCaptor.forClass(Managed.class);
         verify(applicationContext).manage(managedCaptor.capture());
-        Managed managed = managedCaptor.getValue();
+        managed = managedCaptor.getValue();
         managed.start();
 
         // After start(), getScheduler() should return a non-null scheduler
@@ -140,5 +152,10 @@ public class GuiceJobsBundleTest {
         });
     }
 
-    private static class MyConfiguration extends JobConfiguration {}
+    private static class MyConfiguration extends MutableJobConfiguration {
+        MyConfiguration() {
+            withQuartzProperties(DefaultQuartzConfiguration.get());
+            withQuartzProperty("org.quartz.scheduler.instanceName", "guice-bundle-" + UUID.randomUUID());
+        }
+    }
 }
