@@ -10,6 +10,7 @@ import org.mockito.Mockito;
 import org.quartz.*;
 import org.quartz.impl.matchers.GroupMatcher;
 import org.quartz.impl.triggers.CronTriggerImpl;
+import org.quartz.spi.JobFactory;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -268,6 +269,57 @@ public class JobManagerTest {
         jobManager.start();
         assertThat(jobManager.getScheduler().getMetaData().getThreadPoolSize(), Matchers.is(15));
         jobManager.stop();
+    }
+
+    @Test
+    public void shouldShutDownSchedulerWhenSchedulingFailsDuringStartup() throws Exception {
+        TestConfig config = new TestConfig();
+        config.getQuartzConfiguration().put("org.quartz.scheduler.instanceName", "failed-startup-" + UUID.randomUUID());
+        jobManager = JobManager.fromJobs(config, List.of(new OnTestJobWithInvalidTimeZone()));
+
+        try {
+            assertThrows(IllegalArgumentException.class, jobManager::start);
+            assertTrue(jobManager.getScheduler().isShutdown());
+        } finally {
+            jobManager.getScheduler().shutdown(true);
+        }
+    }
+
+    @Test
+    public void shouldShutDownSchedulerWhenFactorySetupFails() throws Exception {
+        TestConfig config = new TestConfig();
+        config.getQuartzConfiguration().put("org.quartz.scheduler.instanceName", "failed-factory-" + UUID.randomUUID());
+        IllegalStateException failure = new IllegalStateException("Factory setup failed");
+        jobManager = new JobManager(config, List.of()) {
+            @Override
+            protected JobFactory getJobFactory() {
+                throw failure;
+            }
+        };
+
+        try {
+            assertSame(failure, assertThrows(IllegalStateException.class, jobManager::start));
+            assertTrue(jobManager.getScheduler().isShutdown());
+        } finally {
+            jobManager.getScheduler().shutdown(true);
+        }
+    }
+
+    @Test
+    public void shouldNotShutDownAlreadyStartedSchedulerWhenStartupFails() throws Exception {
+        TestConfig config = new TestConfig();
+        config.getQuartzConfiguration().put("org.quartz.scheduler.instanceName", "shared-startup-" + UUID.randomUUID());
+        JobManager runningManager = JobManager.fromJobs(config, List.of());
+        runningManager.start();
+        jobManager = JobManager.fromJobs(config, List.of(new OnTestJobWithInvalidTimeZone()));
+
+        try {
+            assertThrows(IllegalArgumentException.class, jobManager::start);
+            assertSame(runningManager.getScheduler(), jobManager.getScheduler());
+            assertFalse(runningManager.getScheduler().isShutdown());
+        } finally {
+            runningManager.getScheduler().shutdown(true);
+        }
     }
 
     @Test

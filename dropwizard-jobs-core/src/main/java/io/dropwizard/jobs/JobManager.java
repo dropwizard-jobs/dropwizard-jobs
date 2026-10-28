@@ -137,25 +137,39 @@ public class JobManager implements Managed, JobMediator {
      *   <li>Schedules all {@code @OnApplicationStart}, {@code @Every}, and {@code @On} jobs</li>
      *   <li>Logs all registered {@code @OnApplicationStop} jobs</li>
      * </ol>
+    * If startup fails, a scheduler that was not already started is shut down without
+    * running {@code @OnApplicationStop} jobs. The original startup failure is preserved.
      *
      * @throws Exception if the scheduler fails to start
      */
     @Override
     public void start() throws Exception {
         scheduler = createScheduler();
-        scheduler.setJobFactory(getJobFactory());
+        boolean alreadyStarted = scheduler.isStarted();
+        try {
+            scheduler.setJobFactory(getJobFactory());
 
-        // Register listeners BEFORE starting scheduler and scheduling jobs
-        // so they are ready to receive events from the very first execution
-        registerJobListeners();
+            // Register listeners BEFORE starting scheduler and scheduling jobs
+            // so they are ready to receive events from the very first execution
+            registerJobListeners();
 
-        scheduler.start();
+            scheduler.start();
 
-        onApplicationStartScheduler.schedule();
-        everyScheduler.schedule();
-        onCronScheduler.schedule();
+            onApplicationStartScheduler.schedule();
+            everyScheduler.schedule();
+            onCronScheduler.schedule();
 
-        logAllOnApplicationStopJobs();
+            logAllOnApplicationStopJobs();
+        } catch (Exception startupFailure) {
+            if (!alreadyStarted) {
+                try {
+                    scheduler.shutdown(false);
+                } catch (Exception shutdownFailure) {
+                    startupFailure.addSuppressed(shutdownFailure);
+                }
+            }
+            throw startupFailure;
+        }
     }
 
     /**
